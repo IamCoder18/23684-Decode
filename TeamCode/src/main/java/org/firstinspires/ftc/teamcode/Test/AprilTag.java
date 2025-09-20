@@ -46,13 +46,7 @@ public class AprilTag extends LinearOpMode {
 				.setTagFamily(AprilTagProcessor.TagFamily.TAG_36h11)
 				.setTagLibrary(AprilTagGameDatabase.getDecodeTagLibrary())
 				.setOutputUnits(DistanceUnit.INCH, AngleUnit.DEGREES)
-
-				// == CAMERA CALIBRATION ==
-				// If you do not manually specify calibration parameters, the SDK will attempt
-				// to load a predefined calibration for your camera.
-				//.setLensIntrinsics(578.272, 578.272, 402.145, 221.506)
-				// ... these parameters are fx, fy, cx, cy.
-
+				.setLensIntrinsics(1437.0372, 1438.2118, 963.4090, 515.8415)
 				.build();
 
 		aprilTag.setDecimation(3);
