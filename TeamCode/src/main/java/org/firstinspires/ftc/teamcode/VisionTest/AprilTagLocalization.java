@@ -18,6 +18,7 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagGameDatabase;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 @TeleOp(name = "AprilTag Localization", group = "Test")
@@ -169,21 +170,21 @@ public class AprilTagLocalization extends LinearOpMode {
 		// Step through the list of detections and display info for each one.
 		for (AprilTagDetection detection : currentDetections) {
 			if (detection.metadata != null) {
-				telemetry.addLine(String.format("\n==== (ID %d) %s", detection.id, detection.metadata.name));
+				telemetry.addLine(String.format(Locale.getDefault(), "\n==== (ID %d) %s", detection.id, detection.metadata.name));
 				// Only use tags that don't have Obelisk in them
 				if (!detection.metadata.name.contains("Obelisk")) {
-					telemetry.addLine(String.format("XYZ %6.1f %6.1f %6.1f  (inch)",
-							detection.robotPose.getPosition().x,
-							detection.robotPose.getPosition().y,
-							detection.robotPose.getPosition().z));
-					telemetry.addLine(String.format("PRY %6.1f %6.1f %6.1f  (deg)",
-							detection.robotPose.getOrientation().getPitch(AngleUnit.DEGREES),
-							detection.robotPose.getOrientation().getRoll(AngleUnit.DEGREES),
-							detection.robotPose.getOrientation().getYaw(AngleUnit.DEGREES)));
+					telemetry.addLine(String.format(Locale.getDefault(), "XYZ %6.1f %6.1f %6.1f  (inch)",
+							detection.ftcPose.x,
+							detection.ftcPose.y,
+							detection.ftcPose.z));
+					telemetry.addLine(String.format(Locale.getDefault(), "PRY %6.1f %6.1f %6.1f  (deg)",
+							detection.ftcPose.pitch,
+							detection.ftcPose.roll,
+							detection.ftcPose.yaw));
 				}
 			} else {
-				telemetry.addLine(String.format("\n==== (ID %d) Unknown", detection.id));
-				telemetry.addLine(String.format("Center %6.0f %6.0f   (pixels)", detection.center.x, detection.center.y));
+				telemetry.addLine(String.format(Locale.getDefault(), "\n==== (ID %d) Unknown", detection.id));
+				telemetry.addLine(String.format(Locale.getDefault(), "Center %6.0f %6.0f   (pixels)", detection.center.x, detection.center.y));
 			}
 		}   // end for() loop
 
