@@ -18,6 +18,11 @@ apply from: '../build.dependencies.gradle'
 android {
     namespace = 'org.firstinspires.ftc.teamcode'
 
+    compileSdk 35
+    defaultConfig {
+        minSdk 24
+    }
+
     packagingOptions {
         jniLibs.useLegacyPackaging true
     }
@@ -26,6 +31,9 @@ android {
 repositories {
     maven {
         url = 'https://maven.brott.dev/'
+    }
+    maven {
+        url = "https://mymaven.bylazar.com/releases"
     }
 }
 
@@ -36,4 +44,5 @@ dependencies {
     implementation "com.acmerobotics.roadrunner:core:1.0.1"
     implementation "com.acmerobotics.roadrunner:actions:1.0.1"
     implementation "com.acmerobotics.dashboard:dashboard:0.5.0"
+    implementation "com.bylazar:fullpanels:1.0.7"
 }
