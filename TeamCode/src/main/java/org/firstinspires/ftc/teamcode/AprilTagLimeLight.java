@@ -37,6 +37,7 @@ public class AprilTagLimeLight extends OpMode {
     @Override
     public void loop() {
         YawPitchRollAngles angles = imu.getRobotYawPitchRollAngles();
+
         limelight.updateRobotOrientation(angles.getYaw());
         LLResult llResult = limelight.getLatestResult();
         if (llResult != null && llResult.isValid()){
@@ -46,6 +47,8 @@ public class AprilTagLimeLight extends OpMode {
             telemetry.addData("Ta", llResult.getTa());
             telemetry.addData("BotPose", botPose.toString());
             telemetry.addData("Orientation", botPose.getOrientation().toString());
+
+            telemetry.addData("imuing", imu.getRobotYawPitchRollAngles());
 
         }
 
