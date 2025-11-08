@@ -10,7 +10,7 @@ package org.firstinspires.ftc.teamcode;
  *
  * @see <a href="http://brettbeauregard.com/blog/2011/04/improving-the-beginners-pid-direction/improving-the-beginners-pid-introduction">...</a>
  */
-public class PIDFcontroller {
+public class PIDFController {
     //**********************************
     // Class private variables
     //**********************************
