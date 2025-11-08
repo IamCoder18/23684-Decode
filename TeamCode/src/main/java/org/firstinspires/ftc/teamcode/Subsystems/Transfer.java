@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.Actions;
+package org.firstinspires.ftc.teamcode.Subsystems;
 
 import androidx.annotation.NonNull;
 import com.acmerobotics.dashboard.config.Config;
@@ -9,21 +9,36 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 
 @Config
 public class Transfer {
-    private final CRServo transferLeft;
-    private final CRServo transferRight;
-    private final CRServo intakeDoorLeft;
-    private final CRServo intakeDoorRight;
+    private static Transfer instance = null;
+
+    private CRServo transferLeft;
+    private CRServo transferRight;
+    private CRServo intakeDoorLeft;
+    private CRServo intakeDoorRight;
 
     // Servo power constants
     public static double FORWARD_POWER = 1.0;
     public static double BACKWARD_POWER = -1.0;
     public static double STOP_POWER = 0.0;
 
-    public Transfer(HardwareMap hardwareMap) {
-        transferLeft = hardwareMap.get(CRServo.class, "transferLeft");
-        transferRight = hardwareMap.get(CRServo.class, "transferRight");
-        intakeDoorLeft = hardwareMap.get(CRServo.class, "intakeDoorLeft");
-        intakeDoorRight = hardwareMap.get(CRServo.class, "intakeDoorRight");
+    private Transfer() {
+    }
+
+    public static void initialize(HardwareMap hardwareMap) {
+        if (instance == null) {
+            instance = new Transfer();
+            instance.transferLeft = hardwareMap.get(CRServo.class, "transferLeft");
+            instance.transferRight = hardwareMap.get(CRServo.class, "transferRight");
+            instance.intakeDoorLeft = hardwareMap.get(CRServo.class, "intakeDoorLeft");
+            instance.intakeDoorRight = hardwareMap.get(CRServo.class, "intakeDoorRight");
+        }
+    }
+
+    public static Transfer getInstance() {
+        if (instance == null) {
+            throw new IllegalStateException("Transfer not initialized. Call initialize(hardwareMap) first.");
+        }
+        return instance;
     }
 
     // Actions for transfer servos
@@ -74,5 +89,9 @@ public class Transfer {
             intakeDoorRight.setPower(STOP_POWER);
             return true;
         };
+    }
+
+    public static void shutdown() {
+        // No cleanup needed currently
     }
 }

@@ -4,10 +4,10 @@ import androidx.annotation.NonNull;
 
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
+import org.firstinspires.ftc.teamcode.Subsystems.Spindexer;
 
 public class ShootBall implements Action {
 
-    private final Spindexer spindexer;
     private final BallColor requestedColor;
     private static final double SLOT_TOLERANCE_DEGREES = 5.0;
     private static final double SHOOTER_ALIGNMENT_DEGREES = 131.011;
@@ -17,14 +17,12 @@ public class ShootBall implements Action {
     private static final double[] SLOT_CENTERS = {SLOT_0_CENTER, SLOT_1_CENTER, SLOT_2_CENTER};
 
     // Constructor without color preference (any color)
-    public ShootBall(Spindexer spindexer) {
-        this.spindexer = spindexer;
+    public ShootBall() {
         this.requestedColor = null;
     }
 
     // Constructor with optional color preference
-    public ShootBall(Spindexer spindexer, BallColor requestedColor) {
-        this.spindexer = spindexer;
+    public ShootBall(BallColor requestedColor) {
         this.requestedColor = requestedColor;
     }
 
@@ -38,11 +36,11 @@ public class ShootBall implements Action {
         double targetRevolutions = targetDegrees / 360.0;
 
         // Set the target for the PID controller
-        spindexer.setTargetPosition(targetRevolutions);
+        Spindexer.getInstance().setTargetPosition(targetRevolutions);
 
         // Check if position is reached (within tolerance)
-        double currentTicks = spindexer.getCurrentPositionTicks();
-        double targetTicks = targetRevolutions * spindexer.TICKS_PER_REV;
+        double currentTicks = Spindexer.getInstance().getCurrentPositionTicks();
+        double targetTicks = targetRevolutions * Spindexer.TICKS_PER_REV;
         double error = targetTicks - currentTicks;
 
         packet.put("ShootBall Target Slot", targetSlot);
@@ -57,7 +55,7 @@ public class ShootBall implements Action {
         // Priority 1: If a color is requested, find a slot with that color within tolerance
         if (requestedColor != null && requestedColor != BallColor.UNKNOWN) {
             for (int i = 0; i < 3; i++) {
-                if (spindexer.getBallColor(i) == requestedColor) {
+                if (Spindexer.getInstance().getBallColor(i) == requestedColor) {
                     double degreesFromSlotCenter = getDegreesFromSlotCenter(currentPositionDegrees, SLOT_CENTERS[i]);
                     if (degreesFromSlotCenter <= SLOT_TOLERANCE_DEGREES) {
                         return i;
@@ -103,8 +101,8 @@ public class ShootBall implements Action {
     }
 
     private double getCurrentPositionDegrees() {
-        double currentPositionTicks = spindexer.getCurrentPositionTicks();
-        double currentPositionDegrees = (currentPositionTicks % spindexer.TICKS_PER_REV) / spindexer.TICKS_PER_REV * 360;
+        double currentPositionTicks = Spindexer.getInstance().getCurrentPositionTicks();
+        double currentPositionDegrees = (currentPositionTicks % Spindexer.TICKS_PER_REV) / Spindexer.TICKS_PER_REV * 360;
         if (currentPositionDegrees < 0) {
             currentPositionDegrees += 360;
         }

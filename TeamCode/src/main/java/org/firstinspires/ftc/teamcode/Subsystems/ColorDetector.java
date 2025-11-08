@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.Actions;
+package org.firstinspires.ftc.teamcode.Subsystems;
 
 import android.graphics.Color;
 import androidx.annotation.NonNull;
@@ -6,28 +6,42 @@ import androidx.annotation.NonNull;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
-import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 @Config
-public class ColorSensors {
+public class ColorDetector {
 
     // HSV Thresholds
     public static double GREEN_HUE_MIN = 100, GREEN_HUE_MAX = 140;
     public static double PURPLE_HUE_MIN = 250, PURPLE_HUE_MAX = 290;
     public static double MIN_SATURATION = 0.4;
 
-    private final ColorSensor colourLeft;
-    private final ColorSensor colourRight;
+    private static ColorDetector instance = null;
+
+    private com.qualcomm.robotcore.hardware.ColorSensor colourLeft;
+    private com.qualcomm.robotcore.hardware.ColorSensor colourRight;
 
     // Public fields to store the last read values
     public int avgRed, avgGreen, avgBlue;
     public float[] avgHSV = new float[3];
     public boolean isGreen, isPurple;
 
-    public ColorSensors(HardwareMap hardwareMap) {
-        colourLeft = hardwareMap.get(ColorSensor.class, "colourLeft");
-        colourRight = hardwareMap.get(ColorSensor.class, "colourRight");
+    private ColorDetector() {
+    }
+
+    public static void initialize(HardwareMap hardwareMap) {
+        if (instance == null) {
+            instance = new ColorDetector();
+            instance.colourLeft = hardwareMap.get(com.qualcomm.robotcore.hardware.ColorSensor.class, "colourLeft");
+            instance.colourRight = hardwareMap.get(com.qualcomm.robotcore.hardware.ColorSensor.class, "colourRight");
+        }
+    }
+
+    public static ColorDetector getInstance() {
+        if (instance == null) {
+            throw new IllegalStateException("ColorSensor not initialized. Call initialize(hardwareMap) first.");
+        }
+        return instance;
     }
 
     private void updateValues() {
@@ -65,5 +79,11 @@ public class ColorSensors {
         }
     }
 
-    public Action update() { return new UpdateAction(); }
+    public Action update() {
+        return new UpdateAction();
+    }
+
+    public static void shutdown() {
+        // No cleanup needed currently
+    }
 }

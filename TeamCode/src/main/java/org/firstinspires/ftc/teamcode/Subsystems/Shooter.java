@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.Actions;
+package org.firstinspires.ftc.teamcode.Subsystems;
 
 import androidx.annotation.NonNull;
 
@@ -11,8 +11,10 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 @Config
 public class Shooter {
 
-    private final DcMotor upperShooter;
-    private final DcMotor lowerShooter;
+    private static Shooter instance = null;
+
+    private DcMotor upperShooter;
+    private DcMotor lowerShooter;
 
     // Motor power constants
     public static double RUN_POWER = 1.0;
@@ -22,9 +24,22 @@ public class Shooter {
     public static double UPPER_OFFSET = 0.0;
     public static double LOWER_OFFSET = 0.0;
 
-    public Shooter(HardwareMap hardwareMap) {
-        upperShooter = hardwareMap.get(DcMotor.class, "upperShooter");
-        lowerShooter = hardwareMap.get(DcMotor.class, "lowerShooter");
+    private Shooter() {
+    }
+
+    public static void initialize(HardwareMap hardwareMap) {
+        if (instance == null) {
+            instance = new Shooter();
+            instance.upperShooter = hardwareMap.get(DcMotor.class, "upperShooter");
+            instance.lowerShooter = hardwareMap.get(DcMotor.class, "lowerShooter");
+        }
+    }
+
+    public static Shooter getInstance() {
+        if (instance == null) {
+            throw new IllegalStateException("Shooter not initialized. Call initialize(hardwareMap) first.");
+        }
+        return instance;
     }
 
     public Action run() {
@@ -41,5 +56,9 @@ public class Shooter {
             lowerShooter.setPower(STOP_POWER);
             return true;
         };
+    }
+
+    public static void shutdown() {
+        // No cleanup needed currently
     }
 }

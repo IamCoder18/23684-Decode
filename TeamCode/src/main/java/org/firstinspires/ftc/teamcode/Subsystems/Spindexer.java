@@ -1,11 +1,13 @@
-package org.firstinspires.ftc.teamcode.Actions;
+package org.firstinspires.ftc.teamcode.Subsystems;
 
 import androidx.annotation.NonNull;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
-import org.firstinspires.ftc.teamcode.PIDF.PIDFController;
+import org.firstinspires.ftc.teamcode.Utilities.PIDFController;
+import org.firstinspires.ftc.teamcode.Actions.BallColor;
+import org.firstinspires.ftc.teamcode.Actions.IntakeBall;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -20,13 +22,13 @@ public class Spindexer {
     // PID coefficients for position control. Tune these via the FTC Dashboard.
     public static double P = 0.005, I = 0, D = 0, F = 0;
 
-    private final CRServo spindexer;
-    private final DcMotorEx spindexerEncoder;
-    private final TouchSensor spindexerZero;
-    private final Transfer transfer;
-    private final ColorSensors colorSensors;
+    private static Spindexer instance = null;
 
-    private final PIDFController controller;
+    private CRServo spindexer;
+    private DcMotorEx spindexerEncoder;
+    private TouchSensor spindexerZero;
+
+    private PIDFController controller;
     private double targetPosition = 0;
     private boolean isZeroed = false;
 
@@ -37,23 +39,33 @@ public class Spindexer {
     // Store detected ball colors for each slot (0, 1, 2)
     private BallColor[] ballColors = new BallColor[3];
 
-    public Spindexer(HardwareMap hardwareMap) {
+    private Spindexer() {
         // Initialize all slots as UNKNOWN
         for (int i = 0; i < 3; i++) {
             ballColors[i] = BallColor.UNKNOWN;
         }
+    }
 
-        spindexer = hardwareMap.get(CRServo.class, "spindexer");
-        spindexerEncoder = hardwareMap.get(DcMotorEx.class, "frontRight"); // Encoder plugged into a motor port
-        spindexerZero = hardwareMap.get(TouchSensor.class, "spindexerZero");
-        transfer = new Transfer(hardwareMap);
-        colorSensors = new ColorSensors(hardwareMap);
+    public static void initialize(HardwareMap hardwareMap) {
+        if (instance == null) {
+            instance = new Spindexer();
+            instance.spindexer = hardwareMap.get(CRServo.class, "spindexer");
+            instance.spindexerEncoder = hardwareMap.get(DcMotorEx.class, "frontRight"); // Encoder plugged into a motor port
+            instance.spindexerZero = hardwareMap.get(TouchSensor.class, "spindexerZero");
 
-        // Configure the encoder motor port to just read encoder values
-        spindexerEncoder.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            // Configure the encoder motor port to just read encoder values
+            instance.spindexerEncoder.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-        controller = new PIDFController(P, I, D, F);
-        controller.setOutputLimits(-1, 1);
+            instance.controller = new PIDFController(P, I, D, F);
+            instance.controller.setOutputLimits(-1, 1);
+        }
+    }
+
+    public static Spindexer getInstance() {
+        if (instance == null) {
+            throw new IllegalStateException("Spindexer not initialized. Call initialize(hardwareMap, elapsedTime) first.");
+        }
+        return instance;
     }
 
     /**
@@ -171,30 +183,8 @@ public class Spindexer {
 		};
     }
 
-    public Action toZero() {
-        return toPosition(0);
-    }
-
-    public Action toHalf() {
-        return toPosition(0.5);
-    }
-
-    public Action moveForward() {
-        // Using a large target value will cause the PID to saturate and run the motor forwards.
-        return setTargetRevolutions(Double.POSITIVE_INFINITY);
-    }
-
-    public Action moveBackward() {
-        return setTargetRevolutions(Double.NEGATIVE_INFINITY);
-    }
-
-    public Action stop() {
-        // Set the target to the current position to make the PID hold it.
-        return setTargetRevolutions(spindexerEncoder.getCurrentPosition() / TICKS_PER_REV);
-    }
-
     public Action intakeBall() {
-        return new IntakeBall(this, transfer, colorSensors);
+        return new IntakeBall();
     }
 
     public BallColor getBallColor(int slotIndex) {
@@ -218,5 +208,9 @@ public class Spindexer {
         if (isZeroed) {
             targetPosition = revolutions * TICKS_PER_REV;
         }
+    }
+
+    public static void shutdown() {
+        // No cleanup needed currently
     }
 }
