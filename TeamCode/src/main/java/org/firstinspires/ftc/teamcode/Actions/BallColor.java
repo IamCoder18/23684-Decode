@@ -1,7 +1,14 @@
 package org.firstinspires.ftc.teamcode.Actions;
 
+/**
+ * Enumeration of ball colors that can be detected in the game.
+ * Used to track which balls are in each slot of the spindexer.
+ */
 public enum BallColor {
+	/** Green ball color */
 	GREEN,
+	/** Purple/Blue ball color */
 	PURPLE,
+	/** Unknown or no ball detected */
 	UNKNOWN
 }

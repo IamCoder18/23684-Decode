@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.Subsystems;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.Action;
+import com.acmerobotics.roadrunner.InstantAction;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
@@ -36,24 +37,33 @@ public class Intake {
 		// No cleanup needed currently
 	}
 
+	/**
+	 * Returns an InstantAction that runs the intake motor forward.
+	 * This action completes immediately after setting power.
+	 *
+	 * @return Action that starts intake motor forward
+	 */
 	public Action in() {
-		return packet -> {
-			intake.setPower(IN_POWER);
-			return true;
-		};
+		return new InstantAction(() -> intake.setPower(IN_POWER));
 	}
 
+	/**
+	 * Returns an InstantAction that runs the intake motor backward.
+	 * This action completes immediately after setting power.
+	 *
+	 * @return Action that starts intake motor backward
+	 */
 	public Action out() {
-		return packet -> {
-			intake.setPower(OUT_POWER);
-			return true;
-		};
+		return new InstantAction(() -> intake.setPower(OUT_POWER));
 	}
 
+	/**
+	 * Returns an InstantAction that stops the intake motor.
+	 * This action completes immediately after setting power to zero.
+	 *
+	 * @return Action that stops intake motor
+	 */
 	public Action stop() {
-		return packet -> {
-			intake.setPower(STOP_POWER);
-			return true;
-		};
+		return new InstantAction(() -> intake.setPower(STOP_POWER));
 	}
 }

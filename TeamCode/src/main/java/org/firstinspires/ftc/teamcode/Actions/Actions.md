@@ -17,21 +17,23 @@ public interface Action {
 
 ## BallColor Enum
 
-Tracks detected ball colors in the spindexer:
+Enumeration of ball colors that can be detected in the game. Used to track which balls are in each slot of the spindexer.
 
 ```java
 public enum BallColor {
     GREEN,      // Green ball detected
-    PURPLE,     // Purple ball detected
-    UNKNOWN     // No ball or color not detected
+    PURPLE,     // Purple/Blue ball detected
+    UNKNOWN     // Unknown or no ball detected
 }
 ```
+
+**Javadoc:** All enum values are documented with their purpose.
 
 ## Complex Actions
 
 ### IntakeBall
 
-Full intake sequence for collecting a ball into the next available slot.
+Full intake sequence for collecting a ball into the next available slot. Performs a multi-state sequence with automatic slot detection and color identification.
 
 **Usage:**
 ```java
@@ -40,19 +42,21 @@ Actions.runBlocking(Spindexer.getInstance().intakeBall());
 
 **Behavior:**
 
-1. Run intake motor forward
-2. Rotate spindexer to next free slot
-3. Open intake door
-4. Wait for ball (color detection)
-5. Wait 0.2 seconds for ball to settle
-6. Stop intake and door
+1. RUN_INTAKE: Turn on the intake motor
+2. MOVE_TO_NEXT_SLOT: Rotate spindexer to the target slot
+3. RUN_INTAKE_DOOR: Open the transfer door
+4. WAIT_FOR_BALL: Wait for color sensor to detect the ball
+5. WAIT_0_2_SECONDS: Hold position while ball settles (0.2 seconds)
+6. DONE: Stop intake and door motors
 
 **Features:**
 
 - Automatically detects GREEN or PURPLE balls
 - Stores detected color in spindexer
-- Finds next available empty slot
+- Finds next available empty slot automatically
 - Handles case where all slots are full (stops gracefully)
+
+**Javadoc:** See `IntakeBall` class for complete method documentation, including `findNextFreeSlot()` and helper methods.
 
 **State Machine:**
 
@@ -74,7 +78,7 @@ DONE
 
 ### ShootBall
 
-Aligns a ball with the shooter and returns when aligned.
+Action that aligns and shoots a ball from the spindexer. Determines which slot contains the target ball (or closest ball if no color preference), calculates the rotation needed, and returns true when aligned within tolerance.
 
 **Usage:**
 ```java
@@ -87,9 +91,10 @@ Actions.runBlocking(new ShootBall(BallColor.GREEN));
 
 **Behavior:**
 
-1. Find best slot to shoot (color preference or closest)
-2. Set spindexer target position to align with shooter
-3. Return true when position reached (within 50 ticks)
+1. Determine which slot contains the target ball (or closest ball if no color preference)
+2. Calculate the rotation needed to align the slot with the shooter
+3. Command the spindexer to rotate to that position
+4. Return true while the spindexer is still moving, false when aligned within tolerance
 
 **Target Slot Selection Priority:**
 
@@ -102,6 +107,9 @@ Actions.runBlocking(new ShootBall(BallColor.GREEN));
 - Shooter alignment offset handled automatically (131.011°)
 - Accounts for shortest angular path to target
 - Supports color preference for selective shooting
+- Optional color filtering for targeted shooting
+
+**Javadoc:** See `ShootBall` class for complete method documentation, including `findTargetSlot()` and helper methods.
 
 **Constants:**
 
@@ -156,42 +164,61 @@ Actions.runBlocking(
 
 ## Subsystem Actions
 
+All action methods are documented with JavaDoc comments. See the source files for complete documentation.
+
 ### ColorDetector
 
 **`Action update()`**
 
-- Updates RGB and HSV readings from both sensors
-- Detects green/purple balls
+- Updates RGB and HSV readings from both color sensors
+- Averages values from dual sensors for robustness
+- Detects green/purple balls using HSV thresholds
 - Returns immediately (true)
 - Outputs telemetry: RGB values, HSV, detection flags
+- **Javadoc:** Complete documentation in `ColorDetector.java`
 
 ### Transfer
 
 **`Action transferForward()`** - Move balls forward (returns immediately)
+- **Javadoc:** Documented in source file
 
 **`Action transferBackward()`** - Move balls backward (returns immediately)
+- **Javadoc:** Documented in source file
 
 **`Action transferStop()`** - Stop transfer (returns immediately)
+- **Javadoc:** Documented in source file
 
 **`Action intakeDoorForward()`** - Open intake door (returns immediately)
+- **Javadoc:** Documented in source file
 
 **`Action intakeDoorBackward()`** - Close intake door (returns immediately)
+- **Javadoc:** Documented in source file
 
 **`Action intakeDoorStop()`** - Stop intake door (returns immediately)
+- **Javadoc:** Documented in source file
 
 ### Intake
 
-**`Action in()`** - Spin intake inward (returns immediately)
+**`Action in()`** - Spin intake motor inward (returns immediately)
+- Sets intake motor to forward power
+- **Javadoc:** Documented in source file
 
-**`Action out()`** - Spin intake outward (returns immediately)
+**`Action out()`** - Spin intake motor outward (returns immediately)
+- Sets intake motor to reverse power
+- **Javadoc:** Documented in source file
 
 **`Action stop()`** - Stop intake motor (returns immediately)
+- Sets intake motor to zero power
+- **Javadoc:** Documented in source file
 
 ### Shooter
 
-**`Action run()`** - Start shooters at full power (returns immediately)
+**`Action run()`** - Start both shooter motors at full power (returns immediately)
+- Applies configured offset adjustments for speed compensation
+- **Javadoc:** Documented in source file
 
-**`Action stop()`** - Stop shooters (returns immediately)
+**`Action stop()`** - Stop both shooter motors (returns immediately)
+- **Javadoc:** Documented in source file
 
 ### Spindexer
 

@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.Subsystems;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.Action;
+import com.acmerobotics.roadrunner.InstantAction;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
@@ -40,19 +41,30 @@ public class Shooter {
 		// No cleanup needed currently
 	}
 
+	/**
+	 * Returns an InstantAction that runs both shooter motors at full power.
+	 * This action completes immediately after setting motor power.
+	 * Power values include offset adjustments to balance motor speed.
+	 *
+	 * @return Action that starts both shooter motors
+	 */
 	public Action run() {
-		return packet -> {
+		return new InstantAction(() -> {
 			upperShooter.setPower(RUN_POWER + UPPER_OFFSET);
 			lowerShooter.setPower(RUN_POWER + LOWER_OFFSET);
-			return true;
-		};
+		});
 	}
 
+	/**
+	 * Returns an InstantAction that stops both shooter motors.
+	 * This action completes immediately after setting power to zero.
+	 *
+	 * @return Action that stops both shooter motors
+	 */
 	public Action stop() {
-		return packet -> {
+		return new InstantAction(() -> {
 			upperShooter.setPower(STOP_POWER);
 			lowerShooter.setPower(STOP_POWER);
-			return true;
-		};
+		});
 	}
 }

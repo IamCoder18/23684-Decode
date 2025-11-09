@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.Subsystems;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.Action;
+import com.acmerobotics.roadrunner.InstantAction;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
@@ -42,52 +43,84 @@ public class Transfer {
 	}
 
 	// Actions for transfer servos
+
+	/**
+	 * Returns an InstantAction that moves the transfer servos forward.
+	 * This action completes immediately after setting servo power.
+	 *
+	 * @return Action that starts transfer servos forward
+	 */
 	public Action transferForward() {
-		return packet -> {
+		return new InstantAction(() -> {
 			transferLeft.setPower(FORWARD_POWER);
 			transferRight.setPower(FORWARD_POWER);
-			return true;
-		};
+		});
 	}
 
+	/**
+	 * Returns an InstantAction that moves the transfer servos backward.
+	 * This action completes immediately after setting servo power.
+	 *
+	 * @return Action that starts transfer servos backward
+	 */
 	public Action transferBackward() {
-		return packet -> {
+		return new InstantAction(() -> {
 			transferLeft.setPower(BACKWARD_POWER);
 			transferRight.setPower(BACKWARD_POWER);
-			return true;
-		};
+		});
 	}
 
+	/**
+	 * Returns an InstantAction that stops the transfer servos.
+	 * This action completes immediately after setting power to zero.
+	 *
+	 * @return Action that stops transfer servos
+	 */
 	public Action transferStop() {
-		return packet -> {
+		return new InstantAction(() -> {
 			transferLeft.setPower(STOP_POWER);
 			transferRight.setPower(STOP_POWER);
-			return true;
-		};
+		});
 	}
 
 	// Actions for intake door servos
+
+	/**
+	 * Returns an InstantAction that moves the intake door servos forward (opens).
+	 * This action completes immediately after setting servo power.
+	 *
+	 * @return Action that opens intake door
+	 */
 	public Action intakeDoorForward() {
-		return packet -> {
+		return new InstantAction(() -> {
 			intakeDoorLeft.setPower(FORWARD_POWER);
 			intakeDoorRight.setPower(FORWARD_POWER);
-			return true;
-		};
+		});
 	}
 
+	/**
+	 * Returns an InstantAction that moves the intake door servos backward (closes).
+	 * This action completes immediately after setting servo power.
+	 *
+	 * @return Action that closes intake door
+	 */
 	public Action intakeDoorBackward() {
-		return packet -> {
+		return new InstantAction(() -> {
 			intakeDoorLeft.setPower(BACKWARD_POWER);
 			intakeDoorRight.setPower(BACKWARD_POWER);
-			return true;
-		};
+		});
 	}
 
+	/**
+	 * Returns an InstantAction that stops the intake door servos.
+	 * This action completes immediately after setting power to zero.
+	 *
+	 * @return Action that stops intake door
+	 */
 	public Action intakeDoorStop() {
-		return packet -> {
+		return new InstantAction(() -> {
 			intakeDoorLeft.setPower(STOP_POWER);
 			intakeDoorRight.setPower(STOP_POWER);
-			return true;
-		};
+		});
 	}
 }

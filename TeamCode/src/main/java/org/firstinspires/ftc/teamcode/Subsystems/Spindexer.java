@@ -5,6 +5,7 @@ import androidx.annotation.NonNull;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
+import com.acmerobotics.roadrunner.InstantAction;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -112,26 +113,27 @@ public class Spindexer {
 	}
 
 	private Action setTargetRevolutions(double revolutions) {
-		return packet -> {
+		return new InstantAction(() -> {
 			if (isZeroed) {
 				targetPosition = revolutions * TICKS_PER_REV;
 			}
-			return true; // This action finishes instantly
-		};
+		});
 	}
 
 	public Action toPosition(double revolutions) {
 		return packet -> {
-			if (!isZeroed) return true; // Can't go to position if not zeroed
+			// If not zeroed, keep running (return true) to wait until zeroed
+			if (!isZeroed) return true;
 
 			// Set the target for the PID controller running in the background
 			targetPosition = revolutions * TICKS_PER_REV;
 
 			// This action is considered "done" when the error is small.
 			// This allows it to be a "blocking" call in a sequence.
+			// Returns true while moving (error >= threshold), false when within tolerance
 			double error = targetPosition - getAdjustedPosition();
 			packet.put("Spindexer Error", error);
-			return Math.abs(error) < 50; // 50 ticks tolerance
+			return Math.abs(error) >= 50; // Returns true while moving, false when within tolerance
 		};
 	}
 
