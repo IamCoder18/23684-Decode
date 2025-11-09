@@ -14,10 +14,6 @@ This document outlines the complete refactoring strategy for reorganizing test a
 - **Tuning OpModes** (`OpModes/Tuning/`): Used for adjusting constants and control parameters (FTC Dashboard).
 - **Comprehensive Test** (`OpModes/Tests/`): Run prior to competition for high-level system checks.
 
-Key architectural improvement:  
-**Action calling patterns:**
-- TODO: CREATE UPDATED ACTION CALLING PATTERN
-
 ---
 
 ## Current State Analysis
