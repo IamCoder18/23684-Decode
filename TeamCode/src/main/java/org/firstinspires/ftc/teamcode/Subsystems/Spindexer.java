@@ -19,6 +19,10 @@ public class Spindexer {
     // 8192 ticks per 360 degrees for the through-bore encoder
     public static double TICKS_PER_REV = 8192.0;
 
+    // Magnetic limit switch triggers 11.011 degrees after the desired zero point
+    // Offset in ticks: -11.011 * (8192 / 360) ≈ -250.7 ticks
+    public static double zeroOffset = -11.011 * (8192.0 / 360.0);
+
     // PID coefficients for position control. Tune these via the FTC Dashboard.
     public static double P = 0.005, I = 0, D = 0, F = 0;
 
@@ -35,6 +39,12 @@ public class Spindexer {
     // This boolean is used by the ZeroAction to prevent the update() method's PID
     // from interfering with the direct power calls during the zeroing sequence.
     private boolean isZeroing = false;
+
+    // Stores the encoder position when the magnetic limit switch triggers
+    private double calibrationPosition = 0;
+
+    // Stores the true zero position, accounting for the sensor offset
+    private double actualZeroPosition = 0;
 
     // Store detected ball colors for each slot (0, 1, 2)
     private BallColor[] ballColors = new BallColor[3];
@@ -69,6 +79,14 @@ public class Spindexer {
     }
 
     /**
+     * Gets the current position of the spindexer, adjusted for the zero offset.
+     * This accounts for both the sensor trigger point and the actual zero calibration.
+     */
+    private double getAdjustedPosition() {
+        return spindexerEncoder.getCurrentPosition() - actualZeroPosition;
+    }
+
+    /**
      * IMPORTANT: This method must be called from the main loop of your OpMode for the PID
      * controller to run and for the spindexer to hold its position.
      */
@@ -79,7 +97,7 @@ public class Spindexer {
         }
 
         controller.setSetpoint(targetPosition);
-        double currentPosition = spindexerEncoder.getCurrentPosition();
+        double currentPosition = getAdjustedPosition();
         double power = controller.getOutput(currentPosition);
         spindexer.setPower(power);
     }
@@ -139,8 +157,10 @@ public class Spindexer {
                 case SLOW_TOWARDS_SENSOR:
                     if (spindexerZero.isPressed()) {
                         spindexer.setPower(0);
-                        spindexerEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-                        spindexerEncoder.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                        // Record the encoder position when the sensor triggers
+                        calibrationPosition = spindexerEncoder.getCurrentPosition();
+                        // Calculate true zero position accounting for the sensor offset
+                        actualZeroPosition = calibrationPosition + zeroOffset;
                         targetPosition = 0;
                         isZeroed = true;
                         isZeroing = false;
@@ -177,7 +197,7 @@ public class Spindexer {
 
 			// This action is considered "done" when the error is small.
 			// This allows it to be a "blocking" call in a sequence.
-			double error = targetPosition - spindexerEncoder.getCurrentPosition();
+			double error = targetPosition - getAdjustedPosition();
 			packet.put("Spindexer Error", error);
 			return Math.abs(error) < 50; // 50 ticks tolerance
 		};
@@ -201,7 +221,7 @@ public class Spindexer {
     }
 
     public double getCurrentPositionTicks() {
-        return spindexerEncoder.getCurrentPosition();
+        return getAdjustedPosition();
     }
 
     public void setTargetPosition(double revolutions) {
