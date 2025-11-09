@@ -44,8 +44,8 @@ public class IntakeBall implements Action {
 			}
 		}
 
-		// All slots filled (shouldn't happen in normal operation)
-		return currentSlot;
+		// All slots filled - no free slot available
+		return -1;
 	}
 
 	private double getCurrentPositionDegrees() {
@@ -61,6 +61,12 @@ public class IntakeBall implements Action {
 	public boolean run(@NonNull TelemetryPacket packet) {
 		packet.put("Index State", currentState.toString());
 		packet.put("Slot Index", slotIndex);
+
+		// If no free slot is available, stop the action
+		if (slotIndex == -1) {
+			packet.put("Intake Status", "All slots filled - cannot intake");
+			return true;
+		}
 
 		switch (currentState) {
 			case RUN_INTAKE:
