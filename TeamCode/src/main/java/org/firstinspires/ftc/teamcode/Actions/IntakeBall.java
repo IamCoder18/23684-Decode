@@ -9,6 +9,7 @@ import org.firstinspires.ftc.teamcode.Subsystems.ColorDetector;
 import org.firstinspires.ftc.teamcode.Subsystems.Intake;
 import org.firstinspires.ftc.teamcode.Subsystems.Spindexer;
 import org.firstinspires.ftc.teamcode.Subsystems.Transfer;
+import org.firstinspires.ftc.teamcode.Utilities.BallColor;
 
 /**
  * Action that intakes a ball into the next available slot of the spindexer.

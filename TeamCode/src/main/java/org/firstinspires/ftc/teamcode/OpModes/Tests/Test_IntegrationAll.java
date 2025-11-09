@@ -3,7 +3,7 @@ package org.firstinspires.ftc.teamcode.OpModes.Tests;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
-import org.firstinspires.ftc.teamcode.Actions.BallColor;
+import org.firstinspires.ftc.teamcode.Utilities.BallColor;
 import org.firstinspires.ftc.teamcode.LifecycleManagementUtilities.HardwareInitializer;
 import org.firstinspires.ftc.teamcode.LifecycleManagementUtilities.HardwareShutdown;
 import org.firstinspires.ftc.teamcode.Subsystems.ColorDetector;

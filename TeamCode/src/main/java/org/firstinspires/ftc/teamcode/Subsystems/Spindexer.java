@@ -12,7 +12,7 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.TouchSensor;
 
-import org.firstinspires.ftc.teamcode.Actions.BallColor;
+import org.firstinspires.ftc.teamcode.Utilities.BallColor;
 import org.firstinspires.ftc.teamcode.Actions.IntakeBall;
 import org.firstinspires.ftc.teamcode.Utilities.PIDFController;
 
