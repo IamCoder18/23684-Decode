@@ -13,6 +13,6 @@ public class BlueGoalTeleOp extends MainTeleOp {
 	@Override
 	protected Pose2d getStartingPose() {
 		// Blue goal starting position
-		return new Pose2d(-8, 62, -Math.PI / 2);
+		return new Pose2d(-41.25, -52.5, Math.toRadians(90));
 	}
 }

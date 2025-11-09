@@ -19,7 +19,7 @@ import com.acmerobotics.roadrunner.Vector2d;
  * Main TeleOp OpMode for driver control
  * <p>
  * Gamepad 1 (Driver):
- * - Left Stick: Drive forward/backward
+ * - Left Stick: Drive forward/backward/strafe
  * - Right Stick: Turn left/right
  * <p>
  * Gamepad 2 (Operator):
@@ -31,8 +31,6 @@ import com.acmerobotics.roadrunner.Vector2d;
  * - RB: Transfer stop
  * - DPad Up: Spindexer spin forward
  * - DPad Down: Spindexer spin backward
- * <p>
- * All operations are scheduled through ActionScheduler for consistent execution.
  */
 public class MainTeleOp extends OpMode {
 
