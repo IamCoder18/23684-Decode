@@ -128,6 +128,48 @@ This guide explains how to tune robot subsystems using the dedicated Tuning OpMo
 
 ---
 
+### 4. Tune_DistanceDetector
+**Purpose:** Calibrate distance detection threshold for accurate object sensing
+**Location:** `OpModes/Tuning/Tune_DistanceDetector.java`
+
+#### Setup
+1. Ensure distance sensor is clean and unobstructed
+2. Have objects available at various distances
+3. Test under expected lighting conditions
+
+#### Tuning Process
+1. **Test Current Threshold:**
+   - Run OpMode without adjustments
+   - Observe distance readings with objects at various distances
+   - Check if isObject triggers at expected distances
+
+2. **Adjust Threshold Coarsely:**
+   - DPAD UP/DOWN: Adjust OBJECT_THRESHOLD_CM (±0.1 cm)
+   - Move objects to confirm new trigger point
+   - Narrower sensitivity for precise detection
+
+3. **Fine-tune Threshold:**
+   - LB/RB: Fine adjust OBJECT_THRESHOLD_CM (±0.01 cm)
+   - Test multiple times to verify consistency
+   - Goal: Reliable detection at intended distance
+
+4. **Validation:**
+   - Test at various distances and angles
+   - Ensure consistent behavior with different objects
+   - Press X to reset to default (2.0 cm) if needed
+
+#### Key Constants (FTC Dashboard)
+- `OBJECT_THRESHOLD_CM: [0.5, 50.0]` - Detection threshold (default: 2.0)
+
+#### Distance Detection Tips
+- **Typical Range:** 0 cm (contact) to 200 cm (outdoor)
+- **Optimal Range:** 5-100 cm for most applications
+- **Reflectivity:** White objects detected farther than dark objects
+- **Interference:** Avoid bright direct sunlight during tuning
+- **Threshold Selection:** Choose based on your robot's use case
+
+---
+
 ## General Tuning Guidelines
 
 ### When to Tune
@@ -167,15 +209,24 @@ This guide explains how to tune robot subsystems using the dedicated Tuning OpMo
 - **Inconsistent detection:** Improve lighting, clean sensors
 - **Both colors detected:** Adjust hue ranges to be mutually exclusive
 
+#### Distance Detection Issues
+- **No distance reading:** Check sensor connection and power
+- **Inaccurate measurements:** Ensure sensor is clean and unobstructed
+- **Object not detected:** Lower OBJECT_THRESHOLD_CM value
+- **False detections:** Increase OBJECT_THRESHOLD_CM value
+- **Unstable readings:** Check sensor orientation and avoid direct sunlight
+
 ### Recommended Tuning Order
 1. **Tune_Shooter** - Ensure consistent motor speeds
 2. **Tune_Spindexer** - Smooth position control
 3. **Tune_ColorDetector** - Accurate color detection
+4. **Tune_DistanceDetector** - Precise distance detection
 
 ### Performance Metrics
 - **Shooter:** <2% speed difference between motors
 - **Spindexer:** <50 tick position error, smooth motion
 - **Color Detector:** >95% correct detection rate
+- **Distance Detector:** Consistent detection within ±0.5 cm of threshold
 
 ---
 

@@ -173,9 +173,39 @@ Test OpModes allow a human operator to experiment and visually inspect subsystem
 
 ---
 
+#### 6. Test_DistanceDetector
+**Purpose:** Test distance sensor detection accuracy
+**Duration:** ≤1 minute
+**Location:** `OpModes/Tests/Test_DistanceDetector.java`
+
+**Setup:**
+- Ensure distance sensor is clean and unobstructed
+- Have objects available at various distances for testing
+- Test under expected lighting conditions
+
+**Controls:**
+- **A button:** Pause/unpause sensor readings
+- **B button:** Print detailed distance analysis
+
+**What to Test:**
+1. Observe real-time distance readings in centimeters
+2. Move objects at various distances to verify range
+3. Test near threshold (2 cm) - should trigger isObject
+4. Test far from threshold (>5 cm) - should not trigger
+5. Press B for detailed analysis when needed
+
+**Expected Results:**
+- ✓ Sensor reads meaningful distance values
+- ✓ Objects within 2 cm detected as OBJECT
+- ✓ Objects beyond threshold show NO OBJECT
+- ✓ Readings are stable (not flickering)
+- ✓ Detection accuracy at expected distances
+
+---
+
 ### Action Tests (≤1 minute each)
 
-#### 6. Test_IntakeBall
+#### 7. Test_IntakeBall
 **Purpose:** Test complete IntakeBall action sequence
 **Duration:** ≤1 minute
 **Location:** `OpModes/Tests/Test_IntakeBall.java`
@@ -205,7 +235,7 @@ Test OpModes allow a human operator to experiment and visually inspect subsystem
 
 ---
 
-#### 7. Test_ShootBall
+#### 8. Test_ShootBall
 **Purpose:** Test ShootBall action sequence
 **Duration:** ≤1 minute
 **Location:** `OpModes/Tests/Test_ShootBall.java`
@@ -237,7 +267,7 @@ Test OpModes allow a human operator to experiment and visually inspect subsystem
 
 ### Comprehensive Test (≤2 minutes)
 
-#### 8. ComprehensiveTest
+#### 9. ComprehensiveTest
 **Purpose:** Automated pre-competition system verification
 **Duration:** ≤2 minutes
 **Location:** `OpModes/Tests/ComprehensiveTest.java`
@@ -371,6 +401,12 @@ Test OpModes allow a human operator to experiment and visually inspect subsystem
 - **No detection:** Check sensor connections and lighting
 - **Wrong colors:** Use Tune_ColorDetector to adjust thresholds
 - **Unstable readings:** Improve lighting conditions
+
+#### Test_DistanceDetector Failures
+- **No distance reading:** Check sensor connection and power
+- **Inaccurate measurements:** Use Tune_DistanceDetector to adjust threshold
+- **Unstable readings:** Ensure sensor is clean and unobstructed
+- **Object not detected:** Verify OBJECT_THRESHOLD_CM is appropriate for your use case
 
 #### Action Test Failures
 - **Actions don't start:** Check spindexer is zeroed
