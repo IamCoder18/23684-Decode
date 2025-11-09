@@ -1,21 +1,158 @@
 # Actions Documentation
 
-Actions are Roadrunner-compatible objects that represent single behaviors. They implement the
-`Action` interface and can be sequenced, parallelized, and controlled through Roadrunner's action
-scheduler.
+Actions are Roadrunner-compatible objects that implement complex behaviors by composing subsystem methods. All actions implement `Action` interface and are scheduled through Roadrunner's action system.
 
 ## What is an Action?
 
-An `Action` has a single method:
-
 ```java
-boolean run(TelemetryPacket packet)
+public interface Action {
+    boolean run(TelemetryPacket packet);
+}
 ```
 
-- Returns `true` when the action is complete
-- Returns `false` while the action is still running
+- Returns `true` when action is complete
+- Returns `false` while still running
 - Called repeatedly by Roadrunner's scheduler
-- Receives a `TelemetryPacket` for logging telemetry
+- Receives `TelemetryPacket` for logging
+
+## BallColor Enum
+
+Tracks detected ball colors in the spindexer:
+
+```java
+public enum BallColor {
+    GREEN,      // Green ball detected
+    PURPLE,     // Purple ball detected
+    UNKNOWN     // No ball or color not detected
+}
+```
+
+## Complex Actions
+
+### IntakeBall
+
+Full intake sequence for collecting a ball into the next available slot.
+
+**Usage:**
+```java
+Actions.runBlocking(Spindexer.getInstance().intakeBall());
+```
+
+**Behavior:**
+
+1. Run intake motor forward
+2. Rotate spindexer to next free slot
+3. Open intake door
+4. Wait for ball (color detection)
+5. Wait 0.2 seconds for ball to settle
+6. Stop intake and door
+
+**Features:**
+
+- Automatically detects GREEN or PURPLE balls
+- Stores detected color in spindexer
+- Finds next available empty slot
+- Handles case where all slots are full (stops gracefully)
+
+**State Machine:**
+
+```
+RUN_INTAKE
+    ↓
+MOVE_TO_NEXT_SLOT (tolerance: 50 ticks)
+    ↓
+RUN_INTAKE_DOOR
+    ↓
+WAIT_FOR_BALL (color detection)
+    ↓
+WAIT_0_2_SECONDS (precise timing with System.nanoTime())
+    ↓
+DONE
+```
+
+---
+
+### ShootBall
+
+Aligns a ball with the shooter and returns when aligned.
+
+**Usage:**
+```java
+// Shoot any available ball
+Actions.runBlocking(new ShootBall());
+
+// Shoot specific color (GREEN or PURPLE)
+Actions.runBlocking(new ShootBall(BallColor.GREEN));
+```
+
+**Behavior:**
+
+1. Find best slot to shoot (color preference or closest)
+2. Set spindexer target position to align with shooter
+3. Return true when position reached (within 50 ticks)
+
+**Target Slot Selection Priority:**
+
+1. If color requested: find that color within 5° tolerance
+2. Find slot within tolerance of current position (no movement needed)
+3. Find closest slot
+
+**Features:**
+
+- Shooter alignment offset handled automatically (131.011°)
+- Accounts for shortest angular path to target
+- Supports color preference for selective shooting
+
+**Constants:**
+
+- `SLOT_TOLERANCE_DEGREES` - Position tolerance for slot detection
+- `SHOOTER_ALIGNMENT_DEGREES` - Offset to align slot with shooter
+
+---
+
+## Action Composition
+
+Use Roadrunner's action combinators to sequence and parallelize actions:
+
+### Sequential Execution
+
+```java
+Actions.runBlocking(
+    new SequentialAction(
+        Spindexer.getInstance().zero(),           // Must zero first
+        Spindexer.getInstance().intakeBall(),     // Intake first ball
+        new ShootBall(),                          // Shoot it
+        Spindexer.getInstance().intakeBall(),     // Intake second ball
+        new ShootBall()                           // Shoot it
+    )
+);
+```
+
+### Parallel Execution
+
+```java
+// Run multiple actions simultaneously
+Actions.runBlocking(
+    new ParallelAction(
+        Transfer.getInstance().transferForward(),
+        Spindexer.getInstance().toPosition(0.5)
+    )
+);
+```
+
+### Deadlines
+
+```java
+// Run background action until timeout completes
+Actions.runBlocking(
+    new DeadlineAction(
+        Spindexer.getInstance().toPosition(0.5),  // Background task
+        new WaitAction(2.0)                       // Timeout in seconds
+    )
+);
+```
+
+---
 
 ## Subsystem Actions
 
@@ -23,182 +160,129 @@ boolean run(TelemetryPacket packet)
 
 **`Action update()`**
 
-- Updates color sensor readings and outputs telemetry
-- Finishes instantly (returns true)
-- Updates: `isGreen`, `isPurple`, `avgRed`, `avgGreen`, `avgBlue`, `avgHSV`
+- Updates RGB and HSV readings from both sensors
+- Detects green/purple balls
+- Returns immediately (true)
+- Outputs telemetry: RGB values, HSV, detection flags
 
 ### Transfer
 
-**`Action transferForward()`**
+**`Action transferForward()`** - Move balls forward (returns immediately)
 
-- Spins transfer servos forward (power = FORWARD_POWER)
-- Finishes instantly
+**`Action transferBackward()`** - Move balls backward (returns immediately)
 
-**`Action transferBackward()`**
+**`Action transferStop()`** - Stop transfer (returns immediately)
 
-- Spins transfer servos backward (power = BACKWARD_POWER)
-- Finishes instantly
+**`Action intakeDoorForward()`** - Open intake door (returns immediately)
 
-**`Action transferStop()`**
+**`Action intakeDoorBackward()`** - Close intake door (returns immediately)
 
-- Stops transfer servos
-- Finishes instantly
-
-**`Action intakeDoorForward()`**
-
-- Opens intake door servos
-- Finishes instantly
-
-**`Action intakeDoorBackward()`**
-
-- Closes intake door servos
-- Finishes instantly
-
-**`Action intakeDoorStop()`**
-
-- Stops intake door servos
-- Finishes instantly
-
-### Shooter
-
-**`Action run()`**
-
-- Runs both shooter motors at RUN_POWER + offsets
-- Finishes instantly
-- Does NOT handle shooting sequencing - shooter must spin before balls can be fired
-
-**`Action stop()`**
-
-- Stops both shooter motors
-- Finishes instantly
+**`Action intakeDoorStop()`** - Stop intake door (returns immediately)
 
 ### Intake
 
-**`Action in()`**
+**`Action in()`** - Spin intake inward (returns immediately)
 
-- Spins intake motor inward at IN_POWER
-- Finishes instantly
+**`Action out()`** - Spin intake outward (returns immediately)
 
-**`Action out()`**
+**`Action stop()`** - Stop intake motor (returns immediately)
 
-- Spins intake motor outward at OUT_POWER
-- Finishes instantly
+### Shooter
 
-**`Action stop()`**
+**`Action run()`** - Start shooters at full power (returns immediately)
 
-- Stops intake motor
-- Finishes instantly
+**`Action stop()`** - Stop shooters (returns immediately)
 
 ### Spindexer
 
-**`Action zero()`**
+**`Action zero()`** - Calibrate to zero position using touch sensor
 
-- Calibrates the spindexer to zero position using touch sensor
-- **BLOCKING** - returns true when zeroed
-- **MUST be called manually on the first OpMode run before any position control actions**
-- State machine: START → MOVE_OFF_SENSOR → FAST_TOWARDS_SENSOR → BACK_OFF → SLOW_TOWARDS_SENSOR →
-  DONE
+- Returns true when calibrated
+- Must be called once before any position control
 - Example: `Actions.runBlocking(Spindexer.getInstance().zero());`
 
-**`Action toPosition(double revolutions)`**
+**`Action toPosition(double revolutions)`** - Move to specific rotation
 
-- Moves to specified position (in revolutions from zero)
-- **BLOCKING** - returns true when position reached (within 50 ticks)
-- Runs PID controller in background
-- Example: `toPosition(0.5)` moves to 180°
+- `0.0` = 0° (slot 0)
+- `0.333...` = 120° (slot 1)
+- `0.666...` = 240° (slot 2)
+- Returns true when within 50 ticks of target
 
-**`Action intakeBall()`**
+**`Action intakeBall()`** - Complex sequence (see IntakeBall section)
 
-- Full intake sequence:
-    1. Run intake motor
-    2. Rotate to next free slot
-    3. Open intake door
-    4. Wait for ball (detects color)
-    5. Wait 0.2 seconds
-    6. Stop intake and door
-- **BLOCKING** - returns true when complete
-- Uses System.nanoTime() for precision timing
-- Automatically detects GREEN or PURPLE balls and stores color in spindexer
+---
 
-## Action Sequencing
+## Important Patterns
 
-Use Roadrunner's `Actions` class to sequence actions:
-
-```java
-import com.acmerobotics.roadrunner.Actions;
-
-// Sequential execution
-Actions.runBlocking(
-    new SequentialAction(
-        spindexer.zero(),
-        spindexer.intakeBall(),
-        spindexer.toPosition(0.25),
-        shooter.run()
-    )
-);
-
-// Parallel execution
-Actions.runBlocking(
-    new ParallelAction(
-        transfer.transferForward(),
-        spindexer.toPosition(0.5)
-    )
-);
-
-// Deadlines (run action until another completes)
-Actions.runBlocking(
-    new DeadlineAction(
-        spindexer.moveToPosition(0.5),  // Background task
-        new WaitAction(2.0)  // Timeout
-    )
-);
-```
-
-## Important Notes
-
-### SubsystemUpdater.update() Must Be Called Every Loop
+### Every Loop Update
 
 ```java
 @Override
 public void loop() {
-    SubsystemUpdater.update();  // Critical for PID control and other periodic tasks
-    
-    // Your code here
+    SubsystemUpdater.update();  // CRITICAL - runs PID and periodic tasks
+    // Your OpMode code here
 }
 ```
 
-Without this, the spindexer cannot hold its position. The `update()` method runs the PID controller.
+Without this, spindexer cannot hold position and other periodic updates fail.
 
-### Action Composition
+### Blocking vs Non-Blocking
 
-Create custom composite actions by implementing the Action interface:
+- **Blocking Actions** return `true` when complete, allowing sequential chaining
+  - `zero()`, `intakeBall()`, `toPosition()`, `ShootBall`, `IntakeBall`
+- **Non-Blocking Actions** return `true` immediately
+  - Simple subsystem actions like `in()`, `out()`, `run()`, `stop()`
+
+### Custom Action Implementation
 
 ```java
-public class CustomSequence implements Action {
+public class MyCustomAction implements Action {
+    private State currentState = State.START;
+    
     @Override
     public boolean run(@NonNull TelemetryPacket packet) {
-        // Your state machine logic here
-        // Return true when done, false while running
+        packet.put("State", currentState.toString());
+        
+        switch (currentState) {
+            case START:
+                // Do something
+                currentState = State.RUNNING;
+                return false;  // Still running
+                
+            case RUNNING:
+                if (conditionMet()) {
+                    currentState = State.DONE;
+                }
+                return false;  // Still running
+                
+            case DONE:
+                return true;  // Complete
+        }
         return false;
     }
+    
+    private enum State { START, RUNNING, DONE }
 }
 ```
 
-### Telemetry
+---
 
-All actions can output telemetry via the `TelemetryPacket`:
+## Telemetry
+
+All actions can output telemetry visible in FTC Dashboard:
 
 ```java
 packet.put("Key", value);
-packet.put("Position", currentPosition);
-packet.put("Error", error);
+packet.put("Position", 123.45);
+packet.put("Error", -2.5);
+packet.put("State", "RUNNING");
 ```
 
-This telemetry is visible in the FTC Dashboard.
+---
 
-## Roadrunner Integration
+## Architecture Notes
 
-See `Subsystems.md` for initialization and basic usage examples.
-
-The subsystem actions are designed to work seamlessly with Roadrunner's action scheduler, allowing
-you to create complex autonomous routines with clean, readable code.
+- **Actions are separate from Subsystems** - actions compose subsystem methods
+- **Stateful** - action implementations maintain state machine for behavior
+- **Precise Timing** - `System.nanoTime()` used for sub-millisecond precision
+- **PID Control** - spindexer position control runs in background via `SubsystemUpdater`
