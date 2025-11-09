@@ -1,16 +1,19 @@
 # Lifecycle Management Utilities
 
-Utilities for managing the initialization, update, and shutdown of subsystems throughout the OpMode lifecycle.
+Utilities for managing the initialization, update, and shutdown of subsystems throughout the OpMode
+lifecycle.
 
 ## Overview
 
-These utilities handle the orchestration of all subsystems and must be called at specific points in your OpMode to ensure proper setup and teardown.
+These utilities handle the orchestration of all subsystems and must be called at specific points in
+your OpMode to ensure proper setup and teardown.
 
 ## HardwareInitializer
 
 Initializes all subsystems in the correct dependency order.
 
 **Usage:**
+
 ```java
 @Override
 public void init() {
@@ -19,6 +22,7 @@ public void init() {
 ```
 
 **Initialization Order:**
+
 1. ColorSensor
 2. Transfer
 3. Shooter
@@ -30,6 +34,7 @@ public void init() {
 Handles periodic updates for subsystems that require continuous processing.
 
 **Usage:**
+
 ```java
 @Override
 public void loop() {
@@ -45,6 +50,7 @@ public void loop() {
 Cleanly shuts down all subsystems.
 
 **Usage:**
+
 ```java
 @Override
 public void stop() {
@@ -53,6 +59,7 @@ public void stop() {
 ```
 
 **Shutdown Order (reverse of initialization):**
+
 1. Spindexer
 2. Intake
 3. Shooter
