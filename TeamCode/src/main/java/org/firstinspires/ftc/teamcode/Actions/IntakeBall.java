@@ -8,6 +8,7 @@ import com.acmerobotics.roadrunner.Action;
 import org.firstinspires.ftc.teamcode.Subsystems.ColorDetector;
 import org.firstinspires.ftc.teamcode.Subsystems.Intake;
 import org.firstinspires.ftc.teamcode.Subsystems.Spindexer;
+import org.firstinspires.ftc.teamcode.Subsystems.TouchDetector;
 import org.firstinspires.ftc.teamcode.Subsystems.Transfer;
 import org.firstinspires.ftc.teamcode.Utilities.BallColor;
 
@@ -18,18 +19,23 @@ import org.firstinspires.ftc.teamcode.Utilities.BallColor;
  * 1. RUN_INTAKE: Turn on the intake motor
  * 2. MOVE_TO_NEXT_SLOT: Rotate spindexer to the target slot
  * 3. RUN_INTAKE_DOOR: Open the transfer door
- * 4. WAIT_FOR_BALL: Wait for color sensor to detect the ball
- * 5. WAIT_0_2_SECONDS: Hold position while ball settles (0.2 seconds)
- * 6. DONE: Stop intake and door motors
+ * 4. WAIT_FOR_BALL: Wait for TouchDetector to detect the ball
+ * 5. WAIT_BALL_SETTLE: Hold position while ball settles (configurable)
+ * 6. MOVE_TO_COLOR_SENSOR: Rotate spindexer to COLOR_SENSOR_LOCATION
+ * 7. DETECT_COLOR: Wait for color sensor to detect the ball color
+ * 8. DONE: Stop intake and door motors
  * 
- * The action automatically finds the next empty slot and rotates to it.
+ * The action automatically finds the next UNKNOWN slot and rotates to it.
  * If all slots are full, the action completes immediately.
  */
 public class IntakeBall implements Action {
 	private static final double SLOT_TOLERANCE_DEGREES = 5.0;
+	public static double BALL_SETTLE_TIME_NANOS = 2.0 * 1_000_000_000; // 2 seconds in nanoseconds
+	public static double COLOR_SENSOR_LOCATION_DEGREES = 15; // Position where spindexer moves to detect color
+	public static double POSITION_ERROR_TOLERANCE_DEGREES = 1.5; // Position tolerance in degrees for spindexer movement
 	private IndexState currentState = IndexState.RUN_INTAKE;
 	private long waitStartTimeNanos;
-	private int slotIndex;
+	private final int slotIndex;
 
 	/**
 	 * Creates an IntakeBall action that finds and fills the next available slot.
@@ -40,14 +46,15 @@ public class IntakeBall implements Action {
 	}
 
 	/**
-	 * Finds the next empty slot in the spindexer.
-	 * 
+	 * Finds the next available slot in the spindexer.
+	 * <p>
 	 * Selection order:
-	 * 1. Current slot if empty and within tolerance
-	 * 2. Next empty slot in sequence
-	 * 3. -1 if all slots are full
+	 * 1. Current slot if UNKNOWN and within tolerance
+	 * 2. Next UNKNOWN slot in sequence
+	 * 3. If all slots are EMPTY, current slot if within tolerance, otherwise next slot
+	 * 4. -1 if all slots are full (not EMPTY or UNKNOWN)
 	 * 
-	 * @return slot index (0, 1, 2) or -1 if all slots are full
+	 * @return slot index (0, 1, 2) or -1 if no available slots
 	 */
 	private int findNextFreeSlot() {
 		// Check which slots are already filled
@@ -65,11 +72,29 @@ public class IntakeBall implements Action {
 			return currentSlot;
 		}
 
-		// Find next free slot
+		// Find next free slot with a ball detected (UNKNOWN)
 		for (int i = 0; i < 3; i++) {
 			int nextSlot = (currentSlot + 1 + i) % 3;
 			if (Spindexer.getInstance().getBallColor(nextSlot) == BallColor.UNKNOWN) {
 				return nextSlot;
+			}
+		}
+
+		// Check if all slots are EMPTY
+		boolean allEmpty = true;
+		for (int i = 0; i < 3; i++) {
+			if (Spindexer.getInstance().getBallColor(i) != BallColor.EMPTY) {
+				allEmpty = false;
+				break;
+			}
+		}
+
+		// If all slots are empty, return current slot if within tolerance, otherwise next slot
+		if (allEmpty) {
+			if (degreesFromSlotStart <= SLOT_TOLERANCE_DEGREES) {
+				return currentSlot;
+			} else {
+				return (currentSlot + 1) % 3;
 			}
 		}
 
@@ -118,7 +143,8 @@ public class IntakeBall implements Action {
 			double targetTicks = targetRevolutions * Spindexer.TICKS_PER_REV;
 			Spindexer.getInstance().setTargetPosition(targetRevolutions);
 			double error = targetTicks - Spindexer.getInstance().getCurrentPositionTicks();
-			if (Math.abs(error) < 50) {
+			double errorToleranceTicks = POSITION_ERROR_TOLERANCE_DEGREES * Spindexer.TICKS_PER_REV / 360.0;
+			if (Math.abs(error) < errorToleranceTicks) {
 				currentState = IndexState.RUN_INTAKE_DOOR;
 			}
 			break;
@@ -130,22 +156,43 @@ public class IntakeBall implements Action {
 			break;
 
 		case WAIT_FOR_BALL:
+			// Check touch detector to see if ball has been detected
+			if (TouchDetector.getInstance().detected) {
+				// Ball detected - mark slot as UNKNOWN and start settle timer
+				Spindexer.getInstance().setBallColor(slotIndex, BallColor.UNKNOWN);
+				waitStartTimeNanos = System.nanoTime();
+				currentState = IndexState.WAIT_BALL_SETTLE;
+			}
+			break;
+
+		case WAIT_BALL_SETTLE:
+			// Keep intake door open during wait period
+			Transfer.getInstance().intakeDoorForward().run(packet);
+			long elapsedNanos = System.nanoTime() - waitStartTimeNanos;
+			if (elapsedNanos >= BALL_SETTLE_TIME_NANOS) {
+				currentState = IndexState.MOVE_TO_COLOR_SENSOR;
+			}
+			break;
+
+		case MOVE_TO_COLOR_SENSOR: {
+			double colorSensorRevolutions = COLOR_SENSOR_LOCATION_DEGREES / 360.0;
+			double targetTicks = colorSensorRevolutions * Spindexer.TICKS_PER_REV;
+			Spindexer.getInstance().setTargetPosition(colorSensorRevolutions);
+			double error = targetTicks - Spindexer.getInstance().getCurrentPositionTicks();
+			double errorToleranceTicks = POSITION_ERROR_TOLERANCE_DEGREES * Spindexer.TICKS_PER_REV / 360.0;
+			if (Math.abs(error) < errorToleranceTicks) {
+				currentState = IndexState.DETECT_COLOR;
+			}
+			break;
+		}
+
+		case DETECT_COLOR:
 			// Check color sensor readings (ColorDetector.update() is called in main loop)
 			if (ColorDetector.getInstance().isGreen || ColorDetector.getInstance().isPurple) {
 				BallColor detectedColor = ColorDetector.getInstance().isGreen ? BallColor.GREEN : BallColor.PURPLE;
 				Spindexer.getInstance().setBallColor(slotIndex, detectedColor);
 				packet.put("Detected Color", detectedColor.toString());
-				waitStartTimeNanos = System.nanoTime();
-				currentState = IndexState.WAIT_0_2_SECONDS;
-			}
-			break;
-
-		case WAIT_0_2_SECONDS:
-			// Keep intake running during wait period
-			Transfer.getInstance().intakeDoorStop().run(packet);
-			long elapsedNanos = System.nanoTime() - waitStartTimeNanos;
-			if (elapsedNanos >= 0.2 * 1_000_000_000) {
-				// Stop intake and intake door just before done
+				// Stop intake and door motors
 				Intake.getInstance().stop().run(packet);
 				Transfer.getInstance().intakeDoorStop().run(packet);
 				currentState = IndexState.DONE;
@@ -154,7 +201,7 @@ public class IntakeBall implements Action {
 
 		case DONE:
 			return true; // Action is complete
-	}
+		}
 		return false; // Action is still running
 	}
 
@@ -163,7 +210,9 @@ public class IntakeBall implements Action {
 		MOVE_TO_NEXT_SLOT,
 		RUN_INTAKE_DOOR,
 		WAIT_FOR_BALL,
-		WAIT_0_2_SECONDS,
+		WAIT_BALL_SETTLE,
+		MOVE_TO_COLOR_SENSOR,
+		DETECT_COLOR,
 		DONE
 	}
 }

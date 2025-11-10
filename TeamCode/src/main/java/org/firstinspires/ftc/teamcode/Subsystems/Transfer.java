@@ -4,6 +4,7 @@ import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.InstantAction;
 import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 @Config
@@ -26,7 +27,9 @@ public class Transfer {
 			instance = new Transfer();
 			instance.transferLeft = hardwareMap.get(CRServo.class, "transferLeft");
 			instance.transferRight = hardwareMap.get(CRServo.class, "transferRight");
+			instance.transferRight.setDirection(DcMotorSimple.Direction.REVERSE);
 			instance.intakeDoorLeft = hardwareMap.get(CRServo.class, "intakeDoorLeft");
+			instance.intakeDoorLeft.setDirection(DcMotorSimple.Direction.REVERSE);
 			instance.intakeDoorRight = hardwareMap.get(CRServo.class, "intakeDoorRight");
 		}
 	}
@@ -122,5 +125,17 @@ public class Transfer {
 			intakeDoorLeft.setPower(STOP_POWER);
 			intakeDoorRight.setPower(STOP_POWER);
 		});
+	}
+
+	// Direct servo control methods for continuous operation
+
+	/**
+	 * Directly sets the intake door servo power (for continuous control).
+	 *
+	 * @param power The power to set (-1.0 to 1.0)
+	 */
+	public void setIntakeDoorPower(double power) {
+		intakeDoorLeft.setPower(power);
+		intakeDoorRight.setPower(power);
 	}
 }

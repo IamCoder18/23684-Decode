@@ -23,10 +23,10 @@ public class Spindexer {
 
 	// Magnetic limit switch triggers 11.011 degrees after the desired zero point
 	// Offset in ticks: -11.011 * (8192 / 360) ≈ -250.7 ticks
-	public static double zeroOffset = -11.011 * (8192.0 / 360.0);
+	public static double zeroOffset = 0 * (8192.0 / 360.0);
 
 	// PID coefficients for position control. Tune these via the FTC Dashboard.
-	public static double P = 0.005, I = 0, D = 0, F = 0;
+	public static double P = 0.01, I = 0, D = 0, F = 0;
 
 	private static Spindexer instance = null;
 
@@ -52,9 +52,9 @@ public class Spindexer {
 	private BallColor[] ballColors = new BallColor[3];
 
 	private Spindexer() {
-		// Initialize all slots as UNKNOWN
+		// Initialize all slots as EMPTY
 		for (int i = 0; i < 3; i++) {
-			ballColors[i] = BallColor.UNKNOWN;
+			ballColors[i] = BallColor.EMPTY;
 		}
 	}
 
@@ -162,6 +162,16 @@ public class Spindexer {
 		if (isZeroed) {
 			targetPosition = revolutions * TICKS_PER_REV;
 		}
+	}
+
+	/**
+	 * Force set the spindexer power to a value between -1 and 1.
+	 * Clamps the power to the valid range.
+	 */
+	public void setDirectPower(double power) {
+		// Clamp power between -1 and 1
+		double clampedPower = Math.max(-1.0, Math.min(1.0, power));
+		spindexer.setPower(clampedPower);
 	}
 
 	private enum ZeroState {

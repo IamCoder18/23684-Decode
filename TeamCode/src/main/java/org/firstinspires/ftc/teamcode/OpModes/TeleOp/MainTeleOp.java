@@ -7,6 +7,7 @@ import org.firstinspires.ftc.teamcode.LifecycleManagementUtilities.HardwareIniti
 import org.firstinspires.ftc.teamcode.LifecycleManagementUtilities.HardwareShutdown;
 import org.firstinspires.ftc.teamcode.Roadrunner.MecanumDrive;
 import org.firstinspires.ftc.teamcode.Subsystems.Intake;
+import org.firstinspires.ftc.teamcode.Subsystems.RGBIndicator;
 import org.firstinspires.ftc.teamcode.Subsystems.Shooter;
 import org.firstinspires.ftc.teamcode.Subsystems.Spindexer;
 import org.firstinspires.ftc.teamcode.Subsystems.Transfer;
@@ -29,6 +30,8 @@ import com.acmerobotics.roadrunner.Vector2d;
  * - Y: Shooter off
  * - LB: Transfer forward
  * - RB: Transfer stop
+ * - LT: IntakeDoor open
+ * - RT: IntakeDoor close
  * - DPad Up: Spindexer spin forward
  * - DPad Down: Spindexer spin backward
  */
@@ -44,8 +47,6 @@ public class MainTeleOp extends OpMode {
 	protected boolean shooterOffPressed = false;
 	protected boolean transferForwardPressed = false;
 	protected boolean transferStopPressed = false;
-	protected boolean spindexerUpPressed = false;
-	protected boolean spindexerDownPressed = false;
 
 	@Override
 	public void init() {
@@ -61,6 +62,8 @@ public class MainTeleOp extends OpMode {
 	@Override
 	public void start() {
 		// Called when START is pressed
+//		scheduler.schedule(Spindexer.getInstance().zero());
+//		scheduler.update();
 	}
 
 	@Override
@@ -70,6 +73,12 @@ public class MainTeleOp extends OpMode {
 
 		// Update spindexer PID
 		Spindexer.getInstance().update();
+
+		// Update shooter RPM readings
+		Shooter.getInstance().updateRPM();
+
+		// Update RGB indicator based on shooter RPM
+		updateRGBIndicator();
 
 		// Update action scheduler
 		scheduler.update();
@@ -94,6 +103,31 @@ public class MainTeleOp extends OpMode {
 	 */
 	protected Pose2d getStartingPose() {
 		return new Pose2d(0, 0, 0);
+	}
+
+	/**
+	 * Update RGB indicator color based on shooter RPM.
+	 * Red (FF0000) at 0 RPM, Violet (9400D3) at 10000 RPM, interpolated in between.
+	 */
+	private void updateRGBIndicator() {
+		double rpm = Shooter.getInstance().averageRPM;
+		double maxRPM = 10000.0;
+
+		// Clamp RPM to 0-maxRPM range
+		rpm = Math.max(0, Math.min(maxRPM, rpm));
+
+		// Interpolate between Red (0xFF0000) and Violet (0x9400D3)
+		double progress = rpm / maxRPM;
+
+		// Red: (255, 0, 0)
+		// Violet: (148, 0, 211)
+		int r = (int) (255 + (148 - 255) * progress);
+		int g = (int) (0 + (0 - 0) * progress);
+		int b = (int) (0 + (211 - 0) * progress);
+
+		// Convert to HEX string
+		String hexColor = String.format("%02X%02X%02X", r, g, b);
+		RGBIndicator.getInstance().setColor(hexColor);
 	}
 
 	/**
@@ -136,6 +170,11 @@ public class MainTeleOp extends OpMode {
 			intakeOutPressed = false;
 		}
 
+		// Stop intake if neither A nor B is pressed
+		if (!gamepad2.a && !gamepad2.b) {
+			scheduler.schedule(Intake.getInstance().stop());
+		}
+
 		// Shooter control
 		if (gamepad2.x && !shooterOnPressed) {
 			scheduler.schedule(Shooter.getInstance().run());
@@ -166,23 +205,16 @@ public class MainTeleOp extends OpMode {
 			transferStopPressed = false;
 		}
 
-		// Spindexer control - continuous spin or hold position
-		if (gamepad2.dpad_up && !spindexerUpPressed) {
-			Spindexer.getInstance().setTargetPosition(Double.POSITIVE_INFINITY); // Spin forward
-			spindexerUpPressed = true;
-		} else if (!gamepad2.dpad_up && spindexerUpPressed) {
-			// Hold current position when button released
-			Spindexer.getInstance().setTargetPosition(Spindexer.getInstance().getCurrentPositionTicks() / Spindexer.TICKS_PER_REV);
-			spindexerUpPressed = false;
-		}
+		// IntakeDoor control - always runs in
+		Transfer.getInstance().setIntakeDoorPower(Transfer.FORWARD_POWER);
 
-		if (gamepad2.dpad_down && !spindexerDownPressed) {
-			Spindexer.getInstance().setTargetPosition(Double.NEGATIVE_INFINITY); // Spin backward
-			spindexerDownPressed = true;
-		} else if (!gamepad2.dpad_down && spindexerDownPressed) {
-			// Hold current position when button released
-			Spindexer.getInstance().setTargetPosition(Spindexer.getInstance().getCurrentPositionTicks() / Spindexer.TICKS_PER_REV);
-			spindexerDownPressed = false;
+		// Spindexer control - direct power with dpad
+		if (gamepad2.dpad_up) {
+			Spindexer.getInstance().setDirectPower(0.5);
+		} else if (gamepad2.dpad_down) {
+			Spindexer.getInstance().setDirectPower(-0.3);
+		} else {
+			Spindexer.getInstance().setDirectPower(0);
 		}
 	}
 
@@ -205,8 +237,13 @@ public class MainTeleOp extends OpMode {
 		telemetry.addData("Y", "Shooter OFF");
 		telemetry.addData("LB", "Transfer Forward");
 		telemetry.addData("RB", "Transfer Stop");
+		telemetry.addData("LT", "IntakeDoor Open");
+		telemetry.addData("RT", "IntakeDoor Close");
 		telemetry.addData("DPad UP", "Spindexer Spin Forward");
 		telemetry.addData("DPad DOWN", "Spindexer Spin Backward");
 		telemetry.addData("Spindexer Position", String.format("%.2f rev", Spindexer.getInstance().getCurrentPositionTicks() / Spindexer.TICKS_PER_REV));
+		
+		telemetry.addData("", "=== SHOOTER ===");
+		telemetry.addData("Average RPM", String.format("%.2f", Shooter.getInstance().averageRPM));
 	}
 }

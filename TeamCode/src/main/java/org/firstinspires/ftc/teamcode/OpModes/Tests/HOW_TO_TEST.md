@@ -203,9 +203,41 @@ Test OpModes allow a human operator to experiment and visually inspect subsystem
 
 ---
 
+#### 7. Test_TouchDetector
+**Purpose:** Test touch sensor contact detection
+**Duration:** ≤1 minute
+**Location:** `OpModes/Tests/Test_TouchDetector.java`
+
+**Setup:**
+- Ensure both touch sensors are properly mounted
+- Verify physical access to both sensors
+- Have test objects available to press sensors
+
+**Controls:**
+- **A button:** Pause/unpause sensor readings
+- **B button:** Print detailed sensor analysis
+
+**What to Test:**
+1. Observe individual left and right sensor states
+2. Press left sensor - should show "PRESSED ✓"
+3. Press right sensor - should show "PRESSED ✓"
+4. Press both sensors together - should show both active
+5. Release and watch states return to "RELEASED"
+6. Press B for detailed analysis of sensor combinations
+
+**Expected Results:**
+- ✓ Sensors read meaningful boolean states
+- ✓ Left sensor detects independent contact
+- ✓ Right sensor detects independent contact
+- ✓ Combined detected field is true when either is pressed
+- ✓ Response is immediate to contact/release
+- ✓ Readings are stable (no flickering)
+
+---
+
 ### Action Tests (≤1 minute each)
 
-#### 7. Test_IntakeBall
+#### 8. Test_IntakeBall
 **Purpose:** Test complete IntakeBall action sequence
 **Duration:** ≤1 minute
 **Location:** `OpModes/Tests/Test_IntakeBall.java`
@@ -235,7 +267,7 @@ Test OpModes allow a human operator to experiment and visually inspect subsystem
 
 ---
 
-#### 8. Test_ShootBall
+#### 9. Test_ShootBall
 **Purpose:** Test ShootBall action sequence
 **Duration:** ≤1 minute
 **Location:** `OpModes/Tests/Test_ShootBall.java`
@@ -267,7 +299,7 @@ Test OpModes allow a human operator to experiment and visually inspect subsystem
 
 ### Comprehensive Test (≤2 minutes)
 
-#### 9. ComprehensiveTest
+#### 10. ComprehensiveTest
 **Purpose:** Automated pre-competition system verification
 **Duration:** ≤2 minutes
 **Location:** `OpModes/Tests/ComprehensiveTest.java`
@@ -407,6 +439,13 @@ Test OpModes allow a human operator to experiment and visually inspect subsystem
 - **Inaccurate measurements:** Use Tune_DistanceDetector to adjust threshold
 - **Unstable readings:** Ensure sensor is clean and unobstructed
 - **Object not detected:** Verify OBJECT_THRESHOLD_CM is appropriate for your use case
+
+#### Test_TouchDetector Failures
+- **No response:** Check sensor connections and power
+- **One sensor not working:** Verify individual sensor connection
+- **Detected always true:** Check for stuck or pressed sensor
+- **Detected always false:** Verify both sensors are properly wired
+- **Unstable readings:** Check for loose connections or corrosion
 
 #### Action Test Failures
 - **Actions don't start:** Check spindexer is zeroed

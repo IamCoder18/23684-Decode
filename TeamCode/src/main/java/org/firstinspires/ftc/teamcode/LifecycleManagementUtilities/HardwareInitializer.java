@@ -4,6 +4,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.teamcode.Subsystems.ColorDetector;
 import org.firstinspires.ftc.teamcode.Subsystems.Intake;
+import org.firstinspires.ftc.teamcode.Subsystems.RGBIndicator;
 import org.firstinspires.ftc.teamcode.Subsystems.Shooter;
 import org.firstinspires.ftc.teamcode.Subsystems.Spindexer;
 import org.firstinspires.ftc.teamcode.Subsystems.Transfer;
@@ -19,6 +20,7 @@ public class HardwareInitializer {
 		Transfer.initialize(hardwareMap);
 		Shooter.initialize(hardwareMap);
 		Intake.initialize(hardwareMap);
+		RGBIndicator.initialize(hardwareMap);
 
 		// Initialize Spindexer last (depends on Transfer and ColorSensor)
 		Spindexer.initialize(hardwareMap);

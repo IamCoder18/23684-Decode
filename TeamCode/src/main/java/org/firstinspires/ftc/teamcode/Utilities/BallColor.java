@@ -9,6 +9,8 @@ public enum BallColor {
 	GREEN,
 	/** Purple/Blue ball color */
 	PURPLE,
-	/** Unknown or no ball detected */
-	UNKNOWN
+	/** Ball detected in slot but color not yet determined */
+	UNKNOWN,
+	/** No ball in this slot */
+	EMPTY
 }

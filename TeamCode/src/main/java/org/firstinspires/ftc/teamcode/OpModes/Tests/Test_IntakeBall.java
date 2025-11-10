@@ -173,7 +173,7 @@ public class Test_IntakeBall extends LinearOpMode {
 		}
 		
 		// Color sensor
-		var colorDetector = org.firstinspires.ftc.teamcode.Subsystems.ColorDetector.getInstance();
+		ColorDetector colorDetector = org.firstinspires.ftc.teamcode.Subsystems.ColorDetector.getInstance();
 		status.append("Color Detection: ").append(colorDetector.isGreen ? "GREEN" : (colorDetector.isPurple ? "PURPLE" : "UNKNOWN")).append("\n");
 		
 		telemetry.addData("Status Output", status.toString());
