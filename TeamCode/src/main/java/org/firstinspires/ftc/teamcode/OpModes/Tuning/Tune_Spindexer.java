@@ -50,6 +50,12 @@ public class Tune_Spindexer extends OpMode {
 	private static final double I_STEP = 0.0001;
 	private static final double D_STEP = 0.00001;
 	private static final double FINE_MULTIPLIER = 5.0; // Right stick increases step size
+	
+	// Button state tracking for edge detection
+	private boolean prevA = false;
+	private boolean prevB = false;
+	private boolean prevX = false;
+	private boolean prevY = false;
 
 	@Override
 	public void init() {
@@ -77,24 +83,32 @@ public class Tune_Spindexer extends OpMode {
 		double stepMultiplier = gamepad1.right_stick_button ? FINE_MULTIPLIER : 1.0;
 		
 		// === ZEROING ===
-		if (gamepad1.a) {
+		// Only schedule on button press (not held)
+		if (gamepad1.a && !prevA) {
 			scheduler.schedule(spindexer.zero());
 			telemetry.addData("Action", "Zero sequence started");
 		}
+		prevA = gamepad1.a;
 
 		// === POSITION COMMANDS ===
-		if (gamepad1.b) {
+		// Only schedule on button press (not held)
+		if (gamepad1.b && !prevB) {
 			scheduler.schedule(spindexer.toPosition(0.25)); // 90 degrees
 			telemetry.addData("Action", "Moving to 90°");
 		}
-		if (gamepad1.x) {
+		prevB = gamepad1.b;
+		
+		if (gamepad1.x && !prevX) {
 			scheduler.schedule(spindexer.toPosition(0.5)); // 180 degrees
 			telemetry.addData("Action", "Moving to 180°");
 		}
-		if (gamepad1.y) {
+		prevX = gamepad1.x;
+		
+		if (gamepad1.y && !prevY) {
 			scheduler.schedule(spindexer.toPosition(0.75)); // 270 degrees
 			telemetry.addData("Action", "Moving to 270°");
 		}
+		prevY = gamepad1.y;
 
 		// === PID COEFFICIENT ADJUSTMENTS ===
 		
