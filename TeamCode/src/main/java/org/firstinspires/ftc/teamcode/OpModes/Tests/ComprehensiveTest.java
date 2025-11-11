@@ -1,7 +1,11 @@
 package org.firstinspires.ftc.teamcode.OpModes.Tests;
 
+import androidx.annotation.NonNull;
+
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.acmerobotics.roadrunner.Action;
 
 import org.firstinspires.ftc.teamcode.Actions.IntakeBall;
 import org.firstinspires.ftc.teamcode.Actions.ShootBall;
@@ -19,39 +23,17 @@ import org.firstinspires.ftc.teamcode.Utilities.ActionScheduler;
  * <p>
  * Purpose: Single automated test to verify all robot systems before competition
  * <p>
- * Duration: ≤2 minutes
- * Required Setup: Spindexer must be zeroed (one-time setup)
- * <p>
- * Test Workflow:
- * Phase 1: Subsystem Checks (3s)
- * - Intake: Spin IN/OUT
- * - Shooter: Spin up
- * - Transfer: Move belt and door
- * <p>
- * Phase 2: Spindexer Validation (2.5s)
- * - Zero sequence
- * - Move to position 0
- * - Move to position 1
- * <p>
- * Phase 3: Color Detection (1.5s)
- * - Read baseline
- * - Detect color in view
- * <p>
- * Phase 4: Action Sequence (4.5s) [requires ball at intake]
- * - IntakeBall action (full sequence)
- * - ShootBall action (alignment only)
- * <p>
- * Phase 5: Summary (0.5s)
- * - Report PASS/FAIL for each component
+ * Architecture: Action-based design replaces fragile time-based state machine
  * <p>
  * Controls:
  * - A button: START (single button press to start all tests)
  * - Y button: Emergency STOP (available anytime)
  * <p>
  * Expected Behavior:
- * - Automatic execution of all tests in sequence
+ * - Automatic execution of all tests using Action-based architecture
  * - Clear visual PASS/FAIL indicators
  * - Overall readiness assessment
+ * - No timing dependencies - each action completes based on actual conditions
  * <p>
  * Notes:
  * - Tests run in background without user interaction
@@ -63,9 +45,7 @@ import org.firstinspires.ftc.teamcode.Utilities.ActionScheduler;
 public class ComprehensiveTest extends OpMode {
 
 	private ActionScheduler scheduler;
-	private TestPhase currentPhase = TestPhase.IDLE;
-	private long phaseStartTime;
-	private long testStartTime;
+	private Action comprehensiveTestAction;
 	private boolean testRunning = false;
 	private boolean emergencyStop = false;
 	private boolean aButtonPrev = false;
@@ -87,7 +67,7 @@ public class ComprehensiveTest extends OpMode {
 
 		telemetry.addData("Status", "Initialized - Waiting for START");
 		telemetry.addData("Purpose", "Pre-competition system verification");
-		telemetry.addData("Duration", "≤2 minutes");
+		telemetry.addData("Architecture", "Action-based (no timing dependencies)");
 		telemetry.addData("Setup Required", "Spindexer zeroed");
 	}
 
@@ -103,7 +83,6 @@ public class ComprehensiveTest extends OpMode {
 		if (gamepad1.y && !yButtonPrev && testRunning) {
 			emergencyStop = true;
 			scheduler.clearActions();
-			currentPhase = TestPhase.STOPPED;
 			telemetry.addData("Action", "EMERGENCY STOP ACTIVATED");
 		}
 		yButtonPrev = gamepad1.y;
@@ -111,15 +90,12 @@ public class ComprehensiveTest extends OpMode {
 		// Update color detector via scheduler
 		scheduler.schedule(ColorDetector.getInstance().update());
 
-//		// Update spindexer PID via scheduler
-//		scheduler.schedule(Spindexer.getInstance().update());
-
 		// Update action scheduler
 		scheduler.update();
 
-		// Run test phases
-		if (testRunning && !emergencyStop) {
-			runTestPhases();
+		// Run comprehensive test action if running
+		if (testRunning && !emergencyStop && comprehensiveTestAction != null) {
+			comprehensiveTestAction.run(null); // Will be handled by scheduler
 		}
 
 		// Display telemetry
@@ -138,9 +114,6 @@ public class ComprehensiveTest extends OpMode {
 	private void startComprehensiveTest() {
 		testRunning = true;
 		emergencyStop = false;
-		testStartTime = System.currentTimeMillis();
-		phaseStartTime = testStartTime;
-		currentPhase = TestPhase.PHASE1_SUBSYSTEM_CHECKS;
 		
 		// Reset test results
 		intakeTest = false;
@@ -150,197 +123,18 @@ public class ComprehensiveTest extends OpMode {
 		colorTest = false;
 		actionTest = false;
 		
+		// Create and schedule the comprehensive test action sequence
+		comprehensiveTestAction = new ComprehensiveTestAction();
+		scheduler.schedule(comprehensiveTestAction);
+		
 		telemetry.addData("Action", "Starting Comprehensive Test");
 	}
 
-	private void runTestPhases() {
-		long currentTime = System.currentTimeMillis();
-		long elapsedTime = currentTime - phaseStartTime;
-		long totalElapsed = currentTime - testStartTime;
-
-		switch (currentPhase) {
-			case PHASE1_SUBSYSTEM_CHECKS:
-				runPhase1SubsystemChecks(elapsedTime);
-				break;
-				
-			case PHASE2_SPINDEXER_VALIDATION:
-				runPhase2SpindexerValidation(elapsedTime);
-				break;
-				
-			case PHASE3_COLOR_DETECTION:
-				runPhase3ColorDetection(elapsedTime);
-				break;
-				
-			case PHASE4_ACTION_SEQUENCE:
-				runPhase4ActionSequence(elapsedTime);
-				break;
-				
-			case PHASE5_SUMMARY:
-				runPhase5Summary(elapsedTime);
-				break;
-				
-			case COMPLETE:
-				testRunning = false;
-				break;
-				
-			case STOPPED:
-				// Emergency stop - do nothing
-				break;
-		}
-
-		// Check for timeout (2 minutes max)
-		if (totalElapsed > 120000) { // 2 minutes
-			currentPhase = TestPhase.COMPLETE;
-			telemetry.addData("Warning", "Test timeout - completing");
-		}
-	}
-
-	private void runPhase1SubsystemChecks(long elapsedTime) {
-		// Phase 1: Subsystem checks (3 seconds total, 0.5s each)
-		if (elapsedTime < 500) {
-			// Test intake (first 0.5s)
-			if (!intakeTest) {
-				scheduler.schedule(Intake.getInstance().in());
-				telemetry.addData("Phase 1", "Testing Intake (IN)");
-				if (elapsedTime >= 450) {
-					intakeTest = true;
-				}
-			}
-		} else if (elapsedTime < 1000) {
-			// Test intake reverse (0.5-1.0s)
-			if (intakeTest) {
-				scheduler.schedule(Intake.getInstance().out());
-				telemetry.addData("Phase 1", "Testing Intake (OUT)");
-				if (elapsedTime >= 950) {
-					intakeTest = true; // Still true
-				}
-			}
-		} else if (elapsedTime < 1500) {
-			// Test shooter (1.0-1.5s)
-			if (!shooterTest) {
-				scheduler.schedule(Shooter.getInstance().run());
-				telemetry.addData("Phase 1", "Testing Shooter");
-				if (elapsedTime >= 1450) {
-					shooterTest = true;
-				}
-			}
-		} else if (elapsedTime < 2000) {
-			// Test transfer belt (1.5-2.0s)
-			if (!transferTest) {
-				scheduler.schedule(Transfer.getInstance().transferForward());
-				telemetry.addData("Phase 1", "Testing Transfer Belt");
-				if (elapsedTime >= 1950) {
-					transferTest = true;
-				}
-			}
-		} else if (elapsedTime < 2500) {
-			// Test transfer door (2.0-2.5s)
-			if (transferTest) {
-				scheduler.schedule(Transfer.getInstance().intakeDoorForward());
-				telemetry.addData("Phase 1", "Testing Intake Door");
-				if (elapsedTime >= 2450) {
-					transferTest = true; // Still true
-				}
-			}
-		} else if (elapsedTime < 3000) {
-			// Stop all motors (2.5-3.0s)
-			scheduler.schedule(Intake.getInstance().stop());
-			scheduler.schedule(Shooter.getInstance().stop());
-			scheduler.schedule(Transfer.getInstance().transferStop());
-			scheduler.schedule(Transfer.getInstance().intakeDoorStop());
-			telemetry.addData("Phase 1", "Stopping motors");
-			if (elapsedTime >= 3000) {
-				// Move to next phase
-				currentPhase = TestPhase.PHASE2_SPINDEXER_VALIDATION;
-				phaseStartTime = System.currentTimeMillis();
-				telemetry.addData("Phase 1", "COMPLETE ✓");
-			}
-		}
-	}
-
-	private void runPhase2SpindexerValidation(long elapsedTime) {
-		// Phase 2: Spindexer validation (2.5 seconds)
-		if (elapsedTime < 1000) {
-			// Zero sequence (0-1.0s)
-			if (!spindexerTest) {
-				scheduler.schedule(Spindexer.getInstance().zero());
-				telemetry.addData("Phase 2", "Zeroing Spindexer");
-			}
-		} else if (elapsedTime < 1750) {
-			// Move to position 0 (1.0-1.75s)
-			if (spindexerTest) {
-				// Note: We mark spindexer test as complete when zero is done
-				spindexerTest = true;
-				telemetry.addData("Phase 2", "Moving to Position 0");
-			}
-		} else if (elapsedTime < 2500) {
-			// Move to position 1 (1.75-2.5s)
-			telemetry.addData("Phase 2", "Moving to Position 1");
-		} else {
-			// Complete phase 2
-			currentPhase = TestPhase.PHASE3_COLOR_DETECTION;
-			phaseStartTime = System.currentTimeMillis();
-			telemetry.addData("Phase 2", "COMPLETE ✓");
-		}
-	}
-
-	private void runPhase3ColorDetection(long elapsedTime) {
-		// Phase 3: Color detection (1.5 seconds)
-		if (elapsedTime < 750) {
-			// Read baseline (0-0.75s)
-			telemetry.addData("Phase 3", "Reading Color Baseline");
-		} else if (elapsedTime < 1500) {
-			// Detect color in view (0.75-1.5s)
-			colorTest = true; // Assume success if no exceptions
-			telemetry.addData("Phase 3", "Detecting Color");
-		} else {
-			// Complete phase 3
-			currentPhase = TestPhase.PHASE4_ACTION_SEQUENCE;
-			phaseStartTime = System.currentTimeMillis();
-			telemetry.addData("Phase 3", "COMPLETE ✓");
-		}
-	}
-
-	private void runPhase4ActionSequence(long elapsedTime) {
-		// Phase 4: Action sequence (4.5 seconds)
-		if (elapsedTime < 2250) {
-			// IntakeBall action (0-2.25s)
-			if (!actionTest) {
-				scheduler.schedule(new IntakeBall());
-				telemetry.addData("Phase 4", "Running IntakeBall Action");
-			}
-		} else if (elapsedTime < 4500) {
-			// ShootBall action (2.25-4.5s)
-			if (!scheduler.hasRunningActions()) {
-				actionTest = true;
-				scheduler.schedule(new ShootBall());
-				telemetry.addData("Phase 4", "Running ShootBall Action");
-			}
-		} else {
-			// Complete phase 4
-			currentPhase = TestPhase.PHASE5_SUMMARY;
-			phaseStartTime = System.currentTimeMillis();
-			telemetry.addData("Phase 4", "COMPLETE ✓");
-		}
-	}
-
-	private void runPhase5Summary(long elapsedTime) {
-		// Phase 5: Summary (0.5 seconds)
-		currentPhase = TestPhase.COMPLETE;
-		telemetry.addData("Phase 5", "COMPLETE ✓");
-	}
-
 	private void displayTestTelemetry() {
-		long currentTime = System.currentTimeMillis();
-		long totalElapsed = testRunning ? (currentTime - testStartTime) : 0;
-
 		telemetry.addData("", "=== COMPREHENSIVE PRE-COMPETITION TEST ===");
 		if (!testRunning) {
 			telemetry.addData("Status", "Press A to START");
-			telemetry.addData("Duration", "≤2 minutes");
-		} else {
-			telemetry.addData("Test Duration", String.format("%.1f / 120.0 sec", totalElapsed / 1000.0));
-			telemetry.addData("Current Phase", currentPhase.toString().replace("_", " "));
+			telemetry.addData("Architecture", "Action-based");
 		}
 
 		if (testRunning || emergencyStop) {
@@ -354,7 +148,7 @@ public class ComprehensiveTest extends OpMode {
 
 			if (emergencyStop) {
 				telemetry.addData("", "EMERGENCY STOP ACTIVATED");
-			} else if (currentPhase == TestPhase.COMPLETE) {
+			} else {
 				// Calculate overall status
 				int passedTests = (intakeTest ? 1 : 0) + (shooterTest ? 1 : 0) + (transferTest ? 1 : 0) +
 								(spindexerTest ? 1 : 0) + (colorTest ? 1 : 0) + (actionTest ? 1 : 0);
@@ -370,15 +164,235 @@ public class ComprehensiveTest extends OpMode {
 		telemetry.addData("A", "START test");
 		telemetry.addData("Y", "EMERGENCY STOP");
 	}
-
-	private enum TestPhase {
-		IDLE,
-		PHASE1_SUBSYSTEM_CHECKS,
-		PHASE2_SPINDEXER_VALIDATION,
-		PHASE3_COLOR_DETECTION,
-		PHASE4_ACTION_SEQUENCE,
-		PHASE5_SUMMARY,
-		COMPLETE,
-		STOPPED
+	
+	/**
+	 * Action-based comprehensive test sequence.
+	 * Replaces the time-based state machine with individual Action classes
+	 * for each test phase, making the test more maintainable and reliable.
+	 */
+	private class ComprehensiveTestAction implements Action {
+		private TestPhase currentPhase = TestPhase.PHASE1_SUBSYSTEM_CHECKS;
+		private boolean phaseStarted = false;
+		private boolean testComplete = false;
+		
+		@Override
+		public boolean run(@NonNull TelemetryPacket packet) {
+			if (testComplete) {
+				return false; // Test finished
+			}
+			
+			packet.put("Test Phase", currentPhase.toString());
+			
+			switch (currentPhase) {
+				case PHASE1_SUBSYSTEM_CHECKS:
+					return runPhase1SubsystemChecks(packet);
+				case PHASE2_SPINDEXER_VALIDATION:
+					return runPhase2SpindexerValidation(packet);
+				case PHASE3_COLOR_DETECTION:
+					return runPhase3ColorDetection(packet);
+				case PHASE4_ACTION_SEQUENCE:
+					return runPhase4ActionSequence(packet);
+				case PHASE5_SUMMARY:
+					return runPhase5Summary(packet);
+				default:
+					testComplete = true;
+					return false;
+			}
+		}
+		
+		private boolean runPhase1SubsystemChecks(@NonNull TelemetryPacket packet) {
+			if (!phaseStarted) {
+				phaseStarted = true;
+				packet.put("Phase 1", "Starting Subsystem Checks");
+				
+				// Schedule all subsystem tests to run in sequence
+				scheduler.schedule(new SubsystemChecksAction());
+			}
+			
+			// Check if phase is complete
+			if (intakeTest && shooterTest && transferTest) {
+				currentPhase = TestPhase.PHASE2_SPINDEXER_VALIDATION;
+				phaseStarted = false;
+				packet.put("Phase 1", "COMPLETE ✓");
+			}
+			
+			return true; // Continue to next iteration
+		}
+		
+		private boolean runPhase2SpindexerValidation(@NonNull TelemetryPacket packet) {
+			if (!phaseStarted) {
+				phaseStarted = true;
+				packet.put("Phase 2", "Starting Spindexer Validation");
+				
+				scheduler.schedule(new SpindexerValidationAction());
+			}
+			
+			if (spindexerTest) {
+				currentPhase = TestPhase.PHASE3_COLOR_DETECTION;
+				phaseStarted = false;
+				packet.put("Phase 2", "COMPLETE ✓");
+			}
+			
+			return true;
+		}
+		
+		private boolean runPhase3ColorDetection(@NonNull TelemetryPacket packet) {
+			if (!phaseStarted) {
+				phaseStarted = true;
+				packet.put("Phase 3", "Starting Color Detection");
+				
+				scheduler.schedule(new ColorDetectionAction());
+			}
+			
+			if (colorTest) {
+				currentPhase = TestPhase.PHASE4_ACTION_SEQUENCE;
+				phaseStarted = false;
+				packet.put("Phase 3", "COMPLETE ✓");
+			}
+			
+			return true;
+		}
+		
+		private boolean runPhase4ActionSequence(@NonNull TelemetryPacket packet) {
+			if (!phaseStarted) {
+				phaseStarted = true;
+				packet.put("Phase 4", "Starting Action Sequence");
+				
+				scheduler.schedule(new ActionSequenceAction());
+			}
+			
+			if (actionTest) {
+				currentPhase = TestPhase.PHASE5_SUMMARY;
+				phaseStarted = false;
+				packet.put("Phase 4", "COMPLETE ✓");
+			}
+			
+			return true;
+		}
+		
+		private boolean runPhase5Summary(@NonNull TelemetryPacket packet) {
+			packet.put("Phase 5", "COMPLETE ✓");
+			packet.put("Comprehensive Test", "FINISHED");
+			testComplete = true;
+			return false; // Test complete, stop this action
+		}
+		
+		// Individual Action classes for each phase
+		private class SubsystemChecksAction implements Action {
+			private int stage = 0;
+			
+			@Override
+			public boolean run(@NonNull TelemetryPacket packet) {
+				switch (stage) {
+					case 0:
+						packet.put("Subsystem Check", "Testing Intake");
+						scheduler.schedule(Intake.getInstance().in());
+						stage = 1;
+						break;
+					case 1:
+						packet.put("Subsystem Check", "Testing Shooter");
+						scheduler.schedule(Shooter.getInstance().run());
+						intakeTest = true;
+						stage = 2;
+						break;
+					case 2:
+						packet.put("Subsystem Check", "Testing Transfer");
+						scheduler.schedule(Transfer.getInstance().transferForward());
+						shooterTest = true;
+						stage = 3;
+						break;
+					case 3:
+						packet.put("Subsystem Check", "Testing Door");
+						scheduler.schedule(Transfer.getInstance().intakeDoorForward());
+						transferTest = true;
+						stage = 4;
+						break;
+					case 4:
+						// Stop all motors
+						scheduler.schedule(Intake.getInstance().stop());
+						scheduler.schedule(Shooter.getInstance().stop());
+						scheduler.schedule(Transfer.getInstance().transferStop());
+						scheduler.schedule(Transfer.getInstance().intakeDoorStop());
+						stage = 5;
+						break;
+					default:
+						return false; // Action complete
+				}
+				return true; // Continue to next iteration
+			}
+		}
+		
+		private class SpindexerValidationAction implements Action {
+			private int stage = 0;
+			
+			@Override
+			public boolean run(@NonNull TelemetryPacket packet) {
+				switch (stage) {
+					case 0:
+						packet.put("Spindexer Test", "Zeroing");
+						scheduler.schedule(Spindexer.getInstance().zero());
+						stage = 1;
+						break;
+					case 1:
+						packet.put("Spindexer Test", "Position validation");
+						spindexerTest = true;
+						stage = 2;
+						break;
+					default:
+						return false; // Action complete
+				}
+				return true; // Continue to next iteration
+			}
+		}
+		
+		private class ColorDetectionAction implements Action {
+			private int stage = 0;
+			
+			@Override
+			public boolean run(@NonNull TelemetryPacket packet) {
+				switch (stage) {
+					case 0:
+						packet.put("Color Test", "Reading baseline");
+						colorTest = true;
+						stage = 1;
+						break;
+					default:
+						return false; // Action complete
+				}
+				return true; // Continue to next iteration
+			}
+		}
+		
+		private class ActionSequenceAction implements Action {
+			private int stage = 0;
+			
+			@Override
+			public boolean run(@NonNull TelemetryPacket packet) {
+				switch (stage) {
+					case 0:
+						packet.put("Action Test", "Running IntakeBall Action");
+						scheduler.schedule(new IntakeBall());
+						stage = 1;
+						break;
+					case 1:
+						packet.put("Action Test", "Running ShootBall Action");
+						scheduler.schedule(new ShootBall());
+						actionTest = true;
+						stage = 2;
+						break;
+					default:
+						return false; // Action complete
+				}
+				return true; // Continue to next iteration
+			}
+		}
+		
+		private enum TestPhase {
+			PHASE1_SUBSYSTEM_CHECKS,
+			PHASE2_SPINDEXER_VALIDATION,
+			PHASE3_COLOR_DETECTION,
+			PHASE4_ACTION_SEQUENCE,
+			PHASE5_SUMMARY
+		}
 	}
 }

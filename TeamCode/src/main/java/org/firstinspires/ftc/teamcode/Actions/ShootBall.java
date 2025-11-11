@@ -24,6 +24,7 @@ public class ShootBall implements Action {
 
 	private static final double SLOT_TOLERANCE_DEGREES = 5.0;
 	private static final double SHOOTER_ALIGNMENT_DEGREES = 131.011;
+	private static final double POSITION_ERROR_TOLERANCE_TICKS = 50.0; // Extracted magic number from line 71
 	private static final double SLOT_0_CENTER = 0.0;
 	private static final double SLOT_1_CENTER = 120.0;
 	private static final double SLOT_2_CENTER = 240.0;
@@ -68,7 +69,7 @@ public class ShootBall implements Action {
 		packet.put("ShootBall Current Degrees", currentPositionDegrees);
 		packet.put("ShootBall Error", error);
 
-		return Math.abs(error) >= 50; // Returns true while moving, false when within tolerance
+		return Math.abs(error) >= POSITION_ERROR_TOLERANCE_TICKS; // Returns true while moving, false when within tolerance
 	}
 
 	/**
@@ -83,14 +84,11 @@ public class ShootBall implements Action {
 	 * @return slot index (0, 1, or 2) to shoot
 	 */
 	private int findTargetSlot(double currentPositionDegrees) {
-		// Priority 1: If a color is requested, find a slot with that color within tolerance
+		// Priority 1: If a color is requested, find a slot with that color.
 		if (requestedColor != null && requestedColor != BallColor.UNKNOWN) {
 			for (int i = 0; i < 3; i++) {
 				if (Spindexer.getInstance().getBallColor(i) == requestedColor) {
-					double degreesFromSlotCenter = getDegreesFromSlotCenter(currentPositionDegrees, SLOT_CENTERS[i]);
-					if (degreesFromSlotCenter <= SLOT_TOLERANCE_DEGREES) {
-						return i;
-					}
+					return i; // Found the requested color, select this slot.
 				}
 			}
 		}

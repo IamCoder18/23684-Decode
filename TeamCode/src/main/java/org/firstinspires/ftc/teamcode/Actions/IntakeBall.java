@@ -30,7 +30,8 @@ import org.firstinspires.ftc.teamcode.Utilities.BallColor;
  */
 public class IntakeBall implements Action {
 	private static final double SLOT_TOLERANCE_DEGREES = 5.0;
-	public static double BALL_SETTLE_TIME_NANOS = 2.0 * 1_000_000_000; // 2 seconds in nanoseconds
+	public static double BALL_SETTLE_TIME_SECONDS = 2.0; // Tunable value
+	public static double BALL_SETTLE_TIME_NANOS = BALL_SETTLE_TIME_SECONDS * 1_000_000_000; // 2 seconds in nanoseconds
 	public static double COLOR_SENSOR_LOCATION_DEGREES = 15; // Position where spindexer moves to detect color
 	public static double POSITION_ERROR_TOLERANCE_DEGREES = 1.5; // Position tolerance in degrees for spindexer movement
 	private IndexState currentState = IndexState.RUN_INTAKE;
@@ -57,49 +58,37 @@ public class IntakeBall implements Action {
 	 * @return slot index (0, 1, 2) or -1 if no available slots
 	 */
 	private int findNextFreeSlot() {
-		// Check which slots are already filled
 		double currentPositionDegrees = getCurrentPositionDegrees();
+		int currentSlot = (int) Math.round(currentPositionDegrees / 120.0) % 3;
 
-		// Check current slot with 5 degree tolerance
-		int currentSlot = (int) ((currentPositionDegrees / 120) % 3);
+		// Check if current slot is free and we are aligned
+		BallColor currentSlotColor = Spindexer.getInstance().getBallColor(currentSlot);
 		double slotStartDegrees = currentSlot * 120;
 		double degreesFromSlotStart = Math.abs(currentPositionDegrees - slotStartDegrees);
 		if (degreesFromSlotStart > 180) {
 			degreesFromSlotStart = 360 - degreesFromSlotStart;
 		}
 
-		if (Spindexer.getInstance().getBallColor(currentSlot) == BallColor.UNKNOWN && degreesFromSlotStart <= SLOT_TOLERANCE_DEGREES) {
+		if ((currentSlotColor == BallColor.EMPTY || currentSlotColor == BallColor.UNKNOWN)
+			&& degreesFromSlotStart <= SLOT_TOLERANCE_DEGREES) {
 			return currentSlot;
 		}
 
-		// Find next free slot with a ball detected (UNKNOWN)
-		for (int i = 0; i < 3; i++) {
-			int nextSlot = (currentSlot + 1 + i) % 3;
-			if (Spindexer.getInstance().getBallColor(nextSlot) == BallColor.UNKNOWN) {
+		// Check other slots for a free spot
+		for (int i = 1; i < 3; i++) {
+			int nextSlot = (currentSlot + i) % 3;
+			BallColor nextSlotColor = Spindexer.getInstance().getBallColor(nextSlot);
+			if (nextSlotColor == BallColor.EMPTY || nextSlotColor == BallColor.UNKNOWN) {
 				return nextSlot;
 			}
 		}
 
-		// Check if all slots are EMPTY
-		boolean allEmpty = true;
-		for (int i = 0; i < 3; i++) {
-			if (Spindexer.getInstance().getBallColor(i) != BallColor.EMPTY) {
-				allEmpty = false;
-				break;
-			}
+		// If we are here, it means other slots are full. Check current slot again, without tolerance.
+		if (currentSlotColor == BallColor.EMPTY || currentSlotColor == BallColor.UNKNOWN) {
+			return currentSlot;
 		}
 
-		// If all slots are empty, return current slot if within tolerance, otherwise next slot
-		if (allEmpty) {
-			if (degreesFromSlotStart <= SLOT_TOLERANCE_DEGREES) {
-				return currentSlot;
-			} else {
-				return (currentSlot + 1) % 3;
-			}
-		}
-
-		// All slots filled - no free slot available
-		return -1;
+		return -1; // All slots are full
 	}
 
 	/**
