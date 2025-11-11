@@ -1,11 +1,12 @@
 package org.firstinspires.ftc.teamcode.OpModes.Tests;
 
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.teamcode.LifecycleManagementUtilities.HardwareInitializer;
 import org.firstinspires.ftc.teamcode.LifecycleManagementUtilities.HardwareShutdown;
 import org.firstinspires.ftc.teamcode.Subsystems.Spindexer;
+import org.firstinspires.ftc.teamcode.Utilities.ActionScheduler;
 
 /**
  * Unit Test OpMode for the Spindexer Subsystem
@@ -38,126 +39,138 @@ import org.firstinspires.ftc.teamcode.Subsystems.Spindexer;
  * Duration: ≤1 minute (unit test)
  */
 @TeleOp(name = "Test_Spindexer", group = "Unit Tests")
-public class Test_Spindexer extends LinearOpMode {
+public class Test_Spindexer extends OpMode {
 
 	private Spindexer spindexer;
+	private ActionScheduler scheduler;
 	private boolean isRunningZero = false;
 	private boolean isMovingToPosition = false;
 	private double targetPosition = 0;
+	private boolean aButtonPrev = false;
+	private boolean bButtonPrev = false;
+	private boolean xButtonPrev = false;
+	private boolean yButtonPrev = false;
 
 	@Override
-	public void runOpMode() throws InterruptedException {
+	public void init() {
 		// Initialize hardware
 		HardwareInitializer.initialize(hardwareMap);
 		spindexer = Spindexer.getInstance();
+		scheduler = ActionScheduler.getInstance();
 
 		telemetry.addData("Status", "Initialized - Waiting for START");
 		telemetry.addData("Purpose", "Test spindexer zeroing and position control");
-		telemetry.update();
+	}
 
-		waitForStart();
+	@Override
+	public void loop() {
+		// === ZEROING AND POSITION COMMANDS ===
 
-		telemetry.addData("Status", "Running");
-		telemetry.addData("Controls", "A=Zero, B/X/Y=Positions");
-		telemetry.update();
+		// A button - Start Zero Sequence - edge detection
+		if (gamepad1.a && !aButtonPrev && !isRunningZero && !isMovingToPosition) {
+			isRunningZero = true;
+			telemetry.addData("Action", "Starting Zero Sequence...");
+		}
+		aButtonPrev = gamepad1.a;
 
-		while (opModeIsActive()) {
-			// === ZEROING AND POSITION COMMANDS ===
+		// B button - Move to Position 0 - edge detection
+		if (gamepad1.b && !bButtonPrev && !isRunningZero && !isMovingToPosition) {
+			isMovingToPosition = true;
+			targetPosition = 0;
+			telemetry.addData("Action", "Moving to Position 0...");
+		}
+		bButtonPrev = gamepad1.b;
 
-			// A button - Start Zero Sequence
-			if (gamepad1.a && !isRunningZero && !isMovingToPosition) {
-				isRunningZero = true;
-				telemetry.addData("Action", "Starting Zero Sequence...");
-			}
+		// X button - Move to Position 1 (120 degrees) - edge detection
+		if (gamepad1.x && !xButtonPrev && !isRunningZero && !isMovingToPosition) {
+			isMovingToPosition = true;
+			targetPosition = 1.0 / 3.0; // 120 degrees = 1/3 revolution
+			telemetry.addData("Action", "Moving to Position 1 (120°)...");
+		}
+		xButtonPrev = gamepad1.x;
 
-			// Run zero sequence if active
-			if (isRunningZero) {
-				boolean zeroComplete = spindexer.zero().run(null);
-				if (zeroComplete) {
-					isRunningZero = false;
-					telemetry.addData("Action", "Zero Sequence Complete!");
-					Thread.sleep(500); // Allow user to see message
-				}
-			}
+		// Y button - Move to Position 2 (240 degrees) - edge detection
+		if (gamepad1.y && !yButtonPrev && !isRunningZero && !isMovingToPosition) {
+			isMovingToPosition = true;
+			targetPosition = 2.0 / 3.0; // 240 degrees = 2/3 revolution
+			telemetry.addData("Action", "Moving to Position 2 (240°)...");
+		}
+		yButtonPrev = gamepad1.y;
 
-			// B button - Move to Position 0
-			if (gamepad1.b && !isRunningZero && !isMovingToPosition) {
-				isMovingToPosition = true;
-				targetPosition = 0;
-				telemetry.addData("Action", "Moving to Position 0...");
-			}
-
-			// X button - Move to Position 1 (120 degrees)
-			if (gamepad1.x && !isRunningZero && !isMovingToPosition) {
-				isMovingToPosition = true;
-				targetPosition = 1.0 / 3.0; // 120 degrees = 1/3 revolution
-				telemetry.addData("Action", "Moving to Position 1 (120°)...");
-			}
-
-			// Y button - Move to Position 2 (240 degrees)
-			if (gamepad1.y && !isRunningZero && !isMovingToPosition) {
-				isMovingToPosition = true;
-				targetPosition = 2.0 / 3.0; // 240 degrees = 2/3 revolution
-				telemetry.addData("Action", "Moving to Position 2 (240°)...");
-			}
-
-			// Run position movement if active
-			if (isMovingToPosition) {
-				boolean positionReached = spindexer.toPosition(targetPosition).run(null);
-				if (positionReached) {
-					isMovingToPosition = false;
-					telemetry.addData("Action", "Position reached!");
-					Thread.sleep(300); // Allow user to see message
-				}
-			}
-
-			// Update PID loop (must be called frequently)
-			spindexer.update();
-
-			// === DISPLAY TELEMETRY ===
-			
-			// Position information
-			double currentTicks = spindexer.getCurrentPositionTicks();
-			double currentDegrees = getCurrentPositionDegrees();
-			int currentSlot = getCurrentSlot();
-			
-			// Calculate position error
-			double positionError = Math.abs(targetPosition * Spindexer.TICKS_PER_REV - currentTicks);
-			String accuracyStatus = positionError < 50 ? "✓ ACCURATE" : (positionError < 100 ? "⚠ CLOSE" : "✗ ERROR");
-
-			telemetry.addData("", "=== POSITION STATUS ===");
-			telemetry.addData("Current Position (ticks)", String.format("%.0f", currentTicks));
-			telemetry.addData("Current Position (degrees)", String.format("%.1f", currentDegrees));
-			telemetry.addData("Target Position (revolutions)", String.format("%.3f", targetPosition));
-			telemetry.addData("Current Slot", currentSlot);
-			telemetry.addData("Position Error", String.format("%.0f ticks %s", positionError, accuracyStatus));
-
-			telemetry.addData("", "=== PID COEFFICIENTS ===");
-			telemetry.addData("P", String.format("%.4f", Spindexer.P));
-			telemetry.addData("I", String.format("%.4f", Spindexer.I));
-			telemetry.addData("D", String.format("%.4f", Spindexer.D));
-			telemetry.addData("F", String.format("%.4f", Spindexer.F));
-
-			telemetry.addData("", "=== STATE ===");
-			telemetry.addData("Zeroing", isRunningZero);
-			telemetry.addData("Moving", isMovingToPosition);
-			telemetry.addData("Zeroed", currentTicks > -1);
-
-			telemetry.addData("", "=== CONTROLS ===");
-			telemetry.addData("A", "Zero Sequence");
-			telemetry.addData("B", "Position 0");
-			telemetry.addData("X", "Position 1 (120°)");
-			telemetry.addData("Y", "Position 2 (240°)");
-
-			telemetry.addData("", "=== TEST RESULTS ===");
-			telemetry.addData("Zeroing", "✓ OPERATIONAL");
-			telemetry.addData("Position Control", "✓ OPERATIONAL");
-			telemetry.addData("PID Stability", "✓ VERIFIED");
-
-			telemetry.update();
+		// Run zero sequence if active
+		if (isRunningZero) {
+			scheduler.schedule(spindexer.zero());
 		}
 
-		// Shutdown
+		// Run position movement if active
+		if (isMovingToPosition) {
+			scheduler.schedule(spindexer.toPosition(targetPosition));
+		}
+
+		// Update PID loop (must be called frequently)
+		scheduler.schedule(spindexer.update());
+
+		// Check for completion
+		if (isRunningZero && !scheduler.hasRunningActions()) {
+			isRunningZero = false;
+			telemetry.addData("Action", "Zero Sequence Complete!");
+		}
+
+		if (isMovingToPosition && !scheduler.hasRunningActions()) {
+			isMovingToPosition = false;
+			telemetry.addData("Action", "Position reached!");
+		}
+
+		// === DISPLAY TELEMETRY ===
+		
+		// Position information
+		double currentTicks = spindexer.getCurrentPositionTicks();
+		double currentDegrees = getCurrentPositionDegrees();
+		int currentSlot = getCurrentSlot();
+		
+		// Calculate position error
+		double positionError = Math.abs(targetPosition * Spindexer.TICKS_PER_REV - currentTicks);
+		String accuracyStatus = positionError < 50 ? "✓ ACCURATE" : (positionError < 100 ? "⚠ CLOSE" : "✗ ERROR");
+
+		telemetry.addData("", "=== POSITION STATUS ===");
+		telemetry.addData("Current Position (ticks)", String.format("%.0f", currentTicks));
+		telemetry.addData("Current Position (degrees)", String.format("%.1f", currentDegrees));
+		telemetry.addData("Target Position (revolutions)", String.format("%.3f", targetPosition));
+		telemetry.addData("Current Slot", currentSlot);
+		telemetry.addData("Position Error", String.format("%.0f ticks %s", positionError, accuracyStatus));
+
+		telemetry.addData("", "=== PID COEFFICIENTS ===");
+		telemetry.addData("P", String.format("%.4f", Spindexer.P));
+		telemetry.addData("I", String.format("%.4f", Spindexer.I));
+		telemetry.addData("D", String.format("%.4f", Spindexer.D));
+		telemetry.addData("F", String.format("%.4f", Spindexer.F));
+
+		telemetry.addData("", "=== STATE ===");
+		telemetry.addData("Zeroing", isRunningZero);
+		telemetry.addData("Moving", isMovingToPosition);
+		telemetry.addData("Zeroed", currentTicks > -1);
+
+		telemetry.addData("", "=== CONTROLS ===");
+		telemetry.addData("A", "Zero Sequence");
+		telemetry.addData("B", "Position 0");
+		telemetry.addData("X", "Position 1 (120°)");
+		telemetry.addData("Y", "Position 2 (240°)");
+
+		telemetry.addData("", "=== TEST RESULTS ===");
+		telemetry.addData("Zeroing", "✓ OPERATIONAL");
+		telemetry.addData("Position Control", "✓ OPERATIONAL");
+		telemetry.addData("PID Stability", "✓ VERIFIED");
+
+		telemetry.update();
+
+		// Update action scheduler
+		scheduler.update();
+	}
+
+	@Override
+	public void stop() {
+		// Clear any running actions and shutdown
+		scheduler.clearActions();
 		HardwareShutdown.shutdown();
 	}
 

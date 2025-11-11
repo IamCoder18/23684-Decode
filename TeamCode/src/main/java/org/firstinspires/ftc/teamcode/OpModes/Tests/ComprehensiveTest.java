@@ -1,6 +1,6 @@
 package org.firstinspires.ftc.teamcode.OpModes.Tests;
 
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.teamcode.Actions.IntakeBall;
@@ -60,7 +60,7 @@ import org.firstinspires.ftc.teamcode.Utilities.ActionScheduler;
  * - Designed for pre-competition verification
  */
 @TeleOp(name = "ComprehensiveTest", group = "Pre-Competition")
-public class ComprehensiveTest extends LinearOpMode {
+public class ComprehensiveTest extends OpMode {
 
 	private ActionScheduler scheduler;
 	private TestPhase currentPhase = TestPhase.IDLE;
@@ -68,6 +68,8 @@ public class ComprehensiveTest extends LinearOpMode {
 	private long testStartTime;
 	private boolean testRunning = false;
 	private boolean emergencyStop = false;
+	private boolean aButtonPrev = false;
+	private boolean yButtonPrev = false;
 	
 	// Test results
 	private boolean intakeTest = false;
@@ -78,7 +80,7 @@ public class ComprehensiveTest extends LinearOpMode {
 	private boolean actionTest = false;
 
 	@Override
-	public void runOpMode() throws InterruptedException {
+	public void init() {
 		// Initialize hardware
 		HardwareInitializer.initialize(hardwareMap);
 		scheduler = ActionScheduler.getInstance();
@@ -87,49 +89,49 @@ public class ComprehensiveTest extends LinearOpMode {
 		telemetry.addData("Purpose", "Pre-competition system verification");
 		telemetry.addData("Duration", "≤2 minutes");
 		telemetry.addData("Setup Required", "Spindexer zeroed");
-		telemetry.update();
+	}
 
-		waitForStart();
+	@Override
+	public void loop() {
+		// A button - Start comprehensive test - edge detection
+		if (gamepad1.a && !aButtonPrev && !testRunning && !emergencyStop) {
+			startComprehensiveTest();
+		}
+		aButtonPrev = gamepad1.a;
 
-		telemetry.addData("Status", "Ready to start");
-		telemetry.addData("Controls", "A=START, Y=EMERGENCY STOP");
-		telemetry.update();
+		// Y button - Emergency stop - edge detection
+		if (gamepad1.y && !yButtonPrev && testRunning) {
+			emergencyStop = true;
+			scheduler.clearActions();
+			currentPhase = TestPhase.STOPPED;
+			telemetry.addData("Action", "EMERGENCY STOP ACTIVATED");
+		}
+		yButtonPrev = gamepad1.y;
 
-		while (opModeIsActive()) {
-			// A button - Start comprehensive test
-			if (gamepad1.a && !testRunning && !emergencyStop) {
-				startComprehensiveTest();
-			}
+		// Update color detector via scheduler
+		scheduler.schedule(ColorDetector.getInstance().update());
 
-			// Y button - Emergency stop
-			if (gamepad1.y && testRunning) {
-				emergencyStop = true;
-				scheduler.clearActions();
-				currentPhase = TestPhase.STOPPED;
-				telemetry.addData("Action", "EMERGENCY STOP ACTIVATED");
-			}
+		// Update spindexer PID via scheduler
+		scheduler.schedule(Spindexer.getInstance().update());
 
-			// Update color detector
-			ColorDetector.getInstance().update().run(null);
+		// Update action scheduler
+		scheduler.update();
 
-			// Update spindexer PID
-			Spindexer.getInstance().update();
-
-			// Update action scheduler
-			scheduler.update();
-
-			// Run test phases
-			if (testRunning && !emergencyStop) {
-				runTestPhases();
-			}
-
-			// Display telemetry
-			displayTestTelemetry();
-
-			telemetry.update();
+		// Run test phases
+		if (testRunning && !emergencyStop) {
+			runTestPhases();
 		}
 
-		// Shutdown
+		// Display telemetry
+		displayTestTelemetry();
+
+		telemetry.update();
+	}
+
+	@Override
+	public void stop() {
+		// Clear any running actions and shutdown
+		scheduler.clearActions();
 		HardwareShutdown.shutdown();
 	}
 
@@ -198,7 +200,7 @@ public class ComprehensiveTest extends LinearOpMode {
 		if (elapsedTime < 500) {
 			// Test intake (first 0.5s)
 			if (!intakeTest) {
-				Intake.getInstance().in().run(null);
+				scheduler.schedule(Intake.getInstance().in());
 				telemetry.addData("Phase 1", "Testing Intake (IN)");
 				if (elapsedTime >= 450) {
 					intakeTest = true;
@@ -207,7 +209,7 @@ public class ComprehensiveTest extends LinearOpMode {
 		} else if (elapsedTime < 1000) {
 			// Test intake reverse (0.5-1.0s)
 			if (intakeTest) {
-				Intake.getInstance().out().run(null);
+				scheduler.schedule(Intake.getInstance().out());
 				telemetry.addData("Phase 1", "Testing Intake (OUT)");
 				if (elapsedTime >= 950) {
 					intakeTest = true; // Still true
@@ -216,7 +218,7 @@ public class ComprehensiveTest extends LinearOpMode {
 		} else if (elapsedTime < 1500) {
 			// Test shooter (1.0-1.5s)
 			if (!shooterTest) {
-				Shooter.getInstance().run().run(null);
+				scheduler.schedule(Shooter.getInstance().run());
 				telemetry.addData("Phase 1", "Testing Shooter");
 				if (elapsedTime >= 1450) {
 					shooterTest = true;
@@ -225,7 +227,7 @@ public class ComprehensiveTest extends LinearOpMode {
 		} else if (elapsedTime < 2000) {
 			// Test transfer belt (1.5-2.0s)
 			if (!transferTest) {
-				Transfer.getInstance().transferForward().run(null);
+				scheduler.schedule(Transfer.getInstance().transferForward());
 				telemetry.addData("Phase 1", "Testing Transfer Belt");
 				if (elapsedTime >= 1950) {
 					transferTest = true;
@@ -234,7 +236,7 @@ public class ComprehensiveTest extends LinearOpMode {
 		} else if (elapsedTime < 2500) {
 			// Test transfer door (2.0-2.5s)
 			if (transferTest) {
-				Transfer.getInstance().intakeDoorForward().run(null);
+				scheduler.schedule(Transfer.getInstance().intakeDoorForward());
 				telemetry.addData("Phase 1", "Testing Intake Door");
 				if (elapsedTime >= 2450) {
 					transferTest = true; // Still true
@@ -242,10 +244,10 @@ public class ComprehensiveTest extends LinearOpMode {
 			}
 		} else if (elapsedTime < 3000) {
 			// Stop all motors (2.5-3.0s)
-			Intake.getInstance().stop().run(null);
-			Shooter.getInstance().stop().run(null);
-			Transfer.getInstance().transferStop().run(null);
-			Transfer.getInstance().intakeDoorStop().run(null);
+			scheduler.schedule(Intake.getInstance().stop());
+			scheduler.schedule(Shooter.getInstance().stop());
+			scheduler.schedule(Transfer.getInstance().transferStop());
+			scheduler.schedule(Transfer.getInstance().intakeDoorStop());
 			telemetry.addData("Phase 1", "Stopping motors");
 			if (elapsedTime >= 3000) {
 				// Move to next phase

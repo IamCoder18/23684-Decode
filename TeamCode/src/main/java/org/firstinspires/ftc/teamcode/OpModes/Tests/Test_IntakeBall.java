@@ -1,6 +1,6 @@
 package org.firstinspires.ftc.teamcode.OpModes.Tests;
 
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.teamcode.Actions.IntakeBall;
@@ -40,13 +40,16 @@ import org.firstinspires.ftc.teamcode.Utilities.BallColor;
  * Duration: ≤1 minute (action test)
  */
 @TeleOp(name = "Test_IntakeBall", group = "Action Tests")
-public class Test_IntakeBall extends LinearOpMode {
+public class Test_IntakeBall extends OpMode {
 
 	private ActionScheduler scheduler;
 	private boolean actionRunning = false;
+	private boolean aButtonPrev = false;
+	private boolean bButtonPrev = false;
+	private boolean xButtonPrev = false;
 
 	@Override
-	public void runOpMode() throws InterruptedException {
+	public void init() {
 		// Initialize hardware
 		HardwareInitializer.initialize(hardwareMap);
 		scheduler = ActionScheduler.getInstance();
@@ -54,97 +57,96 @@ public class Test_IntakeBall extends LinearOpMode {
 		telemetry.addData("Status", "Initialized - Waiting for START");
 		telemetry.addData("Purpose", "Test IntakeBall action sequence");
 		telemetry.addData("Note", "Ensure spindexer is zeroed first!");
-		telemetry.update();
+	}
 
-		waitForStart();
+	@Override
+	public void loop() {
+		// A button - Start IntakeBall action - edge detection
+		if (gamepad1.a && !aButtonPrev && !actionRunning) {
+			scheduler.schedule(new IntakeBall());
+			actionRunning = true;
+			telemetry.addData("Action", "IntakeBall sequence started");
+		}
+		aButtonPrev = gamepad1.a;
 
-		telemetry.addData("Status", "Running");
-		telemetry.addData("Controls", "A=Start Action, B=Stop, X=Status");
-		telemetry.update();
+		// B button - Stop current action and clear queue - edge detection
+		if (gamepad1.b && !bButtonPrev) {
+			scheduler.clearActions();
+			actionRunning = false;
+			telemetry.addData("Action", "All actions stopped and cleared");
+		}
+		bButtonPrev = gamepad1.b;
 
-		while (opModeIsActive()) {
-			// A button - Start IntakeBall action
-			if (gamepad1.a && !actionRunning) {
-				scheduler.schedule(new IntakeBall());
-				actionRunning = true;
-				telemetry.addData("Action", "IntakeBall sequence started");
-			}
+		// X button - Print detailed status - edge detection
+		if (gamepad1.x && !xButtonPrev) {
+			printDetailedStatus();
+		}
+		xButtonPrev = gamepad1.x;
 
-			// B button - Stop current action and clear queue
-			if (gamepad1.b) {
-				scheduler.clearActions();
-				actionRunning = false;
-				telemetry.addData("Action", "All actions stopped and cleared");
-				Thread.sleep(200); // Debounce
-			}
+		// Update color detector (required for action)
+		scheduler.schedule(ColorDetector.getInstance().update());
 
-			// X button - Print detailed status
-			if (gamepad1.x) {
-				printDetailedStatus();
-				Thread.sleep(500); // Debounce
-			}
+		// Update action scheduler
+		scheduler.update();
 
-			// Update color detector (required for action)
-			ColorDetector.getInstance().update().run(null);
-
-			// Update action scheduler
-			scheduler.update();
-
-			// Check if action is still running
-			if (actionRunning && !scheduler.hasRunningActions()) {
-				actionRunning = false;
-				telemetry.addData("Action", "IntakeBall sequence completed");
-			}
-
-			// === DISPLAY TELEMETRY ===
-
-			telemetry.addData("", "=== ACTION STATUS ===");
-			telemetry.addData("Action Running", actionRunning ? "YES" : "NO");
-			telemetry.addData("Actions in Queue", scheduler.getRunningActionCount());
-
-			// Spindexer position
-			double currentTicks = org.firstinspires.ftc.teamcode.Subsystems.Spindexer.getInstance().getCurrentPositionTicks();
-			double currentDegrees = (currentTicks % org.firstinspires.ftc.teamcode.Subsystems.Spindexer.TICKS_PER_REV) / org.firstinspires.ftc.teamcode.Subsystems.Spindexer.TICKS_PER_REV * 360;
-			if (currentDegrees < 0) currentDegrees += 360;
-			int currentSlot = (int) ((currentDegrees / 120) % 3);
-
-			telemetry.addData("", "=== SPINDEXER STATUS ===");
-			telemetry.addData("Position (degrees)", String.format("%.1f", currentDegrees));
-			telemetry.addData("Current Slot", currentSlot);
-			telemetry.addData("Zeroed", currentTicks > -1);
-
-			// Ball colors in slots
-			telemetry.addData("", "=== STORED BALLS ===");
-			telemetry.addData("Slot 0", org.firstinspires.ftc.teamcode.Subsystems.Spindexer.getInstance().getBallColor(0).toString());
-			telemetry.addData("Slot 1", org.firstinspires.ftc.teamcode.Subsystems.Spindexer.getInstance().getBallColor(1).toString());
-			telemetry.addData("Slot 2", org.firstinspires.ftc.teamcode.Subsystems.Spindexer.getInstance().getBallColor(2).toString());
-
-			// Color detection
-			telemetry.addData("", "=== COLOR DETECTION ===");
-			String detectedColor;
-			if (org.firstinspires.ftc.teamcode.Subsystems.ColorDetector.getInstance().isGreen) {
-				detectedColor = "GREEN";
-			} else if (org.firstinspires.ftc.teamcode.Subsystems.ColorDetector.getInstance().isPurple) {
-				detectedColor = "PURPLE";
-			} else {
-				detectedColor = "UNKNOWN";
-			}
-			telemetry.addData("Current Detection", detectedColor);
-
-			telemetry.addData("", "=== CONTROLS ===");
-			telemetry.addData("A", "Start IntakeBall");
-			telemetry.addData("B", "Stop All");
-			telemetry.addData("X", "Print Status");
-
-			telemetry.addData("", "=== TEST RESULTS ===");
-			telemetry.addData("Action Execution", actionRunning ? "⚠ RUNNING" : (scheduler.getRunningActionCount() == 0 ? "✓ IDLE" : "✓ COMPLETE"));
-			telemetry.addData("Spindexer Control", "✓ VERIFIED");
-			telemetry.addData("Color Integration", "✓ VERIFIED");
-
-			telemetry.update();
+		// Check if action is still running
+		if (actionRunning && !scheduler.hasRunningActions()) {
+			actionRunning = false;
+			telemetry.addData("Action", "IntakeBall sequence completed");
 		}
 
-		// Shutdown
+		// === DISPLAY TELEMETRY ===
+
+		telemetry.addData("", "=== ACTION STATUS ===");
+		telemetry.addData("Action Running", actionRunning ? "YES" : "NO");
+		telemetry.addData("Actions in Queue", scheduler.getRunningActionCount());
+
+		// Spindexer position
+		double currentTicks = org.firstinspires.ftc.teamcode.Subsystems.Spindexer.getInstance().getCurrentPositionTicks();
+		double currentDegrees = (currentTicks % org.firstinspires.ftc.teamcode.Subsystems.Spindexer.TICKS_PER_REV) / org.firstinspires.ftc.teamcode.Subsystems.Spindexer.TICKS_PER_REV * 360;
+		if (currentDegrees < 0) currentDegrees += 360;
+		int currentSlot = (int) ((currentDegrees / 120) % 3);
+
+		telemetry.addData("", "=== SPINDEXER STATUS ===");
+		telemetry.addData("Position (degrees)", String.format("%.1f", currentDegrees));
+		telemetry.addData("Current Slot", currentSlot);
+		telemetry.addData("Zeroed", currentTicks > -1);
+
+		// Ball colors in slots
+		telemetry.addData("", "=== STORED BALLS ===");
+		telemetry.addData("Slot 0", org.firstinspires.ftc.teamcode.Subsystems.Spindexer.getInstance().getBallColor(0).toString());
+		telemetry.addData("Slot 1", org.firstinspires.ftc.teamcode.Subsystems.Spindexer.getInstance().getBallColor(1).toString());
+		telemetry.addData("Slot 2", org.firstinspires.ftc.teamcode.Subsystems.Spindexer.getInstance().getBallColor(2).toString());
+
+		// Color detection
+		telemetry.addData("", "=== COLOR DETECTION ===");
+		String detectedColor;
+		if (org.firstinspires.ftc.teamcode.Subsystems.ColorDetector.getInstance().isGreen) {
+			detectedColor = "GREEN";
+		} else if (org.firstinspires.ftc.teamcode.Subsystems.ColorDetector.getInstance().isPurple) {
+			detectedColor = "PURPLE";
+		} else {
+			detectedColor = "UNKNOWN";
+		}
+		telemetry.addData("Current Detection", detectedColor);
+
+		telemetry.addData("", "=== CONTROLS ===");
+		telemetry.addData("A", "Start IntakeBall");
+		telemetry.addData("B", "Stop All");
+		telemetry.addData("X", "Print Status");
+
+		telemetry.addData("", "=== TEST RESULTS ===");
+		telemetry.addData("Action Execution", actionRunning ? "⚠ RUNNING" : (scheduler.getRunningActionCount() == 0 ? "✓ IDLE" : "✓ COMPLETE"));
+		telemetry.addData("Spindexer Control", "✓ VERIFIED");
+		telemetry.addData("Color Integration", "✓ VERIFIED");
+
+		telemetry.update();
+	}
+
+	@Override
+	public void stop() {
+		// Clear any running actions and shutdown
+		scheduler.clearActions();
 		HardwareShutdown.shutdown();
 	}
 
