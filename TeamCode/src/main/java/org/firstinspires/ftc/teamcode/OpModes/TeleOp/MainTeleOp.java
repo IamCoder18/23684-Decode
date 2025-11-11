@@ -171,9 +171,9 @@ public class MainTeleOp extends OpMode {
 		}
 
 		// Stop intake if neither A nor B is pressed
-		if (!gamepad2.a && !gamepad2.b) {
-			scheduler.schedule(Intake.getInstance().stop());
-		}
+        if (!gamepad2.a && !gamepad2.b && (intakeInPressed || intakeOutPressed)) {
+            scheduler.schedule(Intake.getInstance().stop());
+        }
 
 		// Shooter control
 		if (gamepad2.x && !shooterOnPressed) {
