@@ -103,8 +103,8 @@ public final class MecanumDrive {
 		rightFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
 		// TODO: reverse motor directions if needed
-		leftFront.setDirection(DcMotorSimple.Direction.REVERSE);
-		leftBack.setDirection(DcMotorSimple.Direction.REVERSE);
+		rightFront.setDirection(DcMotorSimple.Direction.REVERSE);
+		rightBack.setDirection(DcMotorSimple.Direction.REVERSE);
 
 		// TODO: make sure your config has an IMU with this name (can be BNO or BHI)
 		//   see https://ftc-docs.firstinspires.org/en/latest/hardware_and_software_configuration/configuring/index.html
@@ -185,22 +185,22 @@ public final class MecanumDrive {
 		// TODO: fill in these values based on
 		//   see https://ftc-docs.firstinspires.org/en/latest/programming_resources/imu/imu.html?highlight=imu#physical-hub-mounting
 		public RevHubOrientationOnRobot.LogoFacingDirection logoFacingDirection =
-				RevHubOrientationOnRobot.LogoFacingDirection.LEFT;
+				RevHubOrientationOnRobot.LogoFacingDirection.RIGHT;
 		public RevHubOrientationOnRobot.UsbFacingDirection usbFacingDirection =
-				RevHubOrientationOnRobot.UsbFacingDirection.FORWARD;
+				RevHubOrientationOnRobot.UsbFacingDirection.UP;
 
 		// drive model parameters
-		public double inPerTick = 0.002987;
-		public double lateralInPerTick = 0.002134;
-		public double trackWidthTicks = 5150.592848;
+		public double inPerTick = 0.0019530284301607;
+		public double lateralInPerTick = 0.00139369982;
+		public double trackWidthTicks = 6812.71624093;
 
 		// feedforward parameters (in tick units)
-		public double kS = 0.994404;
-		public double kV = 0.000569;
-		public double kA = 0.0001;
+		public double kS = 1.21533595330708854;
+		public double kV = 0.000348044569655801844;
+		public double kA = 0.00015;
 
 		// path profile parameters (in inches)
-		public double maxWheelVel = 50;
+		public double maxWheelVel = Double.POSITIVE_INFINITY; // this was 50before by the way uh tu tu tu Max Verstappen
 		public double minProfileAccel = -30;
 		public double maxProfileAccel = 50;
 
