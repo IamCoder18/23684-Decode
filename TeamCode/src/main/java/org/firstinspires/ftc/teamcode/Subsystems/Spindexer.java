@@ -62,7 +62,7 @@ public class Spindexer {
 		if (instance == null) {
 			instance = new Spindexer();
 			instance.spindexer = hardwareMap.get(CRServo.class, "spindexer");
-			instance.spindexerEncoder = hardwareMap.get(DcMotorEx.class, "frontRight"); // Encoder plugged into a motor port
+			instance.spindexerEncoder = hardwareMap.get(DcMotorEx.class, "rearRight"); // Encoder plugged into a motor port
 			instance.spindexerZero = hardwareMap.get(TouchSensor.class, "spindexerZero");
 
 			// Configure the encoder motor port to just read encoder values
@@ -174,76 +174,39 @@ public class Spindexer {
 		spindexer.setPower(clampedPower);
 	}
 
-	private enum ZeroState {
-		START,
-		MOVE_OFF_SENSOR,
-		FAST_TOWARDS_SENSOR,
-		BACK_OFF,
-		SLOW_TOWARDS_SENSOR,
-		DONE
-	}
-
 	private class ZeroAction implements Action {
-		private ZeroState currentState = ZeroState.START;
-		private double backOffPosition;
+//		private long startTime = System.currentTimeMillis();
 
 		@Override
 		public boolean run(@NonNull TelemetryPacket packet) {
-			packet.put("Zeroing State", currentState.toString());
-
-			switch (currentState) {
-				case START:
-					isZeroing = true;
-					if (spindexerZero.isPressed()) {
-						spindexer.setPower(-0.5);
-						currentState = ZeroState.MOVE_OFF_SENSOR;
-					} else {
-						spindexer.setPower(1.0);
-						currentState = ZeroState.FAST_TOWARDS_SENSOR;
-					}
-					break;
-
-				case MOVE_OFF_SENSOR:
-					if (!spindexerZero.isPressed()) {
-						spindexer.setPower(1.0);
-						currentState = ZeroState.FAST_TOWARDS_SENSOR;
-					}
-					break;
-
-				case FAST_TOWARDS_SENSOR:
-					if (spindexerZero.isPressed()) {
-						spindexer.setPower(0);
-						backOffPosition = spindexerEncoder.getCurrentPosition() - 200;
-						spindexer.setPower(-0.5);
-						currentState = ZeroState.BACK_OFF;
-					}
-					break;
-
-				case BACK_OFF:
-					if (spindexerEncoder.getCurrentPosition() <= backOffPosition) {
-						spindexer.setPower(0.2);
-						currentState = ZeroState.SLOW_TOWARDS_SENSOR;
-					}
-					break;
-
-				case SLOW_TOWARDS_SENSOR:
-					if (spindexerZero.isPressed()) {
-						spindexer.setPower(0);
-						// Record the encoder position when the sensor triggers
-						calibrationPosition = spindexerEncoder.getCurrentPosition();
-						// Calculate true zero position accounting for the sensor offset
-						actualZeroPosition = calibrationPosition + zeroOffset;
-						targetPosition = 0;
-						isZeroed = true;
-						isZeroing = false;
-						currentState = ZeroState.DONE;
-					}
-					break;
-
-				case DONE:
-					return true; // Action is complete
-			}
-			return false; // Action is still running
+//			double currentEncoderPos = spindexerEncoder.getCurrentPosition();
+//			boolean sensorPressed = spindexerZero.isPressed();
+//			long elapsedTime = System.currentTimeMillis() - startTime;
+//
+//			packet.put("ZEROING: Encoder Position", currentEncoderPos);
+//			packet.put("ZEROING: Sensor Pressed", sensorPressed);
+//			packet.put("ZEROING: Elapsed time (ms)", elapsedTime);
+//
+//			isZeroing = true;
+//			spindexer.setPower(0.1);
+//
+//			if (sensorPressed) {
+//				spindexer.setPower(0);
+//				// Record the encoder position when the sensor triggers
+//				calibrationPosition = spindexerEncoder.getCurrentPosition();
+//				// Calculate true zero position accounting for the sensor offset
+//				actualZeroPosition = calibrationPosition + zeroOffset;
+//				targetPosition = 0;
+//				packet.put("ZEROING: COMPLETE - Calibration position", calibrationPosition);
+//				packet.put("ZEROING: COMPLETE - Actual zero position", actualZeroPosition);
+//				packet.put("ZEROING: COMPLETE - Zero offset applied", zeroOffset);
+//				isZeroed = true;
+//				isZeroing = false;
+//				return true; // Action is complete
+//			}
+//
+//			return false; // Action is still running
+			return true;
 		}
 	}
 }

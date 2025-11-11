@@ -41,12 +41,12 @@ public class MainTeleOp extends OpMode {
 	protected ActionScheduler scheduler;
 	
 	// Button state tracking to prevent continuous input
-	protected boolean intakeInPressed = false;
-	protected boolean intakeOutPressed = false;
-	protected boolean shooterOnPressed = false;
-	protected boolean shooterOffPressed = false;
-	protected boolean transferForwardPressed = false;
-	protected boolean transferStopPressed = false;
+	protected boolean leftTriggerPressed = false;
+	protected boolean rightTriggerPressed = false;
+	protected boolean xButtonPressed = false;
+	protected boolean spindexerUpCrossed = false;
+	protected boolean spindexerMidCrossed = false;
+	protected boolean spindexerDownCrossed = false;
 
 	@Override
 	public void init() {
@@ -62,8 +62,9 @@ public class MainTeleOp extends OpMode {
 	@Override
 	public void start() {
 		// Called when START is pressed
-//		scheduler.schedule(Spindexer.getInstance().zero());
-//		scheduler.update();
+		scheduler.schedule(Transfer.getInstance().intakeDoorForward());
+		scheduler.schedule(Transfer.getInstance().transferBackward());
+		scheduler.update();
 	}
 
 	@Override
@@ -155,66 +156,58 @@ public class MainTeleOp extends OpMode {
 	 * Handle operator controls from gamepad2
 	 */
 	protected void handleOperatorInput() {
-		// Intake control
-		if (gamepad2.a && !intakeInPressed) {
+		// Left Trigger: run intake
+		if (gamepad2.left_trigger > 0.5 && !leftTriggerPressed) {
 			scheduler.schedule(Intake.getInstance().in());
-			intakeInPressed = true;
-		} else if (!gamepad2.a) {
-			intakeInPressed = false;
+			leftTriggerPressed = true;
+		} else if (gamepad2.left_trigger <= 0.5 && leftTriggerPressed) {
+			scheduler.schedule(Intake.getInstance().stop());
+			leftTriggerPressed = false;
 		}
 
-		if (gamepad2.b && !intakeOutPressed) {
-			scheduler.schedule(Intake.getInstance().out());
-			intakeOutPressed = true;
-		} else if (!gamepad2.b) {
-			intakeOutPressed = false;
-		}
-
-		// Stop intake if neither A nor B is pressed
-        if (!gamepad2.a && !gamepad2.b && (intakeInPressed || intakeOutPressed)) {
-            scheduler.schedule(Intake.getInstance().stop());
-        }
-
-		// Shooter control
-		if (gamepad2.x && !shooterOnPressed) {
+		// Right Trigger: schedule Shooter.run() once when pressed, Shooter.stop() when released
+		if (gamepad2.right_trigger > 0.5 && !rightTriggerPressed) {
 			scheduler.schedule(Shooter.getInstance().run());
-			shooterOnPressed = true;
-		} else if (!gamepad2.x) {
-			shooterOnPressed = false;
-		}
-
-		if (gamepad2.y && !shooterOffPressed) {
+			rightTriggerPressed = true;
+		} else if (gamepad2.right_trigger <= 0.5 && rightTriggerPressed) {
 			scheduler.schedule(Shooter.getInstance().stop());
-			shooterOffPressed = true;
-		} else if (!gamepad2.y) {
-			shooterOffPressed = false;
+			rightTriggerPressed = false;
 		}
 
-		// Transfer control
-		if (gamepad2.left_bumper && !transferForwardPressed) {
+		// X Button: Transfer forward when pressed, backward when released
+		if (gamepad2.x && !xButtonPressed) {
 			scheduler.schedule(Transfer.getInstance().transferForward());
-			transferForwardPressed = true;
-		} else if (!gamepad2.left_bumper) {
-			transferForwardPressed = false;
+			xButtonPressed = true;
+		} else if (!gamepad2.x && xButtonPressed) {
+			scheduler.schedule(Transfer.getInstance().transferBackward());
+			xButtonPressed = false;
 		}
 
-		if (gamepad2.right_bumper && !transferStopPressed) {
-			scheduler.schedule(Transfer.getInstance().transferStop());
-			transferStopPressed = true;
-		} else if (!gamepad2.right_bumper) {
-			transferStopPressed = false;
+		// Left joystick: Spindexer control with threshold crossing
+		double leftJoystickY = gamepad2.left_stick_y;
+		
+		// Dead zone: stop spindexer
+		if (leftJoystickY > -0.2 && leftJoystickY < 0.2) {
+			if (!spindexerMidCrossed) {
+				Spindexer.getInstance().setDirectPower(0);
+				spindexerMidCrossed = true;
+				spindexerUpCrossed = false;
+				spindexerDownCrossed = false;
+			}
 		}
-
-		// IntakeDoor control - always runs in
-		Transfer.getInstance().setIntakeDoorPower(Transfer.FORWARD_POWER);
-
-		// Spindexer control - direct power with dpad
-		if (gamepad2.dpad_up) {
+		// Crosses 0.2 threshold going up (from lower to 0.2+)
+		else if (leftJoystickY >= 0.2 && !spindexerUpCrossed) {
 			Spindexer.getInstance().setDirectPower(0.5);
-		} else if (gamepad2.dpad_down) {
-			Spindexer.getInstance().setDirectPower(-0.3);
-		} else {
-			Spindexer.getInstance().setDirectPower(0);
+			spindexerUpCrossed = true;
+			spindexerMidCrossed = false;
+			spindexerDownCrossed = false;
+		}
+		// Crosses -0.2 threshold going down (to -0.2 or below)
+		else if (leftJoystickY <= -0.2 && !spindexerDownCrossed) {
+			Spindexer.getInstance().setDirectPower(-0.5);
+			spindexerDownCrossed = true;
+			spindexerMidCrossed = false;
+			spindexerUpCrossed = false;
 		}
 	}
 
@@ -231,16 +224,9 @@ public class MainTeleOp extends OpMode {
 		telemetry.addData("Turn", String.format("%.2f", gamepad1.right_stick_x));
 		
 		telemetry.addData("", "=== GAMEPAD 2 (Operator) ===");
-		telemetry.addData("A", "Intake IN");
-		telemetry.addData("B", "Intake OUT");
-		telemetry.addData("X", "Shooter ON");
-		telemetry.addData("Y", "Shooter OFF");
-		telemetry.addData("LB", "Transfer Forward");
-		telemetry.addData("RB", "Transfer Stop");
-		telemetry.addData("LT", "IntakeDoor Open");
-		telemetry.addData("RT", "IntakeDoor Close");
-		telemetry.addData("DPad UP", "Spindexer Spin Forward");
-		telemetry.addData("DPad DOWN", "Spindexer Spin Backward");
+		telemetry.addData("Left Trigger", "Intake");
+		telemetry.addData("Right Trigger", "Shooter");
+		telemetry.addData("Left Joystick Y", String.format("%.2f", gamepad2.left_stick_y));
 		telemetry.addData("Spindexer Position", String.format("%.2f rev", Spindexer.getInstance().getCurrentPositionTicks() / Spindexer.TICKS_PER_REV));
 		
 		telemetry.addData("", "=== SHOOTER ===");
