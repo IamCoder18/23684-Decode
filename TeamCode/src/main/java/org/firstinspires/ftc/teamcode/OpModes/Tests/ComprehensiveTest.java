@@ -166,6 +166,17 @@ public class ComprehensiveTest extends OpMode {
 	}
 	
 	/**
+	 * Test phases enumeration
+	 */
+	private enum TestPhase {
+		PHASE1_SUBSYSTEM_CHECKS,
+		PHASE2_SPINDEXER_VALIDATION,
+		PHASE3_COLOR_DETECTION,
+		PHASE4_ACTION_SEQUENCE,
+		PHASE5_SUMMARY
+	}
+
+	/**
 	 * Action-based comprehensive test sequence.
 	 * Replaces the time-based state machine with individual Action classes
 	 * for each test phase, making the test more maintainable and reliable.
@@ -385,14 +396,6 @@ public class ComprehensiveTest extends OpMode {
 				}
 				return true; // Continue to next iteration
 			}
-		}
-		
-		private enum TestPhase {
-			PHASE1_SUBSYSTEM_CHECKS,
-			PHASE2_SPINDEXER_VALIDATION,
-			PHASE3_COLOR_DETECTION,
-			PHASE4_ACTION_SEQUENCE,
-			PHASE5_SUMMARY
 		}
 	}
 }
