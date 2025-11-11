@@ -10,8 +10,8 @@ public interface Action {
 }
 ```
 
-- Returns `true` when action is complete
-- Returns `false` while still running
+- Returns `false` when action is complete
+- Returns `true` while still running
 - Called repeatedly by Roadrunner's scheduler
 - Receives `TelemetryPacket` for logging
 
