@@ -108,7 +108,7 @@ public class Test_Spindexer extends OpMode {
 		}
 
 		// Update PID loop (must be called frequently)
-		scheduler.schedule(spindexer.update());
+//		scheduler.schedule(spindexer.update());
 
 		// Check for completion
 		if (isRunningZero && !scheduler.hasRunningActions()) {

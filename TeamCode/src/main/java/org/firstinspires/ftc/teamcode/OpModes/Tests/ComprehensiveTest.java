@@ -111,8 +111,8 @@ public class ComprehensiveTest extends OpMode {
 		// Update color detector via scheduler
 		scheduler.schedule(ColorDetector.getInstance().update());
 
-		// Update spindexer PID via scheduler
-		scheduler.schedule(Spindexer.getInstance().update());
+//		// Update spindexer PID via scheduler
+//		scheduler.schedule(Spindexer.getInstance().update());
 
 		// Update action scheduler
 		scheduler.update();

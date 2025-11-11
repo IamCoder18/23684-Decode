@@ -95,7 +95,7 @@ public class Test_ShootBall extends OpMode {
 		yButtonPrev = gamepad1.y;
 
 		// Update spindexer PID controller
-		scheduler.schedule(org.firstinspires.ftc.teamcode.Subsystems.Spindexer.getInstance().update());
+//		scheduler.schedule(org.firstinspires.ftc.teamcode.Subsystems.Spindexer.getInstance().update());
 
 		// Update action scheduler
 		scheduler.update();
