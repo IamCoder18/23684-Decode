@@ -40,6 +40,7 @@ import com.acmerobotics.roadrunner.ftc.LynxFirmware;
 import com.acmerobotics.roadrunner.ftc.OverflowEncoder;
 import com.acmerobotics.roadrunner.ftc.PositionVelocityPair;
 import com.acmerobotics.roadrunner.ftc.RawEncoder;
+import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -50,6 +51,7 @@ import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 import org.firstinspires.ftc.teamcode.Roadrunner.messages.DriveCommandMessage;
 import org.firstinspires.ftc.teamcode.Roadrunner.messages.MecanumCommandMessage;
@@ -77,6 +79,13 @@ public final class MecanumDrive {
 	public final DcMotorEx leftFront, leftBack, rightBack, rightFront;
 	public final VoltageSensor voltageSensor;
 	public final LazyImu lazyImu;
+
+	public final GoBildaPinpointDriver industriousImu;
+	public final GoBildaPinpointDriver.EncoderDirection initialParDirection, initialPerpDirection;
+
+	public double parYTicks = 0.0; // y position of the parallel encoder (in tick units)
+	public double perpXTicks = 0.0; // x position of the perpendicular encoder (in tick units
+
 	public final Localizer localizer;
 	private final LinkedList<Pose2d> poseHistory = new LinkedList<>();
 	private final DownsampledWriter estimatedPoseWriter = new DownsampledWriter("ESTIMATED_POSE", 50_000_000);
@@ -113,7 +122,23 @@ public final class MecanumDrive {
 
 		voltageSensor = hardwareMap.voltageSensor.iterator().next();
 
-		localizer = new TwoDeadWheelLocalizer(hardwareMap, lazyImu.get(), PARAMS.inPerTick, pose);
+		localizer = new PinpointLocalizer(hardwareMap, PARAMS.inPerTick, pose);
+
+		industriousImu = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
+
+
+
+		// TODO: reverse encoder directions if needed
+		initialParDirection = GoBildaPinpointDriver.EncoderDirection.REVERSED;
+		initialPerpDirection = GoBildaPinpointDriver.EncoderDirection.FORWARD;
+
+		industriousImu.setEncoderDirections(initialParDirection, initialPerpDirection);
+
+		double mmPerTick = PARAMS.inPerTick * 25.4;
+		industriousImu.setEncoderResolution(1 / mmPerTick, DistanceUnit.MM);
+		industriousImu.setOffsets(mmPerTick * parYTicks, mmPerTick * perpXTicks, DistanceUnit.MM);
+		industriousImu.resetPosAndIMU();
+
 
 		FlightRecorder.write("MECANUM_PARAMS", PARAMS);
 	}
@@ -136,6 +161,7 @@ public final class MecanumDrive {
 	public PoseVelocity2d updatePoseEstimate() {
 		PoseVelocity2d vel = localizer.update();
 		poseHistory.add(localizer.getPose());
+		industriousImu.update();
 
 		while (poseHistory.size() > 100) {
 			poseHistory.removeFirst();
@@ -258,7 +284,11 @@ public final class MecanumDrive {
 			PositionVelocityPair rightBackPosVel = rightBack.getPositionAndVelocity();
 			PositionVelocityPair rightFrontPosVel = rightFront.getPositionAndVelocity();
 
-			YawPitchRollAngles angles = imu.getRobotYawPitchRollAngles();
+			//YawPitchRollAngles angles = imu.getRobotYawPitchRollAngles();
+
+			YawPitchRollAngles angles = new YawPitchRollAngles(AngleUnit.RADIANS,industriousImu.getHeading(AngleUnit.DEGREES),0,0,0);
+
+			//YawPitchRollAngles billy = new YawPitchRollAngles(AngleUnit.RADIANS, 0, 0, 0, 0);
 
 			FlightRecorder.write("MECANUM_LOCALIZER_INPUTS", new MecanumLocalizerInputsMessage(
 					leftFrontPosVel, leftBackPosVel, rightBackPosVel, rightFrontPosVel, angles));
