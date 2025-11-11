@@ -156,24 +156,25 @@ public class MainTeleOp extends OpMode {
 	 */
 	protected void handleOperatorInput() {
 		// Intake control
-		if (gamepad2.a && !intakeInPressed) {
-			scheduler.schedule(Intake.getInstance().in());
-			intakeInPressed = true;
-		} else if (!gamepad2.a) {
+		if (gamepad2.a) {
+			if (!intakeInPressed) {
+				scheduler.schedule(Intake.getInstance().in());
+				intakeInPressed = true;
+			}
+		} else if (intakeInPressed) {
+			scheduler.schedule(Intake.getInstance().stop());
 			intakeInPressed = false;
 		}
 
-		if (gamepad2.b && !intakeOutPressed) {
-			scheduler.schedule(Intake.getInstance().out());
-			intakeOutPressed = true;
-		} else if (!gamepad2.b) {
+		if (gamepad2.b) {
+			if (!intakeOutPressed) {
+				scheduler.schedule(Intake.getInstance().out());
+				intakeOutPressed = true;
+			}
+		} else if (intakeOutPressed) {
+			scheduler.schedule(Intake.getInstance().stop());
 			intakeOutPressed = false;
 		}
-
-		// Stop intake if neither A nor B is pressed
-        if (!gamepad2.a && !gamepad2.b && (intakeInPressed || intakeOutPressed)) {
-            scheduler.schedule(Intake.getInstance().stop());
-        }
 
 		// Shooter control
 		if (gamepad2.x && !shooterOnPressed) {
