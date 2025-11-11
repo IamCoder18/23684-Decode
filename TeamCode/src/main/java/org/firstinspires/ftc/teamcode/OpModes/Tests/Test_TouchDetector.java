@@ -1,11 +1,12 @@
 package org.firstinspires.ftc.teamcode.OpModes.Tests;
 
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.teamcode.LifecycleManagementUtilities.HardwareInitializer;
 import org.firstinspires.ftc.teamcode.LifecycleManagementUtilities.HardwareShutdown;
 import org.firstinspires.ftc.teamcode.Subsystems.TouchDetector;
+import org.firstinspires.ftc.teamcode.Utilities.ActionScheduler;
 
 /**
  * Unit Test OpMode for the TouchDetector Subsystem
@@ -37,89 +38,90 @@ import org.firstinspires.ftc.teamcode.Subsystems.TouchDetector;
  * Duration: ≤1 minute (unit test)
  */
 @TeleOp(name = "Test_TouchDetector", group = "Unit Tests")
-public class Test_TouchDetector extends LinearOpMode {
+public class Test_TouchDetector extends OpMode {
 
 	private TouchDetector touchDetector;
+	private ActionScheduler scheduler;
 	private boolean isPaused = false;
+	private boolean aButtonPrev = false;
+	private boolean bButtonPrev = false;
 
 	@Override
-	public void runOpMode() throws InterruptedException {
+	public void init() {
 		// Initialize hardware
 		HardwareInitializer.initialize(hardwareMap);
 		touchDetector = TouchDetector.getInstance();
+		scheduler = ActionScheduler.getInstance();
 
 		telemetry.addData("Status", "Initialized - Waiting for START");
 		telemetry.addData("Purpose", "Test touch sensor detection accuracy");
 		telemetry.addData("Instructions", "Press/release both touch sensors");
-		telemetry.update();
+	}
 
-		waitForStart();
+	@Override
+	public void loop() {
+		// A button - Pause/unpause sensor readings - edge detection
+		if (gamepad1.a && !aButtonPrev) {
+			isPaused = !isPaused;
+			telemetry.addData("Action", isPaused ? "Sensor readings paused" : "Sensor readings resumed");
+		}
+		aButtonPrev = gamepad1.a;
 
-		telemetry.addData("Status", "Running");
-		telemetry.addData("Controls", "A=Pause, B=Print Details");
-		telemetry.update();
+		// B button - Print detailed analysis - edge detection
+		if (gamepad1.b && !bButtonPrev) {
+			printDetailedAnalysis();
+		}
+		bButtonPrev = gamepad1.b;
 
-		while (opModeIsActive()) {
-			// A button - Pause/unpause sensor readings
-			if (gamepad1.a && !isPaused) {
-				isPaused = true;
-				telemetry.addData("Action", "Sensor readings paused");
-				Thread.sleep(200); // Debounce
-			} else if (gamepad1.a && isPaused) {
-				isPaused = false;
-				telemetry.addData("Action", "Sensor readings resumed");
-				Thread.sleep(200); // Debounce
-			}
-
-			// B button - Print detailed analysis
-			if (gamepad1.b) {
-				printDetailedAnalysis();
-				Thread.sleep(500); // Debounce
-			}
-
-			// Update touch sensor readings (unless paused)
-			if (!isPaused) {
-				touchDetector.update().run(null);
-			}
-
-			// === DISPLAY TELEMETRY ===
-
-			// Individual sensor states
-			telemetry.addData("", "=== INDIVIDUAL SENSORS ===");
-			telemetry.addData("Touch Left", touchDetector.touchLeft ? "PRESSED ✓" : "RELEASED");
-			telemetry.addData("Touch Right", touchDetector.touchRight ? "PRESSED ✓" : "RELEASED");
-
-			// Combined detection state
-			telemetry.addData("", "=== COMBINED STATE ===");
-			String detectionStatus;
-			if (touchDetector.detected) {
-				detectionStatus = "CONTACT ✓";
-			} else {
-				detectionStatus = "NO CONTACT";
-			}
-			telemetry.addData("Detected", detectionStatus);
-			telemetry.addData("Is Detected", touchDetector.detected);
-
-			// Detection logic explanation
-			telemetry.addData("", "=== DETECTION LOGIC ===");
-			telemetry.addData("Logic", "OR (either sensor triggers)");
-			telemetry.addData("Status", touchDetector.touchLeft || touchDetector.touchRight ? "Active" : "Inactive");
-
-			// Controls
-			telemetry.addData("", "=== CONTROLS ===");
-			telemetry.addData("A", isPaused ? "RESUME" : "PAUSE");
-			telemetry.addData("B", "Print Details");
-
-			// Test results
-			telemetry.addData("", "=== TEST RESULTS ===");
-			telemetry.addData("Sensor Response", "✓ OPERATIONAL");
-			telemetry.addData("Combined Logic", "✓ FUNCTIONAL");
-			telemetry.addData("Reading Stability", isPaused ? "PAUSED" : "ACTIVE");
-
-			telemetry.update();
+		// Update touch sensor readings (unless paused)
+		if (!isPaused) {
+			scheduler.schedule(touchDetector.update());
 		}
 
-		// Shutdown
+		// === DISPLAY TELEMETRY ===
+
+		// Individual sensor states
+		telemetry.addData("", "=== INDIVIDUAL SENSORS ===");
+		telemetry.addData("Touch Left", touchDetector.touchLeft ? "PRESSED ✓" : "RELEASED");
+		telemetry.addData("Touch Right", touchDetector.touchRight ? "PRESSED ✓" : "RELEASED");
+
+		// Combined detection state
+		telemetry.addData("", "=== COMBINED STATE ===");
+		String detectionStatus;
+		if (touchDetector.detected) {
+			detectionStatus = "CONTACT ✓";
+		} else {
+			detectionStatus = "NO CONTACT";
+		}
+		telemetry.addData("Detected", detectionStatus);
+		telemetry.addData("Is Detected", touchDetector.detected);
+
+		// Detection logic explanation
+		telemetry.addData("", "=== DETECTION LOGIC ===");
+		telemetry.addData("Logic", "OR (either sensor triggers)");
+		telemetry.addData("Status", touchDetector.touchLeft || touchDetector.touchRight ? "Active" : "Inactive");
+
+		// Controls
+		telemetry.addData("", "=== CONTROLS ===");
+		telemetry.addData("A", isPaused ? "RESUME" : "PAUSE");
+		telemetry.addData("B", "Print Details");
+
+		// Test results
+		telemetry.addData("", "=== TEST RESULTS ===");
+		telemetry.addData("Sensor Response", "✓ OPERATIONAL");
+		telemetry.addData("Combined Logic", "✓ FUNCTIONAL");
+		telemetry.addData("Reading Stability", isPaused ? "PAUSED" : "ACTIVE");
+
+		telemetry.update();
+
+		// Update action scheduler
+		scheduler.update();
+	}
+
+	@Override
+	public void stop() {
+		// Clear any running actions and shutdown
+		scheduler.clearActions();
 		HardwareShutdown.shutdown();
 	}
 
