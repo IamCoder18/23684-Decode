@@ -23,7 +23,7 @@ import org.firstinspires.ftc.teamcode.Utilities.ActionScheduler;
  * <p>
  * Purpose: Single automated test to verify all robot systems before competition
  * <p>
- * Architecture: Action-based design replaces fragile time-based state machine
+ * Architecture: Simplified Action-based design with clear test phases
  * <p>
  * Controls:
  * - A button: START (single button press to start all tests)
@@ -45,7 +45,6 @@ import org.firstinspires.ftc.teamcode.Utilities.ActionScheduler;
 public class ComprehensiveTest extends OpMode {
 
 	private ActionScheduler scheduler;
-	private Action comprehensiveTestAction;
 	private boolean testRunning = false;
 	private boolean emergencyStop = false;
 	private boolean aButtonPrev = false;
@@ -93,11 +92,6 @@ public class ComprehensiveTest extends OpMode {
 		// Update action scheduler
 		scheduler.update();
 
-		// Run comprehensive test action if running
-		if (testRunning && !emergencyStop && comprehensiveTestAction != null) {
-			comprehensiveTestAction.run(null); // Will be handled by scheduler
-		}
-
 		// Display telemetry
 		displayTestTelemetry();
 
@@ -123,177 +117,20 @@ public class ComprehensiveTest extends OpMode {
 		colorTest = false;
 		actionTest = false;
 		
-		// Create and schedule the comprehensive test action sequence
-		comprehensiveTestAction = new ComprehensiveTestAction();
-		scheduler.schedule(comprehensiveTestAction);
+		// Schedule test phases in sequence
+		scheduleTestPhases();
 		
 		telemetry.addData("Action", "Starting Comprehensive Test");
 	}
 
-	private void displayTestTelemetry() {
-		telemetry.addData("", "=== COMPREHENSIVE PRE-COMPETITION TEST ===");
-		if (!testRunning) {
-			telemetry.addData("Status", "Press A to START");
-			telemetry.addData("Architecture", "Action-based");
-		}
-
-		if (testRunning || emergencyStop) {
-			telemetry.addData("", "=== TEST RESULTS ===");
-			telemetry.addData("Intake Test", intakeTest ? "✓ PASS" : "⏳ RUN");
-			telemetry.addData("Shooter Test", shooterTest ? "✓ PASS" : "⏳ RUN");
-			telemetry.addData("Transfer Test", transferTest ? "✓ PASS" : "⏳ RUN");
-			telemetry.addData("Spindexer Test", spindexerTest ? "✓ PASS" : "⏳ RUN");
-			telemetry.addData("Color Test", colorTest ? "✓ PASS" : "⏳ RUN");
-			telemetry.addData("Action Test", actionTest ? "✓ PASS" : "⏳ RUN");
-
-			if (emergencyStop) {
-				telemetry.addData("", "EMERGENCY STOP ACTIVATED");
-			} else {
-				// Calculate overall status
-				int passedTests = (intakeTest ? 1 : 0) + (shooterTest ? 1 : 0) + (transferTest ? 1 : 0) +
-								(spindexerTest ? 1 : 0) + (colorTest ? 1 : 0) + (actionTest ? 1 : 0);
-				
-				telemetry.addData("", "=== FINAL SUMMARY ===");
-				telemetry.addData("Passed Tests", passedTests + "/6");
-				telemetry.addData("Failed Tests", (6 - passedTests));
-				telemetry.addData("Overall Status", passedTests == 6 ? "✓ READY FOR COMPETITION" : "⚠ NEEDS ATTENTION");
-			}
-		}
-
-		telemetry.addData("", "=== CONTROLS ===");
-		telemetry.addData("A", "START test");
-		telemetry.addData("Y", "EMERGENCY STOP");
-	}
-	
-	/**
-	 * Test phases enumeration
-	 */
-	private enum TestPhase {
-		PHASE1_SUBSYSTEM_CHECKS,
-		PHASE2_SPINDEXER_VALIDATION,
-		PHASE3_COLOR_DETECTION,
-		PHASE4_ACTION_SEQUENCE,
-		PHASE5_SUMMARY
-	}
-
-	/**
-	 * Action-based comprehensive test sequence.
-	 * Replaces the time-based state machine with individual Action classes
-	 * for each test phase, making the test more maintainable and reliable.
-	 */
-	private class ComprehensiveTestAction implements Action {
-		private TestPhase currentPhase = TestPhase.PHASE1_SUBSYSTEM_CHECKS;
-		private boolean phaseStarted = false;
-		private boolean testComplete = false;
-		
-		@Override
-		public boolean run(@NonNull TelemetryPacket packet) {
-			if (testComplete) {
-				return false; // Test finished
-			}
-			
-			packet.put("Test Phase", currentPhase.toString());
-			
-			switch (currentPhase) {
-				case PHASE1_SUBSYSTEM_CHECKS:
-					return runPhase1SubsystemChecks(packet);
-				case PHASE2_SPINDEXER_VALIDATION:
-					return runPhase2SpindexerValidation(packet);
-				case PHASE3_COLOR_DETECTION:
-					return runPhase3ColorDetection(packet);
-				case PHASE4_ACTION_SEQUENCE:
-					return runPhase4ActionSequence(packet);
-				case PHASE5_SUMMARY:
-					return runPhase5Summary(packet);
-				default:
-					testComplete = true;
-					return false;
-			}
-		}
-		
-		private boolean runPhase1SubsystemChecks(@NonNull TelemetryPacket packet) {
-			if (!phaseStarted) {
-				phaseStarted = true;
-				packet.put("Phase 1", "Starting Subsystem Checks");
-				
-				// Schedule all subsystem tests to run in sequence
-				scheduler.schedule(new SubsystemChecksAction());
-			}
-			
-			// Check if phase is complete
-			if (intakeTest && shooterTest && transferTest) {
-				currentPhase = TestPhase.PHASE2_SPINDEXER_VALIDATION;
-				phaseStarted = false;
-				packet.put("Phase 1", "COMPLETE ✓");
-			}
-			
-			return true; // Continue to next iteration
-		}
-		
-		private boolean runPhase2SpindexerValidation(@NonNull TelemetryPacket packet) {
-			if (!phaseStarted) {
-				phaseStarted = true;
-				packet.put("Phase 2", "Starting Spindexer Validation");
-				
-				scheduler.schedule(new SpindexerValidationAction());
-			}
-			
-			if (spindexerTest) {
-				currentPhase = TestPhase.PHASE3_COLOR_DETECTION;
-				phaseStarted = false;
-				packet.put("Phase 2", "COMPLETE ✓");
-			}
-			
-			return true;
-		}
-		
-		private boolean runPhase3ColorDetection(@NonNull TelemetryPacket packet) {
-			if (!phaseStarted) {
-				phaseStarted = true;
-				packet.put("Phase 3", "Starting Color Detection");
-				
-				scheduler.schedule(new ColorDetectionAction());
-			}
-			
-			if (colorTest) {
-				currentPhase = TestPhase.PHASE4_ACTION_SEQUENCE;
-				phaseStarted = false;
-				packet.put("Phase 3", "COMPLETE ✓");
-			}
-			
-			return true;
-		}
-		
-		private boolean runPhase4ActionSequence(@NonNull TelemetryPacket packet) {
-			if (!phaseStarted) {
-				phaseStarted = true;
-				packet.put("Phase 4", "Starting Action Sequence");
-				
-				scheduler.schedule(new ActionSequenceAction());
-			}
-			
-			if (actionTest) {
-				currentPhase = TestPhase.PHASE5_SUMMARY;
-				phaseStarted = false;
-				packet.put("Phase 4", "COMPLETE ✓");
-			}
-			
-			return true;
-		}
-		
-		private boolean runPhase5Summary(@NonNull TelemetryPacket packet) {
-			packet.put("Phase 5", "COMPLETE ✓");
-			packet.put("Comprehensive Test", "FINISHED");
-			testComplete = true;
-			return false; // Test complete, stop this action
-		}
-		
-		// Individual Action classes for each phase
-		private class SubsystemChecksAction implements Action {
+	private void scheduleTestPhases() {
+		// Phase 1: Subsystem checks
+		scheduler.schedule(new Action() {
 			private int stage = 0;
 			
 			@Override
 			public boolean run(@NonNull TelemetryPacket packet) {
+				packet.put("Current Test", "Subsystem Checks");
 				switch (stage) {
 					case 0:
 						packet.put("Subsystem Check", "Testing Intake");
@@ -331,13 +168,15 @@ public class ComprehensiveTest extends OpMode {
 				}
 				return true; // Continue to next iteration
 			}
-		}
-		
-		private class SpindexerValidationAction implements Action {
+		});
+
+		// Phase 2: Spindexer validation
+		scheduler.schedule(new Action() {
 			private int stage = 0;
 			
 			@Override
 			public boolean run(@NonNull TelemetryPacket packet) {
+				packet.put("Current Test", "Spindexer Validation");
 				switch (stage) {
 					case 0:
 						packet.put("Spindexer Test", "Zeroing");
@@ -354,13 +193,15 @@ public class ComprehensiveTest extends OpMode {
 				}
 				return true; // Continue to next iteration
 			}
-		}
-		
-		private class ColorDetectionAction implements Action {
+		});
+
+		// Phase 3: Color detection
+		scheduler.schedule(new Action() {
 			private int stage = 0;
 			
 			@Override
 			public boolean run(@NonNull TelemetryPacket packet) {
+				packet.put("Current Test", "Color Detection");
 				switch (stage) {
 					case 0:
 						packet.put("Color Test", "Reading baseline");
@@ -372,13 +213,15 @@ public class ComprehensiveTest extends OpMode {
 				}
 				return true; // Continue to next iteration
 			}
-		}
-		
-		private class ActionSequenceAction implements Action {
+		});
+
+		// Phase 4: Action sequence
+		scheduler.schedule(new Action() {
 			private int stage = 0;
 			
 			@Override
 			public boolean run(@NonNull TelemetryPacket packet) {
+				packet.put("Current Test", "Action Sequence");
 				switch (stage) {
 					case 0:
 						packet.put("Action Test", "Running IntakeBall Action");
@@ -396,6 +239,41 @@ public class ComprehensiveTest extends OpMode {
 				}
 				return true; // Continue to next iteration
 			}
+		});
+	}
+
+	private void displayTestTelemetry() {
+		telemetry.addData("", "=== COMPREHENSIVE PRE-COMPETITION TEST ===");
+		if (!testRunning) {
+			telemetry.addData("Status", "Press A to START");
+			telemetry.addData("Architecture", "Action-based");
 		}
+
+		if (testRunning || emergencyStop) {
+			telemetry.addData("", "=== TEST RESULTS ===");
+			telemetry.addData("Intake Test", intakeTest ? "✓ PASS" : "⏳ RUN");
+			telemetry.addData("Shooter Test", shooterTest ? "✓ PASS" : "⏳ RUN");
+			telemetry.addData("Transfer Test", transferTest ? "✓ PASS" : "⏳ RUN");
+			telemetry.addData("Spindexer Test", spindexerTest ? "✓ PASS" : "⏳ RUN");
+			telemetry.addData("Color Test", colorTest ? "✓ PASS" : "⏳ RUN");
+			telemetry.addData("Action Test", actionTest ? "✓ PASS" : "⏳ RUN");
+
+			if (emergencyStop) {
+				telemetry.addData("", "EMERGENCY STOP ACTIVATED");
+			} else {
+				// Calculate overall status
+				int passedTests = (intakeTest ? 1 : 0) + (shooterTest ? 1 : 0) + (transferTest ? 1 : 0) +
+								(spindexerTest ? 1 : 0) + (colorTest ? 1 : 0) + (actionTest ? 1 : 0);
+				
+				telemetry.addData("", "=== FINAL SUMMARY ===");
+				telemetry.addData("Passed Tests", passedTests + "/6");
+				telemetry.addData("Failed Tests", (6 - passedTests));
+				telemetry.addData("Overall Status", passedTests == 6 ? "✓ READY FOR COMPETITION" : "⚠ NEEDS ATTENTION");
+			}
+		}
+
+		telemetry.addData("", "=== CONTROLS ===");
+		telemetry.addData("A", "START test");
+		telemetry.addData("Y", "EMERGENCY STOP");
 	}
 }

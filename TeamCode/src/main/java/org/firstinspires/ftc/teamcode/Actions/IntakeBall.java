@@ -113,7 +113,7 @@ public class IntakeBall implements Action {
 		// If no free slot is available, stop the action
 		if (slotIndex == -1) {
 			packet.put("Intake Status", "All slots filled - cannot intake");
-			return true;
+			return false;
 		}
 
 		switch (currentState) {
@@ -189,9 +189,9 @@ public class IntakeBall implements Action {
 			break;
 
 		case DONE:
-			return true; // Action is complete
+			return false; // Action is complete
 		}
-		return false; // Action is still running
+		return true; // Action is still running
 	}
 
 	private enum IndexState {
