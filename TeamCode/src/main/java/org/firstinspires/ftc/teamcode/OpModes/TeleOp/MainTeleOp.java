@@ -1,20 +1,34 @@
 package org.firstinspires.ftc.teamcode.OpModes.TeleOp;
 
+import static org.firstinspires.ftc.teamcode.Roadrunner.MecanumDrive.PARAMS;
+
+import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
+import com.acmerobotics.roadrunner.Action;
+import com.acmerobotics.roadrunner.VelConstraint;
+import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.teamcode.LifecycleManagementUtilities.HardwareInitializer;
 import org.firstinspires.ftc.teamcode.LifecycleManagementUtilities.HardwareShutdown;
+import org.firstinspires.ftc.teamcode.Roadrunner.Localizer;
 import org.firstinspires.ftc.teamcode.Roadrunner.MecanumDrive;
+import org.firstinspires.ftc.teamcode.Roadrunner.PinpointLocalizer;
 import org.firstinspires.ftc.teamcode.Subsystems.Intake;
 import org.firstinspires.ftc.teamcode.Subsystems.RGBIndicator;
 import org.firstinspires.ftc.teamcode.Subsystems.Shooter;
 import org.firstinspires.ftc.teamcode.Subsystems.Spindexer;
 import org.firstinspires.ftc.teamcode.Subsystems.Transfer;
+import org.firstinspires.ftc.teamcode.TrigLocation;
 import org.firstinspires.ftc.teamcode.Utilities.ActionScheduler;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Vector2d;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * Main TeleOp OpMode for driver control
@@ -70,7 +84,9 @@ public class MainTeleOp extends OpMode {
 	@Override
 	public void loop() {
 		// Update drive with gamepad input
-		handleDriveInput();
+		//handleDriveInput();
+
+		handleDriveInput2();
 
 		// Update spindexer PID
 		Spindexer.getInstance().update();
@@ -150,6 +166,113 @@ public class MainTeleOp extends OpMode {
 				turnPower
 		);
 		drive.setDrivePowers(velocity);
+	}
+
+	private void handleDriveInput2(){
+
+		// imports
+		Pose2d beginPose;
+
+		//MecanumDrive drive;
+
+		Localizer localizer;
+
+		TrigLocation trig;
+
+		VelConstraint vel;
+
+		int timer = 0;
+		FtcDashboard dash = FtcDashboard.getInstance();
+		List<Action> runningActions = new ArrayList<>();
+		String allianceGoal = "RED GOAL";
+		double Dx, Dy,Dh;
+		double X,Y,H;
+		double aimTrigger;
+		double parkTrigger;
+		// red park is 37, -33
+
+		beginPose = getStartingPose();
+
+		localizer = new PinpointLocalizer(hardwareMap,PARAMS.inPerTick,beginPose);
+		trig = new TrigLocation(drive,localizer,hardwareMap);
+		Dx = beginPose.position.x;
+		Dy = beginPose.position.y;
+		Dh = beginPose.heading.toDouble();
+
+		X = gamepad1.left_stick_y;
+		Y = gamepad1.left_stick_x;
+		H = gamepad1.right_stick_x;
+		aimTrigger = gamepad1.right_trigger;
+		parkTrigger = gamepad1.right_trigger;
+
+
+
+		telemetry.addData("Status", "Running");
+		telemetry.addData("X,Y,H", localizer.getPose());
+		telemetry.addLine(allianceGoal);
+		telemetry.update();
+		localizer.update();
+		Pose2d pose = drive.localizer.getPose();
+
+		timer += 1;
+
+
+		TelemetryPacket packet = new TelemetryPacket();
+
+		// updated based on gamepads
+
+		// update running actions
+		List<Action> newActions = new ArrayList<>();
+		for (Action action : runningActions) {
+			action.preview(packet.fieldOverlay());
+			if (action.run(packet)) {
+				newActions.add(action);
+			}
+		}
+		runningActions = newActions;
+
+		dash.sendTelemetryPacket(packet);
+
+
+		if (parkTrigger <= 0.5) {
+			if (X != 0) {
+				Dx += X * 12.2;
+			} else {
+				Dx += X + 0.00000001;
+			}
+
+			if (Y != 0) {
+				Dy += Y * 12.2;
+			}  else {
+				Dy += Y + 0.00000001;
+			}
+
+			if (aimTrigger != 0) {
+				if (H != 0) {
+					Dh += trig.normalizeAngle(H * Math.toRadians(30));
+
+				}  else {
+					Dh += H + 0.00000001;
+				}
+			} else {
+				if (Objects.equals(allianceGoal, "RED GOAL")) {
+					Dh = trig.TurnToRed();
+				}else if (Objects.equals(allianceGoal, "BLUEGOAL")){
+					Dh = trig.TurnToBlue();
+				}
+			}
+		}else{
+			Dy = 37;
+			Dx = -33;
+			Dh = Math.toRadians(90);
+		}
+
+		Actions.runBlocking(
+				drive.actionBuilder(beginPose)
+						.strafeToLinearHeading(new Vector2d(Dx,Dy),Dh)
+						.build());
+
+
 	}
 
 	/**
