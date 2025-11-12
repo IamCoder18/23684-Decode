@@ -113,24 +113,12 @@ public class MainTeleOp extends OpMode {
 	 */
 	private void updateRGBIndicator() {
 		double rpm = Shooter.getInstance().averageRPM;
-		double maxRPM = 10000.0;
+		double maxRPM = 6000.0;
 
 		// Clamp RPM to 0-maxRPM range
 		rpm = Math.max(0, Math.min(maxRPM, rpm));
 
-		// Discrete RPM ranges (0-10000) mapped to 11 color positions
-		// 0-909: Off
-		// 909-1818: Red
-		// 1818-2727: Orange
-		// 2727-3636: Yellow
-		// 3636-4545: Sage
-		// 4545-5454: Green
-		// 5454-6363: Azure
-		// 6363-7272: Blue
-		// 7272-8181: Indigo
-		// 8181-9090: Violet
-		// 9090-10000: White
-
+		// Discrete RPM ranges (0-maxRPM) mapped to 11 color positions
 		String[] colorNames = {"OFF", "RED", "ORANGE", "YELLOW", "SAGE", "GREEN", "AZURE", "BLUE", "INDIGO", "VIOLET", "WHITE"};
 
 		// Determine which color range the current RPM falls into
