@@ -200,7 +200,7 @@ public class MainTeleOp extends OpMode {
 			bButtonPressed = true;
 		} else if (!gamepad2.b && bButtonPressed) {
 			scheduler.schedule(Transfer.getInstance().intakeDoorForward());
-			scheduler.schedule(Intake.getInstance().in());
+			scheduler.schedule(Intake.getInstance().stop());
 			bButtonPressed = false;
 		}
 
