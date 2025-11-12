@@ -12,6 +12,7 @@ public class Shooter {
 
 	// Motor power constants
 	public static double RUN_POWER = 1.0;
+	public static double MIN_POWER = 0.9;
 	public static double STOP_POWER = 0.0;
 	// Offsets to resolve minor speed differences between motors
 	public static double UPPER_OFFSET = 0.0;
@@ -26,6 +27,13 @@ public class Shooter {
 	
 	// Average RPM of the shooter motors
 	public double averageRPM = 0.0;
+	// Individual RPM values for each shooter motor
+	public double upperRPM = 0.0;
+	public double lowerRPM = 0.0;
+	
+	// Oscillation timing
+	private long oscillationStartTime = 0;
+	private static double OSCILLATION_PERIOD = 500.0; // milliseconds for full cycle
 
 	private Shooter() {
 	}
@@ -58,35 +66,48 @@ public class Shooter {
 		double lowerVelocity = lowerShooter.getVelocity(); // ticks per second
 		
 		// Convert ticks per second to RPM: (ticks_per_second / ticks_per_revolution) * 60
-		double upperRPM = (upperVelocity / TICKS_PER_REVOLUTION) * 60.0;
-		double lowerRPM = (lowerVelocity / TICKS_PER_REVOLUTION) * 60.0;
+		upperRPM = (upperVelocity / TICKS_PER_REVOLUTION) * 60.0;
+		lowerRPM = (lowerVelocity / TICKS_PER_REVOLUTION) * 60.0;
 		
 		// Calculate average RPM
 		averageRPM = (upperRPM + lowerRPM) / 2.0;
 	}
 
 	/**
-	 * Returns an InstantAction that runs both shooter motors at full power.
+	 * Returns an InstantAction that runs both shooter motors, oscillating between MIN_POWER and RUN_POWER.
 	 * This action completes immediately after setting motor power.
 	 * Power values include offset adjustments to balance motor speed.
 	 *
-	 * @return Action that starts both shooter motors
+	 * @return Action that starts both shooter motors with oscillation
 	 */
 	public Action run() {
 		return new InstantAction(() -> {
-			upperShooter.setPower(RUN_POWER + UPPER_OFFSET);
-			lowerShooter.setPower(RUN_POWER + LOWER_OFFSET);
+			if (oscillationStartTime == 0) {
+				oscillationStartTime = System.currentTimeMillis();
+			}
+			
+			// Calculate elapsed time and position in oscillation cycle
+			long elapsedTime = System.currentTimeMillis() - oscillationStartTime;
+			double cyclePosition = (elapsedTime % (long) OSCILLATION_PERIOD) / OSCILLATION_PERIOD;
+			
+			// Oscillate between MIN_POWER and RUN_POWER using sine wave
+			double oscillatingPower = MIN_POWER + (RUN_POWER - MIN_POWER) * 0.5 * (1 + Math.sin(2 * Math.PI * cyclePosition - Math.PI / 2));
+			
+			upperShooter.setPower(oscillatingPower + UPPER_OFFSET);
+			lowerShooter.setPower(oscillatingPower + LOWER_OFFSET);
 		});
 	}
 
 	/**
 	 * Returns an InstantAction that stops both shooter motors.
 	 * This action completes immediately after setting power to zero.
+	 * Also resets the oscillation timer.
 	 *
 	 * @return Action that stops both shooter motors
 	 */
 	public Action stop() {
 		return new InstantAction(() -> {
+			oscillationStartTime = 0;
 			upperShooter.setPower(STOP_POWER);
 			lowerShooter.setPower(STOP_POWER);
 		});
