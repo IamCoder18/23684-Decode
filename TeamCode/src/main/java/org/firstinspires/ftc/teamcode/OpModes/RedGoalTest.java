@@ -5,14 +5,15 @@ import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+
 import org.firstinspires.ftc.teamcode.Roadrunner.MecanumDrive;
 
 @Autonomous
-public class BlueGoalTest extends OpMode {
-	private static final Pose2d START_POSE = new Pose2d(-58.45, -44.57, Math.toRadians(54.046));
-	private static final Vector2d LINEAR_STRAFE_TARGET = new Vector2d(-16, -16);
-	private static final double LINEAR_STRAFE_HEADING = Math.toRadians(45);
-	private static final Vector2d CONSTANT_STRAFE_TARGET = new Vector2d(0, -24);
+public class RedGoalTest extends OpMode {
+	private static final Pose2d START_POSE = new Pose2d(-58.45, 44.57, Math.toRadians(-54.046));
+	private static final Vector2d STRAFE_TARGET_1 = new Vector2d(-16, 16);
+	private static final double STRAFE_HEADING_1 = Math.toRadians(-45);
+	private static final Vector2d STRAFE_TARGET_2 = new Vector2d(0, 24);
 
 	private Pose2d beginPose;
 	private MecanumDrive drive;
@@ -31,8 +32,8 @@ public class BlueGoalTest extends OpMode {
 	public void start() {
 		Actions.runBlocking(
 				drive.actionBuilder(beginPose)
-						.strafeToLinearHeading(LINEAR_STRAFE_TARGET, LINEAR_STRAFE_HEADING)
-						.strafeToConstantHeading(CONSTANT_STRAFE_TARGET)
+						.strafeToLinearHeading(STRAFE_TARGET_1, STRAFE_HEADING_1)
+						.strafeToConstantHeading(STRAFE_TARGET_2)
 						.build());
 	}
 
