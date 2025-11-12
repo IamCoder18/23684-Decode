@@ -19,7 +19,7 @@ public class Transfer {
 	private CRServo intakeDoorLeft;
 	private CRServo intakeDoorRight;
 
-	private Transfer() {
+	public Transfer() {
 	}
 
 	public static void initialize(HardwareMap hardwareMap) {

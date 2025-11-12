@@ -7,6 +7,7 @@ import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
+import com.acmerobotics.roadrunner.InstantAction;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
@@ -16,6 +17,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.TouchSensor;
 
 import org.firstinspires.ftc.teamcode.Utilities.PIDFController;
+
 
 public class stupidSpindexer {
 
@@ -28,16 +30,18 @@ public class stupidSpindexer {
 
          public int pos;
 
-        public double P = 0.005, I = 0.0, D = 0.0001, F = 0.0;
+        public double P = 0.005, I = 0.0, D = 0.003, F = 0.00001;;
         public int target = 0;
 
-        public double slot1 = 0 , slot2 = 120, slot3 = 240;
+        public double slot1 = 0 , slot2 = 8192 * (1/3), slot3 = 8192 * (2/3);
+
+         public int ticksperDegree = 8192 / 360;
 
 
 
         public stupidSpindexer(HardwareMap hardwareMap) {
-            spindexer = hardwareMap.get(CRServo.class, "Spindexer");
-            spindexerEncoder = hardwareMap.get(DcMotorEx.class, "rearRight"); //TODO: check this
+            spindexer = hardwareMap.get(CRServo.class, "spindexer");
+            spindexerEncoder = hardwareMap.get(DcMotorEx.class, "frontRight"); //TODO: check this
             zero = hardwareMap.get(TouchSensor.class, "spindexerZero");
 
             spindexerEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -61,15 +65,14 @@ public class stupidSpindexer {
         private boolean initialized = false;
         @Override
         public boolean run(@NonNull TelemetryPacket packet) {
-            // powers on motor, if it is not on
+
             spindexerEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
             if (!initialized) {
                 spindexer.setPower(1);
                 initialized = true;
             }
-            return zero.isPressed();
-            // overall, the action powers the lift until it surpasses
-            // 3000 encoder ticks, then powers it off
+            return !zero.isPressed();
+
         }
     }
 
@@ -86,10 +89,11 @@ public class stupidSpindexer {
         public boolean run(@NonNull TelemetryPacket telemetryPacket) {
 
             pos = spindexerEncoder.getCurrentPosition();
+            spindexerEncoder.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
             if(!checked) {
 
-                if (pos < slot3 || pos < slot1 && pos > slot2) {
+                if ( pos < slot1 && pos > slot2) {
                     target = (int) slot2;
                     checked = true;
                 }
@@ -103,16 +107,15 @@ public class stupidSpindexer {
                 }
 
             }
-            int normalPos = (int) normalizeAngle(spindexerEncoder.getCurrentPosition());
-
-            int newSlot = (int) normalizeAngle(target);
-
+            int normalPos = spindexerEncoder.getCurrentPosition();
             power = -pidfController.getOutput(normalPos, target);
 
             spindexer.setPower(power);
 
+            boolean duoble = normalPos - target < 50 && normalPos - target > -50;
 
-            return spindexer.getPower() < 0.2;
+
+            return duoble;
         }
     }
 
@@ -129,12 +132,14 @@ public class stupidSpindexer {
                 spindexer.setPower(1);
                 initialized = true;
             }
-            return false;
+            return true;
         }
     }
 
     public Action MindlessSpindexer() {
-        return new MindlessSpindexer();
+        return new InstantAction(() -> {
+            spindexer.setPower(1);
+        });
     }
 
 
