@@ -10,13 +10,16 @@ import org.firstinspires.ftc.teamcode.Roadrunner.MecanumDrive;
 
 @Autonomous
 public class AudienceLeave extends OpMode {
-	Pose2d beginPose;
-	MecanumDrive drive;
+	private static final Pose2d START_POSE = new Pose2d(62.143, -14.717, Math.toRadians(180));
+	private static final Vector2d PARK_POSITION = new Vector2d(40, -14);
+
+	private Pose2d beginPose;
+	private MecanumDrive drive;
 
 	@Override
 	public void init() {
 		// RoadRunner Init
-		beginPose = new Pose2d(62.143, -14.717, Math.toRadians(180));
+		beginPose = START_POSE;
 		drive = new MecanumDrive(hardwareMap, beginPose);
 
 		telemetry.addData("Status", "Initialized");
@@ -27,7 +30,7 @@ public class AudienceLeave extends OpMode {
 	public void start() {
 		Actions.runBlocking(
 				drive.actionBuilder(beginPose)
-						.strafeTo(new Vector2d(40, -14))
+						.strafeTo(PARK_POSITION)
 						.build());
 	}
 

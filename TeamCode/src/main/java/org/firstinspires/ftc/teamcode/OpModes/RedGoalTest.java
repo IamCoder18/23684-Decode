@@ -10,13 +10,18 @@ import org.firstinspires.ftc.teamcode.Roadrunner.MecanumDrive;
 
 @Autonomous
 public class RedGoalTest extends OpMode {
-	Pose2d beginPose;
-	MecanumDrive drive;
+	private static final Pose2d START_POSE = new Pose2d(-58.45, 44.57, Math.toRadians(-54.046));
+	private static final Vector2d STRAFE_TARGET_1 = new Vector2d(-16, 16);
+	private static final double STRAFE_HEADING_1 = Math.toRadians(-45);
+	private static final Vector2d STRAFE_TARGET_2 = new Vector2d(0, 24);
+
+	private Pose2d beginPose;
+	private MecanumDrive drive;
 
 	@Override
 	public void init() {
 		// RoadRunner Init
-		beginPose = new Pose2d(-58.45, 44.57, Math.toRadians(-54.046));
+		beginPose = START_POSE;
 		drive = new MecanumDrive(hardwareMap, beginPose);
 
 		telemetry.addData("Status", "Initialized");
@@ -27,8 +32,8 @@ public class RedGoalTest extends OpMode {
 	public void start() {
 		Actions.runBlocking(
 				drive.actionBuilder(beginPose)
-						.strafeToLinearHeading(new Vector2d(-16, 16), Math.toRadians(-45))
-						.strafeToConstantHeading(new Vector2d(0, 24))
+						.strafeToLinearHeading(STRAFE_TARGET_1, STRAFE_HEADING_1)
+						.strafeToConstantHeading(STRAFE_TARGET_2)
 						.build());
 	}
 
