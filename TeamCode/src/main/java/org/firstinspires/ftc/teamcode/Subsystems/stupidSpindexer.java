@@ -41,6 +41,8 @@ public class stupidSpindexer {
 
         public stupidSpindexer(HardwareMap hardwareMap) {
             spindexer = hardwareMap.get(CRServo.class, "spindexer");
+            spindexer.setDirection(CRServo.Direction.REVERSE);
+
             spindexerEncoder = hardwareMap.get(DcMotorEx.class, "frontRight"); //TODO: check this
             zero = hardwareMap.get(TouchSensor.class, "spindexerZero");
 
@@ -91,28 +93,17 @@ public class stupidSpindexer {
             pos = spindexerEncoder.getCurrentPosition();
             spindexerEncoder.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-            if(!checked) {
-
-                if ( pos < slot1 && pos > slot2) {
-                    target = (int) slot2;
-                    checked = true;
-                }
-                if (pos < slot1 && pos < slot2 && pos > slot3) {
-                    target = (int) slot3    ;
-                    checked = true;
-                }
-                if (pos < slot2 && pos < slot1 && pos > slot3) {
-                    target = (int) slot1;
-                    checked = true;
-                }
-
+            if (!checked) {
+                target = pos + (8192 / 3);
+                checked = true;
             }
+
             int normalPos = spindexerEncoder.getCurrentPosition();
             power = -pidfController.getOutput(normalPos, target);
 
             spindexer.setPower(power);
 
-            boolean duoble = normalPos - target < 50 && normalPos - target > -50;
+            boolean duoble = normalPos - target < 100 && normalPos - target > -100;
 
 
             return duoble;
