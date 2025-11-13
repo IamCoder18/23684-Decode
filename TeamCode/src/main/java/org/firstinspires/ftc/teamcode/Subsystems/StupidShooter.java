@@ -48,7 +48,7 @@ public class StupidShooter {
             timmythetime = timmythetime + 0.5;
             if (!initialized) {
                 upperShooter.setPower(0.1 * Math.sin(timmythetime * 50) + 1);
-                lowerShooter.setPower(1);
+                lowerShooter.setPower(0.1 * Math.sin(timmythetime * 50) + 1);
                 initialized = true;
             }
             return averageRPM > needForSpeed;

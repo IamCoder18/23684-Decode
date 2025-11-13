@@ -12,6 +12,7 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.teamcode.Roadrunner.MecanumDrive;
+import org.firstinspires.ftc.teamcode.Subsystems.StupidIntake;
 import org.firstinspires.ftc.teamcode.Subsystems.StupidShooter;
 import org.firstinspires.ftc.teamcode.Subsystems.StupidTransfer;
 import org.firstinspires.ftc.teamcode.Subsystems.Transfer;
@@ -27,6 +28,8 @@ public class spindexerTest extends OpMode {
 
     StupidTransfer transfer;
 
+    StupidIntake intake;
+
 
     TelemetryPacket telemetryPacket;
     MecanumDrive drive;
@@ -36,6 +39,7 @@ public class spindexerTest extends OpMode {
         shooter = new StupidShooter(hardwareMap);
         spindexer = new stupidSpindexer(hardwareMap);
         transfer = new StupidTransfer(hardwareMap);
+        intake = new StupidIntake(hardwareMap);
         beginPose = new Pose2d(-58.45, -44.57, Math.toRadians(54.046));
         drive = new MecanumDrive(hardwareMap, beginPose);
 
@@ -54,12 +58,18 @@ public class spindexerTest extends OpMode {
                 transfer.tranferOut(), // ball 1
                 shooter.WaitForSpike(),
                  transfer.tranferIn(),
-                spindexer.NextSlot(),
+                new ParallelAction(
+                        spindexer.NextSlot(),
+                        intake.intakeDoorIn()
+                ),
                 shooter.WindUp(),
                 transfer.tranferOut(), // ball 2
                 shooter.WaitForSpike(),
                 transfer.tranferIn(),
-                spindexer.NextSlot(),
+                new ParallelAction(
+                  spindexer.NextSlot(),
+                   intake.intakeDoorIn()
+                ),
                 shooter.WindUp(),
                 transfer.tranferOut() // ball 3
 
