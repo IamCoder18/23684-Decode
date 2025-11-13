@@ -9,6 +9,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.teamcode.Roadrunner.Localizer;
 import org.firstinspires.ftc.teamcode.Roadrunner.MecanumDrive;
+import org.firstinspires.ftc.teamcode.Roadrunner.PinpointLocalizer;
 import org.firstinspires.ftc.teamcode.Utilities.PIDFController;
 
 
@@ -56,7 +57,7 @@ public class drivetest extends OpMode {
         drive = new MecanumDrive(hardwareMap, pose);
         target = new Pose2d(targetX, targetY, targetH);
 
-        localizer = new Localizer()
+        localizer = new PinpointLocalizer(hardwareMap, drive.PARAMS.inPerTick,pose);
 
         xController = new PIDFController(xpid.Xp, xpid.Xi, xpid.Xd, xpid.Xf);
         yController = new PIDFController(whypid.Yp, whypid.Yi, whypid.Yd, whypid.Yf);
@@ -70,11 +71,13 @@ public class drivetest extends OpMode {
 
     @Override
     public void loop() {
-        target = new Pose2d(targetX, targetY, targetH);
 
-        double forwardPower = yController.getOutput(drive.localizer.getPose().position.y, target.position.y); // Left stick Y (inverted)
-        double turnPower = hController.getOutput(drive.localizer.getPose().heading.toDouble(), target.heading.toDouble());;     // Right stick X
-        double strafePower = xController.getOutput(drive.localizer.getPose().position.x, target.position.x);    // Left stick X
+        pose = localizer.getPose();
+        target = new Pose2d(targetX, targetY, Math.toRadians(targetH));
+
+        double forwardPower = yController.getOutput(pose.position.y, target.position.y); // Left stick Y (inverted)
+        double turnPower = hController.getOutput(pose.heading.toDouble(), target.heading.toDouble());;     // Right stick X
+        double strafePower = xController.getOutput(pose.position.x, target.position.x);    // Left stick X
 
         // Apply deadzone
         forwardPower = Math.abs(forwardPower) > 0.05 ? forwardPower : 0;
