@@ -85,9 +85,9 @@ public class MainTeleOp extends OpMode {
 	@Override
 	public void loop() {
 		// Update drive with gamepad input
-		//handleDriveInput();
+		handleDriveInput();
 
-		handleDriveInput2();
+		//handleDriveInput2();
 
 		// Update spindexer PID
 		Spindexer.getInstance().update();
@@ -150,7 +150,7 @@ public class MainTeleOp extends OpMode {
 	 */
 	private void handleDriveInput() {
 		double forwardPower = -gamepad1.left_stick_y; // Left stick Y (inverted)
-		double turnPower = gamepad1.right_stick_x;     // Right stick X
+		double turnPower = -gamepad1.right_stick_x;     // Right stick X
 		double strafePower = gamepad1.left_stick_x;    // Left stick X
 
 		// Apply deadzone
@@ -289,9 +289,11 @@ public class MainTeleOp extends OpMode {
 		// Right Trigger: schedule Shooter.run() once when pressed, Shooter.stop() when released
 		if (gamepad2.right_trigger > 0.5 && !rightTriggerPressed) {
 			scheduler.schedule(Shooter.getInstance().run());
+			scheduler.schedule(Transfer.getInstance().transferForward());
 			rightTriggerPressed = true;
 		} else if (gamepad2.right_trigger <= 0.5 && rightTriggerPressed) {
 			scheduler.schedule(Shooter.getInstance().stop());
+			scheduler.schedule(Transfer.getInstance().transferBackward());
 			rightTriggerPressed = false;
 		}
 

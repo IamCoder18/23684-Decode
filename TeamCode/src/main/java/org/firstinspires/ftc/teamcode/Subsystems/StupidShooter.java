@@ -59,4 +59,19 @@ public class StupidShooter {
         return new WindUp();
     }
 
+
+    public class WaitForSpike implements Action {
+        boolean initialized = false;
+        double timmythetime = 0;
+        @Override
+        public boolean run(@NonNull TelemetryPacket telemetryPacket) {
+            updateRPM();
+            return averageRPM < needForSpeed;
+        }
+    }
+
+    public Action WaitForSpike() {
+        return new WaitForSpike();
+    }
+
 }
