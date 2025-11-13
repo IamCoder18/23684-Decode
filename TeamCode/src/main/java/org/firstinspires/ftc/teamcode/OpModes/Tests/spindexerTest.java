@@ -36,7 +36,7 @@ public class spindexerTest extends OpMode {
         shooter = new StupidShooter(hardwareMap);
         spindexer = new stupidSpindexer(hardwareMap);
         transfer = new StupidTransfer(hardwareMap);
-        beginPose = new Pose2d(0, 0, Math.toRadians(90));
+        beginPose = new Pose2d(-58.45, -44.57, Math.toRadians(54.046));
         drive = new MecanumDrive(hardwareMap, beginPose);
 
 
@@ -47,18 +47,21 @@ public class spindexerTest extends OpMode {
                 new SequentialAction(
                      new ParallelAction(
                              drive.actionBuilder(beginPose)
-                                     .strafeToConstantHeading(new Vector2d(0, 24))
+                                     .strafeToConstantHeading(new Vector2d(-16, -16))
                                      .build(),
                              shooter.WindUp()
                              ),
-                transfer.tranferOut(),
-                spindexer.NextSlot(), //ball 1
+                transfer.tranferOut(), // ball 1
+                shooter.WaitForSpike(),
+                 transfer.tranferIn(),
+                spindexer.NextSlot(),
                 shooter.WindUp(),
-                transfer.tranferOut(),
-                spindexer.NextSlot(), //ball 2
+                transfer.tranferOut(), // ball 2
+                shooter.WaitForSpike(),
+                transfer.tranferIn(),
+                spindexer.NextSlot(),
                 shooter.WindUp(),
-                transfer.tranferOut(),
-                spindexer.NextSlot() //ball 3
+                transfer.tranferOut() // ball 3
 
                 //spindexer.Zero(),
                 //spindexer.NextSlot()

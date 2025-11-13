@@ -28,9 +28,10 @@ public class Transfer {
 			instance.transferLeft = hardwareMap.get(CRServo.class, "transferLeft");
 			instance.transferRight = hardwareMap.get(CRServo.class, "transferRight");
 			instance.transferRight.setDirection(DcMotorSimple.Direction.REVERSE);
+			//instance.transferLeft.setDirection(DcMotorSimple.Direction.REVERSE);
 			instance.intakeDoorLeft = hardwareMap.get(CRServo.class, "intakeDoorLeft");
-			instance.intakeDoorLeft.setDirection(DcMotorSimple.Direction.REVERSE);
 			instance.intakeDoorRight = hardwareMap.get(CRServo.class, "intakeDoorRight");
+			instance.intakeDoorLeft.setDirection(DcMotorSimple.Direction.REVERSE);
 		}
 	}
 

@@ -11,7 +11,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 public class Shooter {
 
 	// Motor power constants
-	public static double RUN_POWER = 1.0;
+	public static double RUN_POWER = 0.82;
 	public static double STOP_POWER = 0.0;
 	// Offsets to resolve minor speed differences between motors
 	public static double UPPER_OFFSET = 0.0;
@@ -26,6 +26,8 @@ public class Shooter {
 	
 	// Average RPM of the shooter motors
 	public double averageRPM = 0.0;
+
+	public double timmythetime;
 
 	private Shooter() {
 	}
@@ -66,7 +68,7 @@ public class Shooter {
 	}
 
 	/**
-	 * Returns an InstantAction that runs both shooter motors at full power.
+	 * Returns an InstantAction that runs both shooter motors at full power dc pulsing owo.
 	 * This action completes immediately after setting motor power.
 	 * Power values include offset adjustments to balance motor speed.
 	 *
