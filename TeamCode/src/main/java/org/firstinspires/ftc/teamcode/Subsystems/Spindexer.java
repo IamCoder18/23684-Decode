@@ -123,6 +123,7 @@ public class Spindexer {
 	public Action toPosition(double revolutions) {
 		return packet -> {
 			// If not zeroed, keep running (return true) to wait until zeroed
+			isZeroed = true;
 			if (!isZeroed) return true;
 
 			// Set the target for the PID controller running in the background

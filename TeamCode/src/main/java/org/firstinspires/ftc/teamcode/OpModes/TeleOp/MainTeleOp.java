@@ -154,6 +154,9 @@ public class MainTeleOp extends OpMode {
 	 * Handle operator controls from gamepad2
 	 */
 	protected void handleOperatorInput() {
+		double rpm = Shooter.getInstance().averageRPM;
+		double topRPM = 2800;
+
 		// Left Trigger: run intake
 		if (gamepad2.left_trigger > 0.5 && !leftTriggerPressed) {
 			scheduler.schedule(Intake.getInstance().in());
@@ -173,10 +176,10 @@ public class MainTeleOp extends OpMode {
 		}
 
 		// X Button: Transfer forward when pressed, backward when released
-		if (gamepad2.x && !xButtonPressed) {
+		if (rpm >= topRPM && !xButtonPressed) {
 			scheduler.schedule(Transfer.getInstance().transferForward());
 			xButtonPressed = true;
-		} else if (!gamepad2.x && xButtonPressed) {
+		} else if (rpm < topRPM && xButtonPressed) {
 			scheduler.schedule(Transfer.getInstance().transferBackward());
 			xButtonPressed = false;
 		}
