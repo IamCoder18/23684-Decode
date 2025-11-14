@@ -58,6 +58,7 @@ public class MainTeleOp extends OpMode {
 	protected boolean leftTriggerPressed = false;
 	protected boolean rightTriggerPressed = false;
 	protected boolean xButtonPressed = false;
+	protected boolean bButtonPressed = false;
 	protected boolean spindexerUpCrossed = false;
 	protected boolean spindexerMidCrossed = false;
 	protected boolean spindexerDownCrossed = false;
@@ -94,14 +95,14 @@ public class MainTeleOp extends OpMode {
 		// Update shooter RPM readings
 		Shooter.getInstance().updateRPM();
 
-		// Update RGB indicator based on shooter RPM
-		updateRGBIndicator();
+		// Handle operator controls (must be before scheduler.update())
+		handleOperatorInput();
 
 		// Update action scheduler
 		scheduler.update();
 
-		// Handle operator controls
-		handleOperatorInput();
+		// Update RGB indicator based on shooter RPM (after scheduler.update())
+		updateRGBIndicator();
 
 		// Display telemetry
 		displayTelemetry();
@@ -123,28 +124,25 @@ public class MainTeleOp extends OpMode {
 	}
 
 	/**
-	 * Update RGB indicator color based on shooter RPM.
-	 * Red (FF0000) at 0 RPM, Violet (9400D3) at 10000 RPM, interpolated in between.
+	 * Update RGB indicator color based on shooter RPM using discrete color ranges.
+	 * Predefined colors: Off, Red, Orange, Yellow, Sage, Green, Azure, Blue, Indigo, Violet, White
 	 */
 	private void updateRGBIndicator() {
 		double rpm = Shooter.getInstance().averageRPM;
-		double maxRPM = 10000.0;
+		double maxRPM = 6000.0;
 
 		// Clamp RPM to 0-maxRPM range
 		rpm = Math.max(0, Math.min(maxRPM, rpm));
 
-		// Interpolate between Red (0xFF0000) and Violet (0x9400D3)
-		double progress = rpm / maxRPM;
+		// Discrete RPM ranges (0-maxRPM) mapped to 11 color positions
+		String[] colorNames = {"OFF", "RED", "ORANGE", "YELLOW", "SAGE", "GREEN", "AZURE", "BLUE", "INDIGO", "VIOLET", "WHITE"};
 
-		// Red: (255, 0, 0)
-		// Violet: (148, 0, 211)
-		int r = (int) (255 + (148 - 255) * progress);
-		int g = (int) (0 + (0 - 0) * progress);
-		int b = (int) (0 + (211 - 0) * progress);
+		// Determine which color range the current RPM falls into
+		int colorIndex = (int) (rpm / maxRPM * (colorNames.length - 1));
+		colorIndex = Math.min(colorIndex, colorNames.length - 1);
 
-		// Convert to HEX string
-		String hexColor = String.format("%02X%02X%02X", r, g, b);
-		RGBIndicator.getInstance().setColor(hexColor);
+		// Set the servo to the corresponding discrete position
+		RGBIndicator.getInstance().setColorByName(colorNames[colorIndex]);
 	}
 
 	/**
@@ -308,8 +306,19 @@ public class MainTeleOp extends OpMode {
 			xButtonPressed = false;
 		}
 
-		// Left joystick: Spindexer control with threshold crossing
-		double leftJoystickY = gamepad2.left_stick_y;
+		// B Button: Intake door backward and intake out when pressed, forward and intake in when released
+		if (gamepad2.b && !bButtonPressed) {
+			scheduler.schedule(Transfer.getInstance().intakeDoorBackward());
+			scheduler.schedule(Intake.getInstance().out());
+			bButtonPressed = true;
+		} else if (!gamepad2.b && bButtonPressed) {
+			scheduler.schedule(Transfer.getInstance().intakeDoorForward());
+			scheduler.schedule(Intake.getInstance().stop());
+			bButtonPressed = false;
+		}
+
+		// Left joystick: Spindexer control with threshold crossing (inverted Y axis)
+		double leftJoystickY = -gamepad2.left_stick_y;
 		
 		// Dead zone: stop spindexer
 		if (leftJoystickY > -0.2 && leftJoystickY < 0.2) {
@@ -322,14 +331,14 @@ public class MainTeleOp extends OpMode {
 		}
 		// Crosses 0.2 threshold going up (from lower to 0.2+)
 		else if (leftJoystickY >= 0.2 && !spindexerUpCrossed) {
-			Spindexer.getInstance().setDirectPower(0.5);
+			Spindexer.getInstance().setDirectPower(0.3);
 			spindexerUpCrossed = true;
 			spindexerMidCrossed = false;
 			spindexerDownCrossed = false;
 		}
 		// Crosses -0.2 threshold going down (to -0.2 or below)
 		else if (leftJoystickY <= -0.2 && !spindexerDownCrossed) {
-			Spindexer.getInstance().setDirectPower(-0.5);
+			Spindexer.getInstance().setDirectPower(-0.3);
 			spindexerDownCrossed = true;
 			spindexerMidCrossed = false;
 			spindexerUpCrossed = false;
@@ -351,10 +360,12 @@ public class MainTeleOp extends OpMode {
 		telemetry.addData("", "=== GAMEPAD 2 (Operator) ===");
 		telemetry.addData("Left Trigger", "Intake");
 		telemetry.addData("Right Trigger", "Shooter");
-		telemetry.addData("Left Joystick Y", String.format("%.2f", gamepad2.left_stick_y));
+		telemetry.addData("Left Joystick Y (Spindexer)", String.format("%.2f", -gamepad2.left_stick_y));
 		telemetry.addData("Spindexer Position", String.format("%.2f rev", Spindexer.getInstance().getCurrentPositionTicks() / Spindexer.TICKS_PER_REV));
 		
 		telemetry.addData("", "=== SHOOTER ===");
+		telemetry.addData("Upper RPM", String.format("%.2f", Shooter.getInstance().upperRPM));
+		telemetry.addData("Lower RPM", String.format("%.2f", Shooter.getInstance().lowerRPM));
 		telemetry.addData("Average RPM", String.format("%.2f", Shooter.getInstance().averageRPM));
 	}
 }

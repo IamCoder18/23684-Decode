@@ -97,7 +97,7 @@ public class drivetest extends OpMode {
 
         pinpoint.update();
 
-        pose = new Pose2d(pinpoint.getPosX(DistanceUnit.INCH),pinpoint.getPosY(DistanceUnit.INCH), pinpoint.getHeading(AngleUnit.RADIANS));
+        pose = new Pose2d(pinpoint.getPosY(DistanceUnit.INCH),pinpoint.getPosX(DistanceUnit.INCH), pinpoint.getHeading(AngleUnit.RADIANS));
         target = new Pose2d(targetX, targetY, Math.toRadians(targetH));
 
 

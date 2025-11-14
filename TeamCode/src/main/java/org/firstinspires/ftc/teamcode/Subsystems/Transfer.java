@@ -27,11 +27,13 @@ public class Transfer {
 			instance = new Transfer();
 			instance.transferLeft = hardwareMap.get(CRServo.class, "transferLeft");
 			instance.transferRight = hardwareMap.get(CRServo.class, "transferRight");
-			instance.transferRight.setDirection(DcMotorSimple.Direction.REVERSE);
-			//instance.transferLeft.setDirection(DcMotorSimple.Direction.REVERSE);
 			instance.intakeDoorLeft = hardwareMap.get(CRServo.class, "intakeDoorLeft");
 			instance.intakeDoorRight = hardwareMap.get(CRServo.class, "intakeDoorRight");
+
+			instance.intakeDoorRight.setDirection(DcMotorSimple.Direction.FORWARD);
 			instance.intakeDoorLeft.setDirection(DcMotorSimple.Direction.REVERSE);
+			instance.transferLeft.setDirection(DcMotorSimple.Direction.FORWARD);
+			instance.transferRight.setDirection(DcMotorSimple.Direction.REVERSE);
 		}
 	}
 
@@ -56,6 +58,8 @@ public class Transfer {
 	 */
 	public Action transferForward() {
 		return new InstantAction(() -> {
+			transferLeft.setDirection(DcMotorSimple.Direction.FORWARD);
+			transferRight.setDirection(DcMotorSimple.Direction.REVERSE);
 			transferLeft.setPower(FORWARD_POWER);
 			transferRight.setPower(FORWARD_POWER);
 		});
@@ -69,6 +73,8 @@ public class Transfer {
 	 */
 	public Action transferBackward() {
 		return new InstantAction(() -> {
+			transferLeft.setDirection(DcMotorSimple.Direction.FORWARD);
+			transferRight.setDirection(DcMotorSimple.Direction.REVERSE);
 			transferLeft.setPower(BACKWARD_POWER);
 			transferRight.setPower(BACKWARD_POWER);
 		});
@@ -97,6 +103,8 @@ public class Transfer {
 	 */
 	public Action intakeDoorForward() {
 		return new InstantAction(() -> {
+			intakeDoorRight.setDirection(DcMotorSimple.Direction.FORWARD);
+			intakeDoorLeft.setDirection(DcMotorSimple.Direction.REVERSE);
 			intakeDoorLeft.setPower(FORWARD_POWER);
 			intakeDoorRight.setPower(FORWARD_POWER);
 		});
@@ -110,6 +118,8 @@ public class Transfer {
 	 */
 	public Action intakeDoorBackward() {
 		return new InstantAction(() -> {
+			intakeDoorRight.setDirection(DcMotorSimple.Direction.FORWARD);
+			intakeDoorLeft.setDirection(DcMotorSimple.Direction.REVERSE);
 			intakeDoorLeft.setPower(BACKWARD_POWER);
 			intakeDoorRight.setPower(BACKWARD_POWER);
 		});
@@ -136,6 +146,8 @@ public class Transfer {
 	 * @param power The power to set (-1.0 to 1.0)
 	 */
 	public void setIntakeDoorPower(double power) {
+		intakeDoorRight.setDirection(DcMotorSimple.Direction.FORWARD);
+		intakeDoorLeft.setDirection(DcMotorSimple.Direction.REVERSE);
 		intakeDoorLeft.setPower(power);
 		intakeDoorRight.setPower(power);
 	}
