@@ -4,9 +4,12 @@ import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Vector2d;
+import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.Roadrunner.Localizer;
 import org.firstinspires.ftc.teamcode.Roadrunner.MecanumDrive;
 import org.firstinspires.ftc.teamcode.Roadrunner.PinpointLocalizer;
@@ -23,6 +26,11 @@ public class drivetest extends OpMode {
     Pose2d target;
 
     Localizer localizer;
+
+
+    GoBildaPinpointDriver pinpoint;
+    GoBildaPinpointDriver.EncoderDirection ything, xthing;
+
 
     public static double targetX = 0, targetY = 0, targetH = 0;
 
@@ -63,21 +71,40 @@ public class drivetest extends OpMode {
         yController = new PIDFController(whypid.Yp, whypid.Yi, whypid.Yd, whypid.Yf);
         hController = new PIDFController(hpid.Hp, hpid.Hi, hpid.Hd, hpid.Hf);
 
-        xController.setPID(xpid.Xp, xpid.Xi, xpid.Xd,xpid.Xf);
-        yController.setPID(whypid.Yp, whypid.Yi, whypid.Yd, whypid.Yf);
-        hController.setPID(hpid.Hp, hpid.Hi, hpid.Hd, hpid.Hf);
+
+        ything = GoBildaPinpointDriver.EncoderDirection.REVERSED;
+        xthing = GoBildaPinpointDriver.EncoderDirection.REVERSED;
+
+        pinpoint = hardwareMap.get(GoBildaPinpointDriver.class,"pinpoint");
+        pinpoint.setOffsets(211.38, 193.647, DistanceUnit.MM);
+        pinpoint.setEncoderDirections(ything,xthing);
+        pinpoint.resetPosAndIMU();
 
     }
 
     @Override
     public void loop() {
 
-        pose = localizer.getPose();
+//        telemetry.addLine("=========================Target=========================");
+//        telemetry.addData("target",target);
+//        telemetry.addLine("=====================Pows=========================");
+
+        xController.setPID(xpid.Xp, xpid.Xi, xpid.Xd,xpid.Xf);
+        yController.setPID(whypid.Yp, whypid.Yi, whypid.Yd, whypid.Yf);
+        hController.setPID(hpid.Hp, hpid.Hi, hpid.Hd, hpid.Hf);
+
+
+
+        pinpoint.update();
+
+        pose = new Pose2d(pinpoint.getPosX(DistanceUnit.INCH),pinpoint.getPosY(DistanceUnit.INCH), pinpoint.getHeading(AngleUnit.RADIANS));
         target = new Pose2d(targetX, targetY, Math.toRadians(targetH));
+
 
         double forwardPower = yController.getOutput(pose.position.y, target.position.y); // Left stick Y (inverted)
         double turnPower = hController.getOutput(pose.heading.toDouble(), target.heading.toDouble());;     // Right stick X
         double strafePower = xController.getOutput(pose.position.x, target.position.x);    // Left stick X
+
 
         // Apply deadzone
         forwardPower = Math.abs(forwardPower) > 0.05 ? forwardPower : 0;
@@ -91,8 +118,14 @@ public class drivetest extends OpMode {
         );
         drive.setDrivePowers(velocity);
 
-        telemetry.addData("pose",drive.localizer.getPose());
-        telemetry.addData("target",target);
+        telemetry.addData("pose",pose.position);
+        telemetry.addData("pose head",pose.heading);
+        telemetry.addLine("=====================Pows=========================");
+        telemetry.addData("powery",forwardPower);
+        telemetry.addData("powerx",strafePower);
+        telemetry.addData("powerh",turnPower);
+        telemetry.update();
+
 
     }
 }
