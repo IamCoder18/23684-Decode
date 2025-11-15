@@ -33,6 +33,10 @@ public class StupidShooter {
 		return new WindUp();
 	}
 
+	public Action Stop() {
+		return new Stop();
+	}
+
 	public Action WaitForSpike() {
 		return new WaitForSpike();
 	}
@@ -60,6 +64,15 @@ public class StupidShooter {
 		public boolean run(@NonNull TelemetryPacket telemetryPacket) {
 			updateRPM();
 			return averageRPM > needForSpeed;
+		}
+	}
+
+	public class Stop implements Action {
+		@Override
+		public boolean run(@NonNull TelemetryPacket telemetryPacket) {
+			upperShooter.setPower(0);
+			lowerShooter.setPower(0);
+			return false;
 		}
 	}
 }

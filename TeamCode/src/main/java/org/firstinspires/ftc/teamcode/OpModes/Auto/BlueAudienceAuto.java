@@ -92,11 +92,6 @@ public class BlueAudienceAuto extends OpMode {
 		telemetry.addData("Trajectory", "Tab2 angle: 270°");
 		telemetry.update();
 
-		transferRight = hardwareMap.get(CRServo.class, "transferRight");
-		transferLeft = hardwareMap.get(CRServo.class, "transferLeft");
-
-		transferRight.setDirection(DcMotorSimple.Direction.REVERSE);
-		telemetry.addData("Subsystem Init", "Transfer servos configured");
 		telemetry.addData("Status", "Initialization complete");
 		telemetry.update();
 	}
@@ -135,7 +130,10 @@ public class BlueAudienceAuto extends OpMode {
 								transfer.intakeDoorForward()
 						),
 						shooter.WaitForSpike(),
-						tab2.build()
+						tab2.build(),
+						spindexer.setDirectPower(0),
+						transfer.intakeDoorStop(),
+						shooter.Stop()
 				)
 		);
 
