@@ -101,7 +101,7 @@ public class Test_ShootBall extends OpMode {
 		scheduler.update();
 
 		// Check if action is still running
-		if (actionRunning && !scheduler.hasRunningActions()) {
+		if (actionRunning && scheduler.isSchedulerEmpty()) {
 			actionRunning = false;
 			telemetry.addData("Action", "ShootBall sequence completed");
 		}

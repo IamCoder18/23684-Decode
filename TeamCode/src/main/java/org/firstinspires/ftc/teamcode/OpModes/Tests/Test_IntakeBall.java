@@ -90,7 +90,7 @@ public class Test_IntakeBall extends OpMode {
 		scheduler.update();
 
 		// Check if action is still running
-		if (actionRunning && !scheduler.hasRunningActions()) {
+		if (actionRunning && scheduler.isSchedulerEmpty()) {
 			actionRunning = false;
 			telemetry.addData("Action", "IntakeBall sequence completed");
 		}

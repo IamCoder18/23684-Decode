@@ -1,7 +1,6 @@
 package org.firstinspires.ftc.teamcode.Utilities;
 
 import com.acmerobotics.dashboard.FtcDashboard;
-import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
 
@@ -107,11 +106,11 @@ public class ActionScheduler {
     }
 
     /**
-     * Check if any actions are currently running.
+     * Check if the action scheduler is empty.
      *
-     * @return true if there are running actions, false otherwise
+     * @return false if there are running actions, true otherwise
      */
-    public boolean hasRunningActions() {
-        return !runningActions.isEmpty();
+    public boolean isSchedulerEmpty() {
+        return runningActions.isEmpty();
     }
 }

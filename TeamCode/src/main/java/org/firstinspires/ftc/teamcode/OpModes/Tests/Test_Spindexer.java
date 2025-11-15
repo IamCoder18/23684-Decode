@@ -111,12 +111,12 @@ public class Test_Spindexer extends OpMode {
 //		scheduler.schedule(spindexer.update());
 
 		// Check for completion
-		if (isRunningZero && !scheduler.hasRunningActions()) {
+		if (isRunningZero && scheduler.isSchedulerEmpty()) {
 			isRunningZero = false;
 			telemetry.addData("Action", "Zero Sequence Complete!");
 		}
 
-		if (isMovingToPosition && !scheduler.hasRunningActions()) {
+		if (isMovingToPosition && scheduler.isSchedulerEmpty()) {
 			isMovingToPosition = false;
 			telemetry.addData("Action", "Position reached!");
 		}

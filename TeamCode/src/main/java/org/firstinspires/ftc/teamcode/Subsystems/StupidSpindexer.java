@@ -2,14 +2,9 @@ package org.firstinspires.ftc.teamcode.Subsystems;
 
 import androidx.annotation.NonNull;
 
-import com.acmerobotics.dashboard.FtcDashboard;
-import com.acmerobotics.dashboard.config.Config;
-import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.InstantAction;
-import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -19,7 +14,7 @@ import com.qualcomm.robotcore.hardware.TouchSensor;
 import org.firstinspires.ftc.teamcode.Utilities.PIDFController;
 
 
-public class stupidSpindexer {
+public class StupidSpindexer {
 
         CRServo spindexer;
         DcMotor spindexerEncoder;
@@ -39,7 +34,7 @@ public class stupidSpindexer {
 
 
 
-        public stupidSpindexer(HardwareMap hardwareMap) {
+        public StupidSpindexer(HardwareMap hardwareMap) {
             spindexer = hardwareMap.get(CRServo.class, "spindexer");
 
             spindexerEncoder = hardwareMap.get(DcMotorEx.class, "frontRight"); //TODO: check this
