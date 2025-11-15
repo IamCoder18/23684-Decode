@@ -67,6 +67,11 @@ public class BlueAudienceAuto extends OpMode {
 		telemetry.update();
 
 		intake = Intake.getInstance();
+
+		transferLeft = hardwareMap.get(CRServo.class, "transferLeft");
+		transferRight = hardwareMap.get(CRServo.class, "transferRight");
+		transferRight.setDirection(DcMotorSimple.Direction.REVERSE);
+
 		telemetry.addData("Subsystem Init", "Intake initialized");
 		telemetry.update();
 
@@ -80,7 +85,7 @@ public class BlueAudienceAuto extends OpMode {
 		telemetry.addData("Subsystem Init", "ActionScheduler initialized");
 		telemetry.update();
 
-		tab1 = drive.actionBuilder(new Pose2d(60, -9, Math.toRadians(0)))
+		tab1 = drive.actionBuilder(new Pose2d(54, -9, Math.toRadians(0)))
 				.strafeToLinearHeading(new Vector2d(shootingX, shootingY), AngleOfShot(shootingX, shootingY));
 		telemetry.addData("Trajectory", "Tab1 created - Target: (%.1f, %.1f)", shootingX, shootingY);
 		telemetry.addData("Trajectory", "Tab1 angle: %.2f°", Math.toDegrees(AngleOfShot(shootingX, shootingY)));
@@ -129,11 +134,11 @@ public class BlueAudienceAuto extends OpMode {
 								spindexer.setDirectPower(0.8),
 								transfer.intakeDoorForward()
 						),
-						shooter.WaitForSpike(),
-						tab2.build(),
-						spindexer.setDirectPower(0),
-						transfer.intakeDoorStop(),
-						shooter.Stop()
+						shooter.WaitForSpike()
+//						tab2.build()
+//						spindexer.setDirectPower(0),
+//						transfer.intakeDoorStop(),
+//						shooter.Stop()
 				)
 		);
 
@@ -149,7 +154,7 @@ public class BlueAudienceAuto extends OpMode {
 		drive.updatePoseEstimate();
 
 
-		if (shooter.averageRPM > Shooter.AUDIENCE_RPM){
+		if (shooter.averageRPM > (Shooter.AUDIENCE_RPM - 400)){
 			telemetry.addLine("Transfer");
 			transferLeft.setPower(1);
 			transferRight.setPower(1);
