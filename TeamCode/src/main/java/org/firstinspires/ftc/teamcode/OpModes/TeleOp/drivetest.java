@@ -20,120 +20,107 @@ import org.firstinspires.ftc.teamcode.Utilities.PIDFController;
 @TeleOp
 public class drivetest extends OpMode {
 
-    MecanumDrive drive;
+	public static double targetX = 0, targetY = 0, targetH = 0;
+	public static X xpid = new X();
+	public static Y whypid = new Y();
+	public static H hpid = new H();
+	MecanumDrive drive;
+	Pose2d pose;
+	Pose2d target;
+	Localizer localizer;
+	GoBildaPinpointDriver pinpoint;
+	GoBildaPinpointDriver.EncoderDirection ything, xthing;
+	PIDFController xController;
+	PIDFController yController;
+	PIDFController hController;
 
-    Pose2d pose;
-    Pose2d target;
+	public double normalizeAngle(double angle) {
+		while (angle > Math.PI) angle -= 2 * Math.PI;
+		while (angle < -Math.PI) angle += 2 * Math.PI;
+		return angle;
+	}
 
-    Localizer localizer;
+	@Override
+	public void init() {
+		pose = new Pose2d(0, 0, 0);
+		drive = new MecanumDrive(hardwareMap, pose);
+		target = new Pose2d(targetX, targetY, targetH);
 
+		localizer = new PinpointLocalizer(hardwareMap, MecanumDrive.PARAMS.inPerTick, pose);
 
-    GoBildaPinpointDriver pinpoint;
-    GoBildaPinpointDriver.EncoderDirection ything, xthing;
-
-
-    public static double targetX = 0, targetY = 0, targetH = 0;
-
-
-
-    public static class  X{
-        public static double Xp = 0, Xi = 0, Xd = 0 , Xf = 0;
-
-    }
-    public static X xpid = new X();
-
-    public static class  Y{
-        public static  double Yp = 0, Yi = 0, Yd = 0, Yf = 0;
-
-    }
-    public static Y whypid = new Y();
-    public static class  H{
-        public static double Hp = 0, Hi = 0, Hd = 0, Hf = 0;
-    }
-    public static H hpid = new H();
-
-
-
-    PIDFController xController;
-    PIDFController yController;
-    PIDFController hController;
+		xController = new PIDFController(X.Xp, X.Xi, X.Xd, X.Xf);
+		yController = new PIDFController(Y.Yp, Y.Yi, Y.Yd, Y.Yf);
+		hController = new PIDFController(H.Hp, H.Hi, H.Hd, H.Hf);
 
 
-    public double normalizeAngle(double angle) {
-        while (angle > Math.PI) angle -= 2 * Math.PI;
-        while (angle < -Math.PI) angle += 2 * Math.PI;
-        return angle;
-    }
+		ything = GoBildaPinpointDriver.EncoderDirection.REVERSED;
+		xthing = GoBildaPinpointDriver.EncoderDirection.REVERSED;
 
+		pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
+		pinpoint.setOffsets(7, -60.10603, DistanceUnit.MM);
+		pinpoint.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
+		pinpoint.setEncoderDirections(ything, xthing);
+		pinpoint.resetPosAndIMU();
 
-    @Override
-    public void init() {
-        pose = new Pose2d(0, 0, 0);
-        drive = new MecanumDrive(hardwareMap, pose);
-        target = new Pose2d(targetX, targetY, targetH);
+	}
 
-        localizer = new PinpointLocalizer(hardwareMap, drive.PARAMS.inPerTick,pose);
-
-        xController = new PIDFController(xpid.Xp, xpid.Xi, xpid.Xd, xpid.Xf);
-        yController = new PIDFController(whypid.Yp, whypid.Yi, whypid.Yd, whypid.Yf);
-        hController = new PIDFController(hpid.Hp, hpid.Hi, hpid.Hd, hpid.Hf);
-
-
-        ything = GoBildaPinpointDriver.EncoderDirection.REVERSED;
-        xthing = GoBildaPinpointDriver.EncoderDirection.REVERSED;
-
-        pinpoint = hardwareMap.get(GoBildaPinpointDriver.class,"pinpoint");
-        pinpoint.setOffsets(7, -60.10603, DistanceUnit.MM);
-        pinpoint.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
-        pinpoint.setEncoderDirections(ything,xthing);
-        pinpoint.resetPosAndIMU();
-
-    }
-
-    @Override
-    public void loop() {
+	@Override
+	public void loop() {
 
 //        telemetry.addLine("=========================Target=========================");
 //        telemetry.addData("target",target);
 //        telemetry.addLine("=====================Pows=========================");
 
-        xController.setPID(xpid.Xp, xpid.Xi, xpid.Xd,xpid.Xf);
-        yController.setPID(whypid.Yp, whypid.Yi, whypid.Yd, whypid.Yf);
-        hController.setPID(hpid.Hp, hpid.Hi, hpid.Hd, hpid.Hf);
+		xController.setPID(X.Xp, X.Xi, X.Xd, X.Xf);
+		yController.setPID(Y.Yp, Y.Yi, Y.Yd, Y.Yf);
+		hController.setPID(H.Hp, H.Hi, H.Hd, H.Hf);
 
 
+		pinpoint.update();
 
-        pinpoint.update();
-
-        pose = new Pose2d(-pinpoint.getPosY(DistanceUnit.INCH),pinpoint.getPosX(DistanceUnit.INCH), pinpoint.getHeading(AngleUnit.RADIANS));
-        target = new Pose2d(targetX, targetY, Math.toRadians(targetH));
-
-
-        double forwardPower = yController.getOutput(pose.position.y, target.position.y); // Left stick Y (inverted)
-        double turnPower = hController.getOutput(normalizeAngle(pose.heading.toDouble()), normalizeAngle(target.heading.toDouble()));     // Right stick X
-        double strafePower = xController.getOutput(pose.position.x, target.position.x);    // Left stick X
+		pose = new Pose2d(-pinpoint.getPosY(DistanceUnit.INCH), pinpoint.getPosX(DistanceUnit.INCH), pinpoint.getHeading(AngleUnit.RADIANS));
+		target = new Pose2d(targetX, targetY, Math.toRadians(targetH));
 
 
-        // Apply deadzone
-        forwardPower = Math.abs(forwardPower) > 0.05 ? forwardPower : 0;
-        strafePower = Math.abs(strafePower) > 0.05 ? strafePower : 0;
-        turnPower = Math.abs(turnPower) > 0.05 ? turnPower : 0;
-
-        // Create velocity command
-        PoseVelocity2d velocity = new PoseVelocity2d(
-                new Vector2d(forwardPower, strafePower),
-                turnPower
-        );
-        drive.setDrivePowers(velocity);
-
-        telemetry.addData("pose",pose.position);
-        telemetry.addData("pose head",Math.toDegrees(pose.heading.toDouble()));
-        telemetry.addLine("=====================Pows=========================");
-        telemetry.addData("powery",forwardPower);
-        telemetry.addData("powerx",strafePower);
-        telemetry.addData("powerh",turnPower);
-        telemetry.update();
+		double forwardPower = yController.getOutput(pose.position.y, target.position.y); // Left stick Y (inverted)
+		double turnPower = hController.getOutput(normalizeAngle(pose.heading.toDouble()), normalizeAngle(target.heading.toDouble()));     // Right stick X
+		double strafePower = xController.getOutput(pose.position.x, target.position.x);    // Left stick X
 
 
-    }
+		// Apply deadzone
+		forwardPower = Math.abs(forwardPower) > 0.05 ? forwardPower : 0;
+		strafePower = Math.abs(strafePower) > 0.05 ? strafePower : 0;
+		turnPower = Math.abs(turnPower) > 0.05 ? turnPower : 0;
+
+		// Create velocity command
+		PoseVelocity2d velocity = new PoseVelocity2d(
+				new Vector2d(forwardPower, strafePower),
+				turnPower
+		);
+		drive.setDrivePowers(velocity);
+
+		telemetry.addData("pose", pose.position);
+		telemetry.addData("pose head", Math.toDegrees(pose.heading.toDouble()));
+		telemetry.addLine("=====================Pows=========================");
+		telemetry.addData("powery", forwardPower);
+		telemetry.addData("powerx", strafePower);
+		telemetry.addData("powerh", turnPower);
+		telemetry.update();
+
+
+	}
+
+	public static class X {
+		public static double Xp = 0, Xi = 0, Xd = 0, Xf = 0;
+
+	}
+
+	public static class Y {
+		public static double Yp = 0, Yi = 0, Yd = 0, Yf = 0;
+
+	}
+
+	public static class H {
+		public static double Hp = 0, Hi = 0, Hd = 0, Hf = 0;
+	}
 }

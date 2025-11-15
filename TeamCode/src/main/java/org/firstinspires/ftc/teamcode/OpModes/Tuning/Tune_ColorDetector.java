@@ -10,16 +10,16 @@ import org.firstinspires.ftc.teamcode.Utilities.ActionScheduler;
 
 /**
  * Tuning OpMode for the ColorDetector Subsystem
- * 
+ * <p>
  * Purpose: Calibrate hue and saturation thresholds for accurate ball color detection
- * 
+ * <p>
  * FTC Dashboard Constants:
  * - GREEN_HUE_MIN: [0, 360] (default: 100)
  * - GREEN_HUE_MAX: [0, 360] (default: 140)
  * - PURPLE_HUE_MIN: [0, 360] (default: 250)
  * - PURPLE_HUE_MAX: [0, 360] (default: 290)
  * - MIN_SATURATION: [0.0, 1.0] (default: 0.4)
- * 
+ * <p>
  * Controls:
  * - DPAD UP/DOWN: Adjust GREEN_HUE_MIN (±1)
  * - DPAD RIGHT/LEFT: Adjust GREEN_HUE_MAX (±1)
@@ -27,13 +27,13 @@ import org.firstinspires.ftc.teamcode.Utilities.ActionScheduler;
  * - LT/RT: Adjust PURPLE_HUE_MAX (±1)
  * - A/Y: Adjust MIN_SATURATION (±0.05)
  * - X: Reset to defaults
- * 
+ * <p>
  * Expected Behavior:
  * - Real-time RGB and HSV value display
  * - Color detection status feedback
  * - Threshold range validation
  * - Visual confirmation of color changes
- * 
+ * <p>
  * Notes:
  * - Place test balls in front of sensors for calibration
  * - Values update in real-time through FTC Dashboard
@@ -43,18 +43,16 @@ import org.firstinspires.ftc.teamcode.Utilities.ActionScheduler;
 @TeleOp(name = "Tune_ColorDetector", group = "Tuning")
 public class Tune_ColorDetector extends OpMode {
 
-	private ColorDetector colorDetector;
-	private ActionScheduler scheduler;
-	
 	// Store default values for reset functionality
 	private static final double DEFAULT_GREEN_HUE_MIN = 100;
 	private static final double DEFAULT_GREEN_HUE_MAX = 140;
 	private static final double DEFAULT_PURPLE_HUE_MIN = 250;
 	private static final double DEFAULT_PURPLE_HUE_MAX = 290;
 	private static final double DEFAULT_MIN_SATURATION = 0.4;
-	
 	private static final double HUE_STEP = 1.0;
 	private static final double SATURATION_STEP = 0.05;
+	private ColorDetector colorDetector;
+	private ActionScheduler scheduler;
 
 	@Override
 	public void init() {
@@ -192,12 +190,12 @@ public class Tune_ColorDetector extends OpMode {
 
 		// Current thresholds
 		telemetry.addData("", "=== GREEN THRESHOLDS ===");
-		telemetry.addData("GREEN_HUE_MIN", String.format("%d (DPAD ↑↓)", (int)ColorDetector.GREEN_HUE_MIN));
-		telemetry.addData("GREEN_HUE_MAX", String.format("%d (DPAD ←→)", (int)ColorDetector.GREEN_HUE_MAX));
+		telemetry.addData("GREEN_HUE_MIN", String.format("%d (DPAD ↑↓)", (int) ColorDetector.GREEN_HUE_MIN));
+		telemetry.addData("GREEN_HUE_MAX", String.format("%d (DPAD ←→)", (int) ColorDetector.GREEN_HUE_MAX));
 
 		telemetry.addData("", "=== PURPLE THRESHOLDS ===");
-		telemetry.addData("PURPLE_HUE_MIN", String.format("%d (LB/RB)", (int)ColorDetector.PURPLE_HUE_MIN));
-		telemetry.addData("PURPLE_HUE_MAX", String.format("%d (LT/RT)", (int)ColorDetector.PURPLE_HUE_MAX));
+		telemetry.addData("PURPLE_HUE_MIN", String.format("%d (LB/RB)", (int) ColorDetector.PURPLE_HUE_MIN));
+		telemetry.addData("PURPLE_HUE_MAX", String.format("%d (LT/RT)", (int) ColorDetector.PURPLE_HUE_MAX));
 
 		telemetry.addData("", "=== SATURATION ===");
 		telemetry.addData("MIN_SATURATION", String.format("%.2f (A/Y)", ColorDetector.MIN_SATURATION));
@@ -205,7 +203,7 @@ public class Tune_ColorDetector extends OpMode {
 		// Controls reminder
 		telemetry.addData("", "=== CONTROLS ===");
 		telemetry.addData("X: Reset to defaults", "");
-		
+
 		// Range validation
 		String greenRangeStatus = (ColorDetector.GREEN_HUE_MIN < ColorDetector.GREEN_HUE_MAX) ? "✓ VALID" : "✗ INVALID";
 		String purpleRangeStatus = (ColorDetector.PURPLE_HUE_MIN < ColorDetector.PURPLE_HUE_MAX) ? "✓ VALID" : "✗ INVALID";

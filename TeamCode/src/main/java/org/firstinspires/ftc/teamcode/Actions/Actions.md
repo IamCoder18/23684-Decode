@@ -1,6 +1,8 @@
 # Actions Documentation
 
-Actions are Roadrunner-compatible objects that implement complex behaviors by composing subsystem methods. All actions implement `Action` interface and are scheduled through Roadrunner's action system.
+Actions are Roadrunner-compatible objects that implement complex behaviors by composing subsystem
+methods. All actions implement `Action` interface and are scheduled through Roadrunner's action
+system.
 
 ## What is an Action?
 
@@ -17,7 +19,8 @@ public interface Action {
 
 ## BallColor Enum
 
-Enumeration of ball colors that can be detected in the game. Used to track which balls are in each slot of the spindexer.
+Enumeration of ball colors that can be detected in the game. Used to track which balls are in each
+slot of the spindexer.
 
 ```java
 public enum BallColor {
@@ -33,9 +36,11 @@ public enum BallColor {
 
 ### IntakeBall
 
-Full intake sequence for collecting a ball into the next available slot. Performs a multi-state sequence with automatic slot detection and color identification.
+Full intake sequence for collecting a ball into the next available slot. Performs a multi-state
+sequence with automatic slot detection and color identification.
 
 **Usage:**
+
 ```java
 Actions.runBlocking(Spindexer.getInstance().intakeBall());
 ```
@@ -56,7 +61,8 @@ Actions.runBlocking(Spindexer.getInstance().intakeBall());
 - Finds next available empty slot automatically
 - Handles case where all slots are full (stops gracefully)
 
-**Javadoc:** See `IntakeBall` class for complete method documentation, including `findNextFreeSlot()` and helper methods.
+**Javadoc:** See `IntakeBall` class for complete method documentation, including
+`findNextFreeSlot()` and helper methods.
 
 **State Machine:**
 
@@ -78,9 +84,12 @@ DONE
 
 ### ShootBall
 
-Action that aligns and shoots a ball from the spindexer. Determines which slot contains the target ball (or closest ball if no color preference), calculates the rotation needed, and returns true when aligned within tolerance.
+Action that aligns and shoots a ball from the spindexer. Determines which slot contains the target
+ball (or closest ball if no color preference), calculates the rotation needed, and returns true when
+aligned within tolerance.
 
 **Usage:**
+
 ```java
 // Shoot any available ball
 Actions.runBlocking(new ShootBall());
@@ -109,7 +118,8 @@ Actions.runBlocking(new ShootBall(BallColor.GREEN));
 - Supports color preference for selective shooting
 - Optional color filtering for targeted shooting
 
-**Javadoc:** See `ShootBall` class for complete method documentation, including `findTargetSlot()` and helper methods.
+**Javadoc:** See `ShootBall` class for complete method documentation, including `findTargetSlot()`
+and helper methods.
 
 **Constants:**
 
@@ -164,7 +174,8 @@ Actions.runBlocking(
 
 ## Subsystem Actions
 
-All action methods are documented with JavaDoc comments. See the source files for complete documentation.
+All action methods are documented with JavaDoc comments. See the source files for complete
+documentation.
 
 ### ColorDetector
 
@@ -180,44 +191,55 @@ All action methods are documented with JavaDoc comments. See the source files fo
 ### Transfer
 
 **`Action transferForward()`** - Move balls forward (returns immediately)
+
 - **Javadoc:** Documented in source file
 
 **`Action transferBackward()`** - Move balls backward (returns immediately)
+
 - **Javadoc:** Documented in source file
 
 **`Action transferStop()`** - Stop transfer (returns immediately)
+
 - **Javadoc:** Documented in source file
 
 **`Action intakeDoorForward()`** - Open intake door (returns immediately)
+
 - **Javadoc:** Documented in source file
 
 **`Action intakeDoorBackward()`** - Close intake door (returns immediately)
+
 - **Javadoc:** Documented in source file
 
 **`Action intakeDoorStop()`** - Stop intake door (returns immediately)
+
 - **Javadoc:** Documented in source file
 
 ### Intake
 
 **`Action in()`** - Spin intake motor inward (returns immediately)
+
 - Sets intake motor to forward power
 - **Javadoc:** Documented in source file
 
 **`Action out()`** - Spin intake motor outward (returns immediately)
+
 - Sets intake motor to reverse power
 - **Javadoc:** Documented in source file
 
 **`Action stop()`** - Stop intake motor (returns immediately)
+
 - Sets intake motor to zero power
 - **Javadoc:** Documented in source file
 
 ### Shooter
 
 **`Action run()`** - Start both shooter motors at full power (returns immediately)
+
 - Applies configured offset adjustments for speed compensation
 - **Javadoc:** Documented in source file
 
 **`Action stop()`** - Stop both shooter motors (returns immediately)
+
 - **Javadoc:** Documented in source file
 
 ### Spindexer
@@ -256,9 +278,9 @@ Without this, spindexer cannot hold position and other periodic updates fail.
 ### Blocking vs Non-Blocking
 
 - **Blocking Actions** return `true` when complete, allowing sequential chaining
-  - `zero()`, `intakeBall()`, `toPosition()`, `ShootBall`, `IntakeBall`
+    - `zero()`, `intakeBall()`, `toPosition()`, `ShootBall`, `IntakeBall`
 - **Non-Blocking Actions** return `true` immediately
-  - Simple subsystem actions like `in()`, `out()`, `run()`, `stop()`
+    - Simple subsystem actions like `in()`, `out()`, `run()`, `stop()`
 
 ### Custom Action Implementation
 

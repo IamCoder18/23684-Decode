@@ -11,11 +11,12 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
+import org.firstinspires.ftc.teamcode.LifecycleManagementUtilities.HardwareInitializer;
 import org.firstinspires.ftc.teamcode.Roadrunner.MecanumDrive;
-import org.firstinspires.ftc.teamcode.Subsystems.StupidIntake;
+import org.firstinspires.ftc.teamcode.Subsystems.Intake;
+import org.firstinspires.ftc.teamcode.Subsystems.Spindexer;
 import org.firstinspires.ftc.teamcode.Subsystems.StupidShooter;
-import org.firstinspires.ftc.teamcode.Subsystems.StupidTransfer;
-import org.firstinspires.ftc.teamcode.Subsystems.StupidSpindexer;
+import org.firstinspires.ftc.teamcode.Subsystems.Transfer;
 import org.firstinspires.ftc.teamcode.Utilities.ActionScheduler;
 
 
@@ -24,12 +25,11 @@ public class BlueAudienceAuto extends OpMode {
 	public static double shootingX = 57, shootingY = -23; // this is the position used shooting
 	public static double Goalx = -60, Goaly = -60; // this is the position of the goal
 	public double topRpM = 2000;
-	StupidSpindexer spindexer;
+	Spindexer spindexer;
 	StupidShooter shooter;
 	Pose2d beginPose;
-	Pose2d NextPose;
-	StupidTransfer transfer;
-	StupidIntake intake;
+	Transfer transfer;
+	Intake intake;
 	CRServo transferRight;
 	CRServo transferLeft;
 	TelemetryPacket telemetryPacket;
@@ -51,19 +51,21 @@ public class BlueAudienceAuto extends OpMode {
 		telemetry.addData("Status", "Initializing subsystems...");
 		telemetry.update();
 
+		HardwareInitializer.initialize(hardwareMap);
+
 		shooter = new StupidShooter(hardwareMap);
-		telemetry.addData("Subsystem Init", "Shooter initialized");
+		telemetry.addData("Subsystem Init", "StupidShooter initialized");
 		telemetry.update();
 
-		spindexer = new StupidSpindexer(hardwareMap);
+		spindexer = Spindexer.getInstance();
 		telemetry.addData("Subsystem Init", "Spindexer initialized");
 		telemetry.update();
 
-		transfer = new StupidTransfer(hardwareMap);
+		transfer = Transfer.getInstance();
 		telemetry.addData("Subsystem Init", "Transfer initialized");
 		telemetry.update();
 
-		intake = new StupidIntake(hardwareMap);
+		intake = Intake.getInstance();
 		telemetry.addData("Subsystem Init", "Intake initialized");
 		telemetry.update();
 
@@ -109,30 +111,30 @@ public class BlueAudienceAuto extends OpMode {
 
 		actionScheduler.schedule(
 				new SequentialAction(
-					new ParallelAction(
-							tab1.build(),
-							shooter.WindUp()
-					),
-					new ParallelAction(
-							spindexer.MindlessSpindexer(),
-							intake.intakeDoorIn()
-					),
-					shooter.WaitForSpike(),
-					shooter.WindUp(),
-					new ParallelAction(
-							spindexer.MindlessSpindexer(),
-							intake.intakeDoorIn()
-					),
-					shooter.WaitForSpike(),
-					new ParallelAction(
-							shooter.WindUp()
-					),
-					new ParallelAction(
-							spindexer.MindlessSpindexer(),
-							intake.intakeDoorIn()
-					),
-					shooter.WaitForSpike(),
-					tab2.build()
+						new ParallelAction(
+								tab1.build(),
+								shooter.WindUp()
+						),
+						new ParallelAction(
+								spindexer.setDirectPower(0.8),
+								transfer.intakeDoorForward()
+						),
+						shooter.WaitForSpike(),
+						shooter.WindUp(),
+						new ParallelAction(
+								spindexer.setDirectPower(0.8),
+								transfer.intakeDoorForward()
+						),
+						shooter.WaitForSpike(),
+						new ParallelAction(
+								shooter.WindUp()
+						),
+						new ParallelAction(
+								spindexer.setDirectPower(0.8),
+								transfer.intakeDoorForward()
+						),
+						shooter.WaitForSpike(),
+						tab2.build()
 				)
 		);
 
