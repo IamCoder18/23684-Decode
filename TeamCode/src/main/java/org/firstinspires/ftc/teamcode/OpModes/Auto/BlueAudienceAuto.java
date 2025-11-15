@@ -14,6 +14,7 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import org.firstinspires.ftc.teamcode.LifecycleManagementUtilities.HardwareInitializer;
 import org.firstinspires.ftc.teamcode.Roadrunner.MecanumDrive;
 import org.firstinspires.ftc.teamcode.Subsystems.Intake;
+import org.firstinspires.ftc.teamcode.Subsystems.Shooter;
 import org.firstinspires.ftc.teamcode.Subsystems.Spindexer;
 import org.firstinspires.ftc.teamcode.Subsystems.StupidShooter;
 import org.firstinspires.ftc.teamcode.Subsystems.Transfer;
@@ -24,7 +25,7 @@ import org.firstinspires.ftc.teamcode.Utilities.ActionScheduler;
 public class BlueAudienceAuto extends OpMode {
 	public static double shootingX = 57, shootingY = -23; // this is the position used shooting
 	public static double Goalx = -60, Goaly = -60; // this is the position of the goal
-	public double topRpM = 2000;
+//	public double topRpM = 2000;
 	Spindexer spindexer;
 	StupidShooter shooter;
 	Pose2d beginPose;
@@ -146,7 +147,19 @@ public class BlueAudienceAuto extends OpMode {
 	public void loop() {
 		// Update action scheduler
 		actionScheduler.update();
+		shooter.updateRPM();
 		drive.updatePoseEstimate();
+
+
+		if (shooter.averageRPM > Shooter.AUDIENCE_RPM){
+			telemetry.addLine("Transfer");
+			transferLeft.setPower(1);
+			transferRight.setPower(1);
+		}else{
+			telemetry.addLine("Transfer stop");
+			transferLeft.setPower(0);
+			transferRight.setPower(0);
+		}
 
 		// Telemetry - Drive position
 		Pose2d currentPose = drive.localizer.getPose();
@@ -160,7 +173,7 @@ public class BlueAudienceAuto extends OpMode {
 
 		// Telemetry - Shooter status
 		telemetry.addData("Shooter RPM", "%.0f", shooter.averageRPM);
-		telemetry.addData("Shooter Target RPM", "%.0f", topRpM);
+		telemetry.addData("Shooter Target RPM", "%.0f", Shooter.AUDIENCE_RPM);
 
 		telemetry.update();
 	}
