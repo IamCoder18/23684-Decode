@@ -52,6 +52,7 @@ public class MainTeleOp extends OpMode {
 	protected boolean spindexerUpCrossed = false;
 	protected boolean spindexerMidCrossed = false;
 	protected boolean spindexerDownCrossed = false;
+	protected boolean transferAboveRPM = false;
 
 	@Override
 	public void init() {
@@ -184,13 +185,23 @@ public class MainTeleOp extends OpMode {
 			rightTriggerPressed = false;
 		}
 
-		// X Button: Transfer forward when pressed, backward when released
-		if (rpm >= topRPM && !xButtonPressed || gamepad2.x) {
+		// X Button: Override transfer - manual control
+		if (gamepad2.x && !xButtonPressed) {
 			scheduler.schedule(transfer.transferForward());
 			xButtonPressed = true;
-		} else if (rpm < topRPM && (xButtonPressed && gamepad2.x)) {
-			scheduler.schedule(transfer.transferBackward());
+		} else if (!gamepad2.x && xButtonPressed) {
 			xButtonPressed = false;
+		}
+		
+		// Automatic transfer based on RPM (only if X button not held)
+		if (!gamepad2.x) {
+			boolean isAboveRPM = rpm >= topRPM;
+			if (isAboveRPM && !transferAboveRPM) {
+				scheduler.schedule(transfer.transferForward());
+			} else if (!isAboveRPM && transferAboveRPM) {
+				scheduler.schedule(transfer.transferBackward());
+			}
+			transferAboveRPM = isAboveRPM;
 		}
 
 		// B Button: Intake door backward and intake out when pressed, forward and intake in when released

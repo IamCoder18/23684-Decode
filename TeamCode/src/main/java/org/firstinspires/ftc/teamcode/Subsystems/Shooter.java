@@ -21,7 +21,7 @@ public class Shooter {
 	 * The power level for the "off" or "idle" state of the bang-bang controller. This is the
 	 * minimum power applied when the RPM is above the target range to keep it spinning.
 	 */
-	public static double BANG_BANG_LOW_POWER = 0.75;
+	public static double BANG_BANG_LOW_POWER = 0.55;
 	/**
 	 * The power level to completely stop the motors.
 	 */
@@ -32,7 +32,7 @@ public class Shooter {
 	 * The tolerance for the bang-bang controller. The shooter is considered "at target speed"
 	 * if the RPM is within `targetRPM +/- RPM_TOLERANCE`. A value of 100 is a good starting point.
 	 */
-	public static double RPM_TOLERANCE = 100.0;
+	public static double RPM_TOLERANCE = 1.0;
 	/**
 	 * The number of encoder ticks per single revolution of the shooter motor's output shaft.
 	 */
