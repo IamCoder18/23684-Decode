@@ -189,6 +189,7 @@ public class MainTeleOp extends OpMode {
 			scheduler.schedule(transfer.transferForward());
 			xButtonPressed = true;
 		} else if (!gamepad2.x && xButtonPressed) {
+			scheduler.schedule(transfer.transferBackward());
 			xButtonPressed = false;
 		}
 
