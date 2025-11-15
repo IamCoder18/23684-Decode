@@ -9,18 +9,17 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 
 @Config
 public class Shooter {
-
 	// --- Motor Power Constants ---
 	/**
 	 * The power level for the "on" state of the bang-bang controller. This is the power
 	 * used when the shooter's RPM is below the target range.
 	 */
-	public static double BANG_BANG_HIGH_POWER = 1.0;
+	public static double BANG_BANG_HIGH_POWER = 0.9;
 	/**
 	 * The power level for the "off" or "idle" state of the bang-bang controller. This is the
 	 * minimum power applied when the RPM is above the target range to keep it spinning.
 	 */
-	public static double BANG_BANG_LOW_POWER = 0.9;
+	public static double BANG_BANG_LOW_POWER = 0.75;
 	/**
 	 * The power level to completely stop the motors.
 	 */
