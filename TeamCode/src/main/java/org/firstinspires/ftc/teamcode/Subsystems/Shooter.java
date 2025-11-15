@@ -111,44 +111,60 @@ public class Shooter {
 	}
 
 	/**
-	 * Returns an Action that runs the shooter motors to maintain a target RPM using a bang-bang controller.
+	 * Returns an Action that runs the shooter motors to maintain a target RPM using separate bang-bang controllers.
+	 * Each motor is controlled independently based on its own RPM feedback.
 	 * This action must be run continuously and will maintain the target speed until cancelled.
 	 *
 	 * @param targetRPM The desired revolutions per minute for the shooter.
-	 * @return Action that runs the shooter with a bang-bang controller.
+	 * @return Action that runs the shooter with independent bang-bang controllers.
 	 */
 	public Action run(double targetRPM) {
 		return new Action() {
-			private boolean highPowerActive = true; // Start by powering up to reach the target.
+			private boolean upperHighPowerActive = true; // Start by powering up to reach the target.
+			private boolean lowerHighPowerActive = true; // Start by powering up to reach the target.
 
 			@Override
 			public boolean run(@NonNull TelemetryPacket packet) {
 				// First, get the latest RPM reading. This is the "feedback" part of the loop.
 				updateRPM();
 
-				// --- Bang-Bang Controller Logic ---
+				// --- Upper Motor Bang-Bang Controller Logic ---
 				// If RPM is too low, activate high power mode.
-				if (averageRPM < targetRPM - RPM_TOLERANCE) {
-					highPowerActive = true;
+				if (upperRPM < targetRPM - RPM_TOLERANCE) {
+					upperHighPowerActive = true;
 				}
 				// If RPM is too high, switch to low power (idle) mode.
-				else if (averageRPM > targetRPM + RPM_TOLERANCE) {
-					highPowerActive = false;
+				else if (upperRPM > targetRPM + RPM_TOLERANCE) {
+					upperHighPowerActive = false;
 				}
-				// If inside the tolerance band, the state (highPowerActive) does not change.
+				// If inside the tolerance band, the state does not change.
 				// This prevents the motor from rapidly switching on/off (chattering).
 
-				// Set power based on the controller's state.
-				// The power will never be negative as both constants are positive.
-				double power = highPowerActive ? BANG_BANG_HIGH_POWER : BANG_BANG_LOW_POWER;
+				// --- Lower Motor Bang-Bang Controller Logic ---
+				// If RPM is too low, activate high power mode.
+				if (lowerRPM < targetRPM - RPM_TOLERANCE) {
+					lowerHighPowerActive = true;
+				}
+				// If RPM is too high, switch to low power (idle) mode.
+				else if (lowerRPM > targetRPM + RPM_TOLERANCE) {
+					lowerHighPowerActive = false;
+				}
+				// If inside the tolerance band, the state does not change.
 
-				upperShooter.setPower(power + UPPER_OFFSET);
-				lowerShooter.setPower(power + LOWER_OFFSET);
+				// Set power for each motor based on its controller's state.
+				double upperPower = upperHighPowerActive ? BANG_BANG_HIGH_POWER : BANG_BANG_LOW_POWER;
+				double lowerPower = lowerHighPowerActive ? BANG_BANG_HIGH_POWER : BANG_BANG_LOW_POWER;
+
+				upperShooter.setPower(upperPower + UPPER_OFFSET);
+				lowerShooter.setPower(lowerPower + LOWER_OFFSET);
 
 				// Optional: Add telemetry for debugging via FTC Dashboard
 				packet.put("Shooter Target RPM", targetRPM);
+				packet.put("Shooter Upper RPM", upperRPM);
+				packet.put("Shooter Lower RPM", lowerRPM);
 				packet.put("Shooter Average RPM", averageRPM);
-				packet.put("Shooter Power", power);
+				packet.put("Upper Motor Power", upperPower);
+				packet.put("Lower Motor Power", lowerPower);
 				packet.put("Shooter At Target", isAtTargetRPM(targetRPM));
 
 				return false;
