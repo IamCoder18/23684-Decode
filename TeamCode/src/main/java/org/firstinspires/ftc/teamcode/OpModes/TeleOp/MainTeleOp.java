@@ -185,10 +185,10 @@ public class MainTeleOp extends OpMode {
 		}
 
 		// X Button: Transfer forward when pressed, backward when released
-		if (rpm >= topRPM && !xButtonPressed) {
+		if (rpm >= topRPM && !xButtonPressed || gamepad2.x) {
 			scheduler.schedule(transfer.transferForward());
 			xButtonPressed = true;
-		} else if (rpm < topRPM && xButtonPressed) {
+		} else if (rpm < topRPM && (xButtonPressed && gamepad2.x)) {
 			scheduler.schedule(transfer.transferBackward());
 			xButtonPressed = false;
 		}

@@ -16,7 +16,7 @@ public class Shooter {
 	 * The power level for the "on" state of the bang-bang controller. This is the power
 	 * used when the shooter's RPM is below the target range.
 	 */
-	public static double BANG_BANG_HIGH_POWER = 0.9;
+	public static double BANG_BANG_HIGH_POWER = 0.85;
 	/**
 	 * The power level for the "off" or "idle" state of the bang-bang controller. This is the
 	 * minimum power applied when the RPM is above the target range to keep it spinning.
@@ -151,8 +151,7 @@ public class Shooter {
 				packet.put("Shooter Power", power);
 				packet.put("Shooter At Target", isAtTargetRPM(targetRPM));
 
-				// Return true to indicate the action is still running and should not be terminated.
-				return true;
+				return false;
 			}
 		};
 	}
