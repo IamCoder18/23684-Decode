@@ -155,7 +155,8 @@ public class MainTeleOp extends OpMode {
 	 */
 	protected void handleOperatorInput() {
 		double rpm = Shooter.getInstance().averageRPM;
-		double topRPM = 2800;
+		double topRPM = 2500;
+		double lowerRPM = 2000;
 
 		// Left Trigger: run intake
 		if (gamepad2.left_trigger > 0.5 && !leftTriggerPressed) {
@@ -174,6 +175,9 @@ public class MainTeleOp extends OpMode {
 			scheduler.schedule(Shooter.getInstance().stop());
 			rightTriggerPressed = false;
 		}
+
+
+
 
 		// X Button: Transfer forward when pressed, backward when released
 		if (rpm >= topRPM && !xButtonPressed) {
@@ -209,14 +213,14 @@ public class MainTeleOp extends OpMode {
 		}
 		// Crosses 0.2 threshold going up (from lower to 0.2+)
 		else if (leftJoystickY >= 0.2 && !spindexerUpCrossed) {
-			Spindexer.getInstance().setDirectPower(0.3);
+			Spindexer.getInstance().setDirectPower(0.25);
 			spindexerUpCrossed = true;
 			spindexerMidCrossed = false;
 			spindexerDownCrossed = false;
 		}
 		// Crosses -0.2 threshold going down (to -0.2 or below)
 		else if (leftJoystickY <= -0.2 && !spindexerDownCrossed) {
-			Spindexer.getInstance().setDirectPower(-0.3);
+			Spindexer.getInstance().setDirectPower(-0.25);
 			spindexerDownCrossed = true;
 			spindexerMidCrossed = false;
 			spindexerUpCrossed = false;
