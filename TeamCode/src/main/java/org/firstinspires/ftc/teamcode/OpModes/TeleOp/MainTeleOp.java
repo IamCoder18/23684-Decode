@@ -25,14 +25,15 @@ import org.firstinspires.ftc.teamcode.Utilities.ActionScheduler;
  * Gamepad 2 (Operator):
  * - A: Intake in
  * - B: Intake out
- * - X: Shooter on
- * - Y: Shooter off
+ * - X: Transfer forward (forced)
+ * - Y: Transfer backward (forced)
  * - LB: Transfer forward
  * - RB: Transfer stop
  * - LT: IntakeDoor open
  * - RT: IntakeDoor close
  * - DPad Up: Spindexer spin forward
  * - DPad Down: Spindexer spin backward
+	 * - Priority: X > Y > RPM-based
  */
 public class MainTeleOp extends OpMode {
 
@@ -48,6 +49,7 @@ public class MainTeleOp extends OpMode {
 	protected boolean leftTriggerPressed = false;
 	protected boolean rightTriggerPressed = false;
 	protected boolean xButtonPressed = false;
+	protected boolean yButtonPressed = false;
 	protected boolean bButtonPressed = false;
 	protected boolean spindexerUpCrossed = false;
 	protected boolean spindexerMidCrossed = false;
@@ -184,7 +186,7 @@ public class MainTeleOp extends OpMode {
 			rightTriggerPressed = false;
 		}
 
-		// X Button: Override transfer - manual control
+		// X Button: Override transfer forward - manual control
 		if (gamepad2.x && !xButtonPressed) {
 			scheduler.schedule(transfer.transferForward());
 			xButtonPressed = true;
@@ -193,8 +195,17 @@ public class MainTeleOp extends OpMode {
 			xButtonPressed = false;
 		}
 
-		// Automatic transfer based on RPM (only if X button not held)
-		if (!gamepad2.x) {
+		// Y Button: Override transfer backward - manual control
+		if (gamepad2.y && !yButtonPressed) {
+			scheduler.schedule(transfer.transferBackward());
+			yButtonPressed = true;
+		} else if (!gamepad2.y && yButtonPressed) {
+			yButtonPressed = false;
+			scheduler.schedule(transfer.transferBackward());
+		}
+
+		// Automatic transfer based on RPM (only if neither X nor Y button held)
+		if (!gamepad2.x && !gamepad2.y) {
 			boolean isAboveRPM = rpm >= Shooter.AUDIENCE_RPM;
 			if (isAboveRPM && !transferAboveRPM) {
 				scheduler.schedule(transfer.transferForward());
