@@ -165,7 +165,6 @@ public class MainTeleOp extends OpMode {
 	 */
 	protected void handleOperatorInput() {
 		double rpm = shooter.averageRPM;
-		double topRPM = 2500;
 
 		// Left Trigger: run intake
 		if (gamepad2.left_trigger > 0.5 && !leftTriggerPressed) {
@@ -192,10 +191,10 @@ public class MainTeleOp extends OpMode {
 		} else if (!gamepad2.x && xButtonPressed) {
 			xButtonPressed = false;
 		}
-		
+
 		// Automatic transfer based on RPM (only if X button not held)
 		if (!gamepad2.x) {
-			boolean isAboveRPM = rpm >= topRPM;
+			boolean isAboveRPM = rpm >= Shooter.AUDIENCE_RPM;
 			if (isAboveRPM && !transferAboveRPM) {
 				scheduler.schedule(transfer.transferForward());
 			} else if (!isAboveRPM && transferAboveRPM) {

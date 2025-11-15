@@ -16,12 +16,12 @@ public class Shooter {
 	 * The power level for the "on" state of the bang-bang controller. This is the power
 	 * used when the shooter's RPM is below the target range.
 	 */
-	public static double BANG_BANG_HIGH_POWER = 0.85;
+	public static double BANG_BANG_HIGH_POWER = 0.72;
 	/**
 	 * The power level for the "off" or "idle" state of the bang-bang controller. This is the
 	 * minimum power applied when the RPM is above the target range to keep it spinning.
 	 */
-	public static double BANG_BANG_LOW_POWER = 0.55;
+	public static double BANG_BANG_LOW_POWER = 0.5;
 	/**
 	 * The power level to completely stop the motors.
 	 */
@@ -40,7 +40,7 @@ public class Shooter {
 	/**
 	 * The RPM required for shooting artifacts from the audience-side shooting zone.
 	 */
-	public static double AUDIENCE_RPM = 2400.0;
+	public static double AUDIENCE_RPM = 2300.0;
 
 	// --- Motor Offsets ---
 	// Minor power adjustments to balance any speed differences between the two motors.
