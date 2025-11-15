@@ -12,8 +12,8 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.TouchSensor;
 
-import org.firstinspires.ftc.teamcode.Utilities.BallColor;
 import org.firstinspires.ftc.teamcode.Actions.IntakeBall;
+import org.firstinspires.ftc.teamcode.Utilities.BallColor;
 import org.firstinspires.ftc.teamcode.Utilities.PIDFController;
 
 @Config
@@ -40,16 +40,16 @@ public class Spindexer {
 
 	// This boolean is used by the ZeroAction to prevent the update() method's PID
 	// from interfering with the direct power calls during the zeroing sequence.
-	private boolean isZeroing = false;
+	private final boolean isZeroing = false;
 
 	// Stores the encoder position when the magnetic limit switch triggers
-	private double calibrationPosition = 0;
+	private final double calibrationPosition = 0;
 
 	// Stores the true zero position, accounting for the sensor offset
-	private double actualZeroPosition = 0;
+	private final double actualZeroPosition = 0;
 
 	// Store detected ball colors for each slot (0, 1, 2)
-	private BallColor[] ballColors = new BallColor[3];
+	private final BallColor[] ballColors = new BallColor[3];
 
 	private Spindexer() {
 		// Initialize all slots as EMPTY
@@ -169,10 +169,12 @@ public class Spindexer {
 	 * Force set the spindexer power to a value between -1 and 1.
 	 * Clamps the power to the valid range.
 	 */
-	public void setDirectPower(double power) {
-		// Clamp power between -1 and 1
-		double clampedPower = Math.max(-1.0, Math.min(1.0, power));
-		spindexer.setPower(clampedPower);
+	public InstantAction setDirectPower(double power) {
+		return new InstantAction(() -> {
+			// Clamp power between -1 and 1
+			double clampedPower = Math.max(-1.0, Math.min(1.0, power));
+			spindexer.setPower(clampedPower);
+		});
 	}
 
 	private class ZeroAction implements Action {

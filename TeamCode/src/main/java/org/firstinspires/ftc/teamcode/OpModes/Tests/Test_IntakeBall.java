@@ -158,26 +158,26 @@ public class Test_IntakeBall extends OpMode {
 		status.append("=== INTAKE BALL ACTION STATUS ===\n");
 		status.append("Action Running: ").append(actionRunning).append("\n");
 		status.append("Actions in Queue: ").append(scheduler.getRunningActionCount()).append("\n");
-		
+
 		// Spindexer details
 		double currentTicks = org.firstinspires.ftc.teamcode.Subsystems.Spindexer.getInstance().getCurrentPositionTicks();
 		double currentDegrees = (currentTicks % org.firstinspires.ftc.teamcode.Subsystems.Spindexer.TICKS_PER_REV) / org.firstinspires.ftc.teamcode.Subsystems.Spindexer.TICKS_PER_REV * 360;
 		if (currentDegrees < 0) currentDegrees += 360;
-		
+
 		status.append("Spindexer Position: ").append(String.format("%.1f", currentDegrees)).append("°\n");
 		status.append("Current Slot: ").append((int) ((currentDegrees / 120) % 3)).append("\n");
-		
+
 		// Ball colors
 		status.append("Stored Ball Colors:\n");
 		for (int i = 0; i < 3; i++) {
 			BallColor color = org.firstinspires.ftc.teamcode.Subsystems.Spindexer.getInstance().getBallColor(i);
 			status.append("  Slot ").append(i).append(": ").append(color.toString()).append("\n");
 		}
-		
+
 		// Color sensor
 		ColorDetector colorDetector = org.firstinspires.ftc.teamcode.Subsystems.ColorDetector.getInstance();
 		status.append("Color Detection: ").append(colorDetector.isGreen ? "GREEN" : (colorDetector.isPurple ? "PURPLE" : "UNKNOWN")).append("\n");
-		
+
 		telemetry.addData("Status Output", status.toString());
 	}
 }

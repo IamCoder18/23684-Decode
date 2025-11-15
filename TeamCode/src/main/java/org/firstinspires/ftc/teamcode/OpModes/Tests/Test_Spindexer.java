@@ -122,12 +122,12 @@ public class Test_Spindexer extends OpMode {
 		}
 
 		// === DISPLAY TELEMETRY ===
-		
+
 		// Position information
 		double currentTicks = spindexer.getCurrentPositionTicks();
 		double currentDegrees = getCurrentPositionDegrees();
 		int currentSlot = getCurrentSlot();
-		
+
 		// Calculate position error
 		double positionError = Math.abs(targetPosition * Spindexer.TICKS_PER_REV - currentTicks);
 		String accuracyStatus = positionError < 50 ? "✓ ACCURATE" : (positionError < 100 ? "⚠ CLOSE" : "✗ ERROR");

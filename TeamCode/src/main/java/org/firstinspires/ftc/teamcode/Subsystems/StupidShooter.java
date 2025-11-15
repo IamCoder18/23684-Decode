@@ -8,70 +8,58 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 public class StupidShooter {
+	public static double TICKS_PER_REV = 28;
+	public double averageRPM = 0;
+	DcMotorEx upperShooter;
+	DcMotorEx lowerShooter;
+	double needForSpeed = 2800;
 
-    DcMotorEx upperShooter;
-    DcMotorEx lowerShooter;
+	public StupidShooter(HardwareMap hardwareMap) {
+		upperShooter = hardwareMap.get(DcMotorEx.class, "upperShooter");
+		lowerShooter = hardwareMap.get(DcMotorEx.class, "lowerShooter");
+	}
 
-    public double averageRPM = 0;
-    public static double TICKS_PER_REV = 28;
+	public void updateRPM() {
+		double upperVelocity = upperShooter.getVelocity();
+		double lowerVelocity = lowerShooter.getVelocity();
 
-    double needForSpeed = 2800;
+		double upperRPM = (upperVelocity / TICKS_PER_REV) * 60;
+		double lowerRPM = (lowerVelocity / TICKS_PER_REV) * 60;
 
-    public StupidShooter(HardwareMap hardwareMap) {
-        upperShooter = hardwareMap.get(DcMotorEx.class, "upperShooter");
-        lowerShooter = hardwareMap.get(DcMotorEx.class, "lowerShooter");
+		averageRPM = (upperRPM + lowerRPM) / 2;
+	}
 
-    }
+	public Action WindUp() {
+		return new WindUp();
+	}
 
-    public void updateRPM() {
-        double upperVelocity = upperShooter.getVelocity();
-        double lowerVelocity = lowerShooter.getVelocity();
+	public Action WaitForSpike() {
+		return new WaitForSpike();
+	}
 
-        double upperRPM = (upperVelocity / TICKS_PER_REV) * 60;
-        double lowerRPM = (lowerVelocity / TICKS_PER_REV) * 60;
+	public class WindUp implements Action {
+		boolean initialized = false;
 
-        averageRPM = (upperRPM + lowerRPM) / 2;
-    }
+		@Override
+		public boolean run(@NonNull TelemetryPacket telemetryPacket) {
+			updateRPM();
 
-    public void UpdateTelemetry(TelemetryPacket packet) {
-        packet.put("Average RPM", averageRPM);
-    }
+			double currentTime = System.nanoTime();
 
+			if (!initialized) {
+				upperShooter.setPower(0.1 * Math.sin(currentTime * 50) + 1);
+				lowerShooter.setPower(0.1 * Math.sin(currentTime * 50) + 1);
+				initialized = true;
+			}
+			return averageRPM < needForSpeed;
+		}
+	}
 
-    public class WindUp implements Action {
-        boolean initialized = false;
-        double timmythetime = 0;
-        @Override
-        public boolean run(@NonNull TelemetryPacket telemetryPacket) {
-            updateRPM();
-
-            timmythetime = timmythetime + 0.5;
-            if (!initialized) {
-                upperShooter.setPower(0.1 * Math.sin(timmythetime * 50) + 1);
-                lowerShooter.setPower(0.1 * Math.sin(timmythetime * 50) + 1);
-                initialized = true;
-            }
-            return averageRPM < needForSpeed;
-        }
-    }
-
-    public Action WindUp() {
-        return new WindUp();
-    }
-
-
-    public class WaitForSpike implements Action {
-        boolean initialized = false;
-        double timmythetime = 0;
-        @Override
-        public boolean run(@NonNull TelemetryPacket telemetryPacket) {
-            updateRPM();
-            return averageRPM > needForSpeed;
-        }
-    }
-
-    public Action WaitForSpike() {
-        return new WaitForSpike();
-    }
-
+	public class WaitForSpike implements Action {
+		@Override
+		public boolean run(@NonNull TelemetryPacket telemetryPacket) {
+			updateRPM();
+			return averageRPM > needForSpeed;
+		}
+	}
 }
