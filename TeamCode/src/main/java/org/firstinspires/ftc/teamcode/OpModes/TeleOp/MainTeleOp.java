@@ -38,6 +38,11 @@ public class MainTeleOp extends OpMode {
 
 	protected MecanumDrive drive;
 	protected ActionScheduler scheduler;
+	protected Shooter shooter;
+	protected Intake intake;
+	protected Transfer transfer;
+	protected Spindexer spindexer;
+	protected RGBIndicator rgbIndicator;
 
 	// Button state tracking to prevent continuous input
 	protected boolean leftTriggerPressed = false;
@@ -54,6 +59,11 @@ public class MainTeleOp extends OpMode {
 		HardwareInitializer.initialize(hardwareMap);
 		drive = new MecanumDrive(hardwareMap, getStartingPose());
 		scheduler = ActionScheduler.getInstance();
+		shooter = Shooter.getInstance();
+		intake = Intake.getInstance();
+		transfer = Transfer.getInstance();
+		spindexer = Spindexer.getInstance();
+		rgbIndicator = RGBIndicator.getInstance();
 
 		telemetry.addData("Status", "Initialized - Waiting for START");
 		telemetry.update();
@@ -62,8 +72,8 @@ public class MainTeleOp extends OpMode {
 	@Override
 	public void start() {
 		// Called when START is pressed
-		scheduler.schedule(Transfer.getInstance().intakeDoorForward());
-		scheduler.schedule(Transfer.getInstance().transferBackward());
+		scheduler.schedule(transfer.intakeDoorForward());
+		scheduler.schedule(transfer.transferBackward());
 		scheduler.update();
 	}
 
@@ -73,10 +83,10 @@ public class MainTeleOp extends OpMode {
 		handleDriveInput();
 
 		// Update spindexer PID
-		Spindexer.getInstance().update();
+		spindexer.update();
 
 		// Update shooter RPM readings
-		Shooter.getInstance().updateRPM();
+		shooter.updateRPM();
 
 		// Handle operator controls (must be before scheduler.update())
 		handleOperatorInput();
@@ -111,7 +121,7 @@ public class MainTeleOp extends OpMode {
 	 * Predefined colors: Off, Red, Orange, Yellow, Sage, Green, Azure, Blue, Indigo, Violet, White
 	 */
 	private void updateRGBIndicator() {
-		double rpm = Shooter.getInstance().averageRPM;
+		double rpm = shooter.averageRPM;
 		double maxRPM = 3000.0;
 
 		// Clamp RPM to 0-maxRPM range
@@ -125,7 +135,7 @@ public class MainTeleOp extends OpMode {
 		colorIndex = Math.min(colorIndex, colorNames.length - 1);
 
 		// Set the servo to the corresponding discrete position
-		RGBIndicator.getInstance().setColorByName(colorNames[colorIndex]);
+		rgbIndicator.setColorByName(colorNames[colorIndex]);
 	}
 
 	/**
@@ -153,44 +163,44 @@ public class MainTeleOp extends OpMode {
 	 * Handle operator controls from gamepad2
 	 */
 	protected void handleOperatorInput() {
-		double rpm = Shooter.getInstance().averageRPM;
+		double rpm = shooter.averageRPM;
 		double topRPM = 2500;
 
 		// Left Trigger: run intake
 		if (gamepad2.left_trigger > 0.5 && !leftTriggerPressed) {
-			scheduler.schedule(Intake.getInstance().in());
+			scheduler.schedule(intake.in());
 			leftTriggerPressed = true;
 		} else if (gamepad2.left_trigger <= 0.5 && leftTriggerPressed) {
-			scheduler.schedule(Intake.getInstance().stop());
+			scheduler.schedule(intake.stop());
 			leftTriggerPressed = false;
 		}
 
 		// Right Trigger: schedule Shooter.run() once when pressed, Shooter.stop() when released
 		if (gamepad2.right_trigger > 0.5 && !rightTriggerPressed) {
-			scheduler.schedule(Shooter.getInstance().run());
+			scheduler.schedule(shooter.run(Shooter.AUDIENCE_RPM));
 			rightTriggerPressed = true;
 		} else if (gamepad2.right_trigger <= 0.5 && rightTriggerPressed) {
-			scheduler.schedule(Shooter.getInstance().stop());
+			scheduler.schedule(shooter.stop());
 			rightTriggerPressed = false;
 		}
 
 		// X Button: Transfer forward when pressed, backward when released
 		if (rpm >= topRPM && !xButtonPressed) {
-			scheduler.schedule(Transfer.getInstance().transferForward());
+			scheduler.schedule(transfer.transferForward());
 			xButtonPressed = true;
 		} else if (rpm < topRPM && xButtonPressed) {
-			scheduler.schedule(Transfer.getInstance().transferBackward());
+			scheduler.schedule(transfer.transferBackward());
 			xButtonPressed = false;
 		}
 
 		// B Button: Intake door backward and intake out when pressed, forward and intake in when released
 		if (gamepad2.b && !bButtonPressed) {
-			scheduler.schedule(Transfer.getInstance().intakeDoorBackward());
-			scheduler.schedule(Intake.getInstance().out());
+			scheduler.schedule(transfer.intakeDoorBackward());
+			scheduler.schedule(intake.out());
 			bButtonPressed = true;
 		} else if (!gamepad2.b && bButtonPressed) {
-			scheduler.schedule(Transfer.getInstance().intakeDoorForward());
-			scheduler.schedule(Intake.getInstance().stop());
+			scheduler.schedule(transfer.intakeDoorForward());
+			scheduler.schedule(intake.stop());
 			bButtonPressed = false;
 		}
 
@@ -200,7 +210,7 @@ public class MainTeleOp extends OpMode {
 		// Dead zone: stop spindexer
 		if (leftJoystickY > -0.2 && leftJoystickY < 0.2) {
 			if (!spindexerMidCrossed) {
-				scheduler.schedule(Spindexer.getInstance().setDirectPower(0));
+				scheduler.schedule(spindexer.setDirectPower(0));
 				spindexerMidCrossed = true;
 				spindexerUpCrossed = false;
 				spindexerDownCrossed = false;
@@ -209,7 +219,7 @@ public class MainTeleOp extends OpMode {
 
 		// Crosses 0.2 threshold going up (from lower to 0.2+)
 		else if (leftJoystickY >= 0.2 && !spindexerUpCrossed) {
-			scheduler.schedule(Spindexer.getInstance().setDirectPower(0.25));
+			scheduler.schedule(spindexer.setDirectPower(0.25));
 			spindexerUpCrossed = true;
 			spindexerMidCrossed = false;
 			spindexerDownCrossed = false;
@@ -217,7 +227,7 @@ public class MainTeleOp extends OpMode {
 
 		// Crosses -0.2 threshold going down (to -0.2 or below)
 		else if (leftJoystickY <= -0.2 && !spindexerDownCrossed) {
-			scheduler.schedule(Spindexer.getInstance().setDirectPower(-0.25));
+			scheduler.schedule(spindexer.setDirectPower(-0.25));
 			spindexerDownCrossed = true;
 			spindexerMidCrossed = false;
 			spindexerUpCrossed = false;
@@ -240,11 +250,11 @@ public class MainTeleOp extends OpMode {
 		telemetry.addData("Left Trigger", "Intake");
 		telemetry.addData("Right Trigger", "Shooter");
 		telemetry.addData("Left Joystick Y (Spindexer)", String.format("%.2f", -gamepad2.left_stick_y));
-		telemetry.addData("Spindexer Position", String.format("%.2f rev", Spindexer.getInstance().getCurrentPositionTicks() / Spindexer.TICKS_PER_REV));
+		telemetry.addData("Spindexer Position", String.format("%.2f rev", spindexer.getCurrentPositionTicks() / Spindexer.TICKS_PER_REV));
 
 		telemetry.addData("", "=== SHOOTER ===");
-		telemetry.addData("Upper RPM", String.format("%.2f", Shooter.getInstance().upperRPM));
-		telemetry.addData("Lower RPM", String.format("%.2f", Shooter.getInstance().lowerRPM));
-		telemetry.addData("Average RPM", String.format("%.2f", Shooter.getInstance().averageRPM));
+		telemetry.addData("Upper RPM", String.format("%.2f", shooter.upperRPM));
+		telemetry.addData("Lower RPM", String.format("%.2f", shooter.lowerRPM));
+		telemetry.addData("Average RPM", String.format("%.2f", shooter.averageRPM));
 	}
 }

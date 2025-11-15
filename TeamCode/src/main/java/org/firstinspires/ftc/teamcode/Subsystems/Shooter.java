@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.Subsystems;
 
+import androidx.annotation.NonNull;
+
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
@@ -35,6 +37,10 @@ public class Shooter {
 	 * The number of encoder ticks per single revolution of the shooter motor's output shaft.
 	 */
 	public static double TICKS_PER_REVOLUTION = 28.0;
+	/**
+	 * The RPM required for shooting artifacts from the audience-side shooting zone.
+	 */
+	public static double AUDIENCE_RPM = 2400.0;
 
 	// --- Motor Offsets ---
 	// Minor power adjustments to balance any speed differences between the two motors.
@@ -116,7 +122,7 @@ public class Shooter {
 			private boolean highPowerActive = true; // Start by powering up to reach the target.
 
 			@Override
-			public boolean run(TelemetryPacket packet) {
+			public boolean run(@NonNull TelemetryPacket packet) {
 				// First, get the latest RPM reading. This is the "feedback" part of the loop.
 				updateRPM();
 
