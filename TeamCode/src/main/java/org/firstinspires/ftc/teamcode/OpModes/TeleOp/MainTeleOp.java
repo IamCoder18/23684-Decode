@@ -201,7 +201,8 @@ public class MainTeleOp extends OpMode {
 			yButtonPressed = true;
 		} else if (!gamepad2.y && yButtonPressed) {
 			yButtonPressed = false;
-			scheduler.schedule(transfer.transferBackward());
+			// Reset transferAboveRPM to force re-evaluation when Y is released
+			transferAboveRPM = false;
 		}
 
 		// Automatic transfer based on RPM (only if neither X nor Y button held)
