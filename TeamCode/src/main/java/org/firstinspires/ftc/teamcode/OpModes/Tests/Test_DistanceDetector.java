@@ -130,11 +130,11 @@ public class Test_DistanceDetector extends OpMode {
 		telemetry.addData("", "=== DETAILED ANALYSIS ===");
 		telemetry.addData("Distance Reading", String.format("%.2f cm", distanceDetector.rawDistance));
 		telemetry.addData("Threshold", String.format("%.2f cm", DistanceDetector.OBJECT_THRESHOLD_CM));
-		
+
 		// Analyze distance relative to threshold
 		String analysis;
 		double difference = distanceDetector.rawDistance - DistanceDetector.OBJECT_THRESHOLD_CM;
-		
+
 		if (distanceDetector.isObject) {
 			analysis = "Within detection range";
 		} else if (difference < 0.5) {
@@ -144,7 +144,7 @@ public class Test_DistanceDetector extends OpMode {
 		} else {
 			analysis = "Outside detection range";
 		}
-		
+
 		telemetry.addData("Analysis", analysis);
 	}
 }

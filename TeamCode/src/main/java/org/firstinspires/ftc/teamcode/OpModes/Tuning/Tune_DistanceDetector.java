@@ -10,23 +10,23 @@ import org.firstinspires.ftc.teamcode.Utilities.ActionScheduler;
 
 /**
  * Tuning OpMode for the DistanceDetector Subsystem
- * 
+ * <p>
  * Purpose: Calibrate object detection threshold for optimal accuracy
- * 
+ * <p>
  * FTC Dashboard Constants:
  * - OBJECT_THRESHOLD_CM: [0.0, 50.0] (default: 2.0)
- * 
+ * <p>
  * Controls:
  * - DPAD UP/DOWN: Adjust OBJECT_THRESHOLD_CM (±0.1)
  * - LB/RB: Fine adjust OBJECT_THRESHOLD_CM (±0.01)
  * - X: Reset to default (2.0 cm)
- * 
+ * <p>
  * Expected Behavior:
  * - Real-time distance sensor readings
  * - Object detection status feedback
  * - Threshold comparison display
  * - Visual confirmation of detection changes
- * 
+ * <p>
  * Notes:
  * - Place test objects at various distances from sensor
  * - Values update in real-time through FTC Dashboard
@@ -36,16 +36,14 @@ import org.firstinspires.ftc.teamcode.Utilities.ActionScheduler;
 @TeleOp(name = "Tune_DistanceDetector", group = "Tuning")
 public class Tune_DistanceDetector extends OpMode {
 
-	private DistanceDetector distanceDetector;
-	private ActionScheduler scheduler;
-	
 	// Store default values for reset functionality
 	private static final double DEFAULT_THRESHOLD = 2.0;
 	private static final double MIN_THRESHOLD = 0.5;
 	private static final double MAX_THRESHOLD = 50.0;
-	
 	private static final double THRESHOLD_STEP = 0.1;
 	private static final double THRESHOLD_FINE_STEP = 0.01;
+	private DistanceDetector distanceDetector;
+	private ActionScheduler scheduler;
 
 	@Override
 	public void init() {

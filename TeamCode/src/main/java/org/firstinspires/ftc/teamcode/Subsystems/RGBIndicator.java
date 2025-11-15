@@ -9,15 +9,11 @@ import com.qualcomm.robotcore.hardware.Servo;
 @Config
 public class RGBIndicator {
 
-	private static RGBIndicator instance = null;
-	private Servo rgbServo;
-
 	// Color names for discrete color selection
 	private static final String[] COLOR_NAMES = {
-			"OFF", "RED", "ORANGE", "YELLOW", "SAGE", "GREEN", 
+			"OFF", "RED", "ORANGE", "YELLOW", "SAGE", "GREEN",
 			"AZURE", "BLUE", "INDIGO", "VIOLET", "WHITE"
 	};
-
 	// Color map with RGB values and corresponding servo positions
 	private static final int[][] COLOR_MAP = {
 			{0, 0, 0},           // Off (black) -> 0.0
@@ -32,7 +28,6 @@ public class RGBIndicator {
 			{148, 0, 211},       // Violet -> 0.722
 			{255, 255, 255}      // White -> 1.0
 	};
-
 	private static final double[] SERVO_POSITIONS = {
 			0.0,    // Off
 			0.277,  // Red
@@ -46,6 +41,8 @@ public class RGBIndicator {
 			0.722,  // Violet
 			1.0     // White
 	};
+	private static RGBIndicator instance = null;
+	private Servo rgbServo;
 
 	private RGBIndicator() {
 	}
@@ -124,7 +121,7 @@ public class RGBIndicator {
 			return;
 		}
 		colorName = colorName.toUpperCase();
-		
+
 		// Find the matching color index
 		int colorIndex = -1;
 		for (int i = 0; i < COLOR_NAMES.length; i++) {
@@ -133,12 +130,12 @@ public class RGBIndicator {
 				break;
 			}
 		}
-		
+
 		// If color name not found, default to OFF
 		if (colorIndex == -1) {
 			colorIndex = 0;
 		}
-		
+
 		rgbServo.setPosition(SERVO_POSITIONS[colorIndex]);
 	}
 

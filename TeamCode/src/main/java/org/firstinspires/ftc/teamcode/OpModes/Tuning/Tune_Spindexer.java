@@ -44,13 +44,12 @@ import org.firstinspires.ftc.teamcode.Utilities.ActionScheduler;
  */
 @TeleOp(name = "Tune_Spindexer", group = "Tuning")
 public class Tune_Spindexer extends OpMode {
-	private Spindexer spindexer;
-	private ActionScheduler scheduler;
 	private static final double P_STEP = 0.0005;
 	private static final double I_STEP = 0.0001;
 	private static final double D_STEP = 0.00001;
 	private static final double FINE_MULTIPLIER = 5.0; // Right stick increases step size
-	
+	private Spindexer spindexer;
+	private ActionScheduler scheduler;
 	// Button state tracking for edge detection
 	private boolean prevA = false;
 	private boolean prevB = false;
@@ -81,7 +80,7 @@ public class Tune_Spindexer extends OpMode {
 	public void loop() {
 		// Calculate step multipliers
 		double stepMultiplier = gamepad1.right_stick_button ? FINE_MULTIPLIER : 1.0;
-		
+
 		// === ZEROING ===
 		// Only schedule on button press (not held)
 		if (gamepad1.a && !prevA) {
@@ -97,13 +96,13 @@ public class Tune_Spindexer extends OpMode {
 			telemetry.addData("Action", "Moving to 90°");
 		}
 		prevB = gamepad1.b;
-		
+
 		if (gamepad1.x && !prevX) {
 			scheduler.schedule(spindexer.toPosition(0.5)); // 180 degrees
 			telemetry.addData("Action", "Moving to 180°");
 		}
 		prevX = gamepad1.x;
-		
+
 		if (gamepad1.y && !prevY) {
 			scheduler.schedule(spindexer.toPosition(0.75)); // 270 degrees
 			telemetry.addData("Action", "Moving to 270°");
@@ -111,7 +110,7 @@ public class Tune_Spindexer extends OpMode {
 		prevY = gamepad1.y;
 
 		// === PID COEFFICIENT ADJUSTMENTS ===
-		
+
 		// P coefficient (DPAD UP/DOWN)
 		if (gamepad1.dpad_up) {
 			Spindexer.P = Math.min(Spindexer.P + (P_STEP * stepMultiplier), 0.1);

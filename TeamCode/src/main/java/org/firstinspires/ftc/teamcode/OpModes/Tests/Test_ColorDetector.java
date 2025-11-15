@@ -144,7 +144,7 @@ public class Test_ColorDetector extends OpMode {
 		telemetry.addData("", "=== DETAILED ANALYSIS ===");
 		telemetry.addData("RGB Values", String.format("(%d, %d, %d)", colorDetector.avgRed, colorDetector.avgGreen, colorDetector.avgBlue));
 		telemetry.addData("HSV Values", String.format("(%.1f°, %.3f, %.3f)", colorDetector.avgHSV[0], colorDetector.avgHSV[1], colorDetector.avgHSV[2]));
-		
+
 		// Analyze which threshold range the current reading falls into
 		String analysis = "";
 		if (colorDetector.avgHSV[1] > ColorDetector.MIN_SATURATION) {
@@ -158,7 +158,7 @@ public class Test_ColorDetector extends OpMode {
 		} else {
 			analysis = "Below saturation threshold";
 		}
-		
+
 		telemetry.addData("Analysis", analysis);
 	}
 }

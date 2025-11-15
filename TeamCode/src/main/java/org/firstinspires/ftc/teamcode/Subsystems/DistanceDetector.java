@@ -7,15 +7,16 @@ import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 /**
  * Singleton subsystem that manages a distance sensor for object detection.
- * 
+ * <p>
  * Reads distance measurements and triggers isObject when an object is detected
  * within 2 cm.
  * Configuration values can be tuned via FTC Dashboard.
- * 
+ * <p>
  * To use:
  * 1. Call initialize(hardwareMap) once during robot initialization
  * 2. Call getInstance().update().run(packet) in the main loop
@@ -26,14 +27,20 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 public class DistanceDetector {
 
 	// Detection threshold (tunable via FTC Dashboard)
-	/** Distance threshold in centimeters for object detection */
+	/**
+	 * Distance threshold in centimeters for object detection
+	 */
 	public static double OBJECT_THRESHOLD_CM = 2.0;
 
 	private static DistanceDetector instance = null;
 	// Public fields to store the last read values
-	/** Raw distance reading in centimeters */
+	/**
+	 * Raw distance reading in centimeters
+	 */
 	public double rawDistance;
-	/** True if an object is detected within OBJECT_THRESHOLD_CM */
+	/**
+	 * True if an object is detected within OBJECT_THRESHOLD_CM
+	 */
 	public boolean isObject;
 	private DistanceSensor frontDistance;
 
@@ -71,7 +78,7 @@ public class DistanceDetector {
 	/**
 	 * Returns an Action that updates distance sensor readings.
 	 * This action finishes immediately after one frame and should be called every loop.
-	 * 
+	 *
 	 * @return Action that performs one sensor update
 	 */
 	public Action update() {
