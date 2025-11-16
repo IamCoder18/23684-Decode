@@ -167,11 +167,9 @@ public class BlueAudienceAuto extends OpMode {
 
 		// Control transfer servos based on shooter RPM TODO: TEST WITH TRANSFER SUBSYSTEM INSTEAD OF DIRECTLY
 		if (shooter.averageRPM > (Shooter.AUDIENCE_RPM - 400)) {
-			telemetry.addLine("Transfer");
 			transferLeft.setPower(1);
 			transferRight.setPower(1);
 		} else {
-			telemetry.addLine("Transfer stop");
 			transferLeft.setPower(0);
 			transferRight.setPower(0);
 		}
