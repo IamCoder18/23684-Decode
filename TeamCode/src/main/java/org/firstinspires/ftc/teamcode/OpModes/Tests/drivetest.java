@@ -58,7 +58,7 @@ public class drivetest extends OpMode {
 		xthing = GoBildaPinpointDriver.EncoderDirection.REVERSED;
 
 		pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
-		pinpoint.setOffsets(7, -60.10603, DistanceUnit.MM);
+		pinpoint.setOffsets(190, -60.10603, DistanceUnit.MM);
 		pinpoint.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
 		pinpoint.setEncoderDirections(ything, xthing);
 		pinpoint.resetPosAndIMU();
