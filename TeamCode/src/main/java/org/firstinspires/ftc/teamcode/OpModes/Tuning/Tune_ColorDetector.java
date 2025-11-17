@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.OpModes.Tuning;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
@@ -40,6 +41,7 @@ import org.firstinspires.ftc.teamcode.Utilities.ActionScheduler;
  * - No timeout - operator can tune as long as needed
  * - Focus on accurate color differentiation
  */
+@Disabled
 @TeleOp(name = "Tune_ColorDetector", group = "Tuning")
 public class Tune_ColorDetector extends OpMode {
 

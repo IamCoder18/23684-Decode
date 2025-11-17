@@ -89,7 +89,7 @@ public class MainTeleOp extends OpMode {
 		spindexer.update();
 
 		// Update shooter RPM readings
-		shooter.updateRPM();
+		shooter.updateRPM(System.nanoTime());
 
 		// Handle operator controls (must be before scheduler.update())
 		handleOperatorInput();

@@ -9,6 +9,7 @@ import com.acmerobotics.roadrunner.InstantAction;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.TouchSensor;
 
@@ -30,7 +31,8 @@ public class Spindexer {
 
 	private static Spindexer instance = null;
 
-	private CRServo spindexer;
+	private CRServo spindexerLeft;
+	private CRServo spindexerRight;
 	private DcMotorEx spindexerEncoder;
 	private TouchSensor spindexerZero;
 
@@ -61,7 +63,9 @@ public class Spindexer {
 	public static void initialize(HardwareMap hardwareMap) {
 		if (instance == null) {
 			instance = new Spindexer();
-			instance.spindexer = hardwareMap.get(CRServo.class, "spindexer");
+			instance.spindexerLeft = hardwareMap.get(CRServo.class, "spindexerLeft");
+			instance.spindexerRight = hardwareMap.get(CRServo.class, "spindexerRight");
+			instance.spindexerRight.setDirection(DcMotorSimple.Direction.REVERSE);
 			instance.spindexerEncoder = hardwareMap.get(DcMotorEx.class, "rearRight"); // Encoder plugged into a motor port
 			instance.spindexerZero = hardwareMap.get(TouchSensor.class, "spindexerZero");
 
@@ -105,7 +109,8 @@ public class Spindexer {
 		controller.setSetpoint(targetPosition);
 		double currentPosition = getAdjustedPosition();
 		double power = controller.getOutput(currentPosition);
-		spindexer.setPower(power);
+		spindexerLeft.setPower(power);
+		spindexerRight.setPower(power);
 	}
 
 	public Action zero() {
@@ -173,7 +178,9 @@ public class Spindexer {
 		return new InstantAction(() -> {
 			// Clamp power between -1 and 1
 			double clampedPower = Math.max(-1.0, Math.min(1.0, power));
-			spindexer.setPower(clampedPower);
+			spindexerRight.setDirection(DcMotorSimple.Direction.REVERSE);
+			spindexerLeft.setPower(clampedPower);
+			spindexerRight.setPower(clampedPower);
 		});
 	}
 
@@ -191,10 +198,12 @@ public class Spindexer {
 //			packet.put("ZEROING: Elapsed time (ms)", elapsedTime);
 //
 //			isZeroing = true;
-//			spindexer.setPower(0.1);
+//			spindexerLeft.setPower(0.1);
+//			spindexerRight.setPower(0.1);
 //
 //			if (sensorPressed) {
-//				spindexer.setPower(0);
+//				spindexerLeft.setPower(0);
+//				spindexerRight.setPower(0);
 //				// Record the encoder position when the sensor triggers
 //				calibrationPosition = spindexerEncoder.getCurrentPosition();
 //				// Calculate true zero position accounting for the sensor offset

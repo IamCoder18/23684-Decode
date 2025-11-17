@@ -9,52 +9,49 @@ import com.acmerobotics.roadrunner.InstantAction;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import org.firstinspires.ftc.teamcode.Utilities.PIDFController;
+import org.firstinspires.ftc.teamcode.Utilities.FeedForwardController;
 
 @Config
 public class Shooter {
-	// --- PIDF Controller Constants ---
-	public static double UPPER_P = 0.05, UPPER_I = 0, UPPER_D = 0.04, UPPER_F = 0;
-	public static double LOWER_P = 0.05, LOWER_I = 0, LOWER_D = 0, LOWER_F = 0;
+	// --- PID Controller Constants ---
+	public static double UPPER_P = 13.7705, UPPER_I = 0, UPPER_D = 3.4426;
+	public static double LOWER_P = 23.9108, LOWER_I = 0, LOWER_D = 5.9777;
+
+	// --- Feedforward Constants (Set these from your auto-tuner results) ---
+	public static double UPPER_KS = 0.226869, UPPER_KV = 0.000196;
+	public static double LOWER_KS = 0.542322, LOWER_KV = 0.000098;
 
 	// --- Motor Power Constants ---
-	/**
-	 * The power level to completely stop the motors.
-	 */
 	public static double STOP_POWER = 0.0;
 
 	// --- RPM & Control Constants ---
-	/**
-	 * The tolerance for the PIDF controller. The shooter is considered "at target speed"
-	 * if the RPM is within `targetRPM +/- RPM_TOLERANCE`. A value of 100 is a good starting point.
-	 */
-	public static double RPM_TOLERANCE = 1.0;
-	/**
-	 * The number of encoder ticks per single revolution of the shooter motor's output shaft.
-	 */
+	public static double RPM_TOLERANCE = 100.0;
 	public static double TICKS_PER_REVOLUTION = 28.0;
-	/**
-	 * The RPM required for shooting artifacts from the audience-side shooting zone.
-	 */
 	public static double AUDIENCE_RPM = 2300.0;
 
 	// --- Motor Offsets ---
-	// Minor power adjustments to balance any speed differences between the two motors.
 	public static double UPPER_OFFSET = 0.0;
 	public static double LOWER_OFFSET = 0.0;
 
-	// --- Singleton Instance ---
 	private static Shooter instance = null;
 
-	// --- Motor & State Variables ---
 	private DcMotorEx upperShooter;
 	private DcMotorEx lowerShooter;
 	public double averageRPM = 0.0;
 	public double upperRPM = 0.0;
 	public double lowerRPM = 0.0;
+	public double upperAcceleration = 0.0;
+	public double lowerAcceleration = 0.0;
+	public double averageAcceleration = 0.0;
 
-	// --- PIDF Controllers ---
+	private long lastNanoTime = 0;
+	private double lastUpperVelocity = 0.0;
+	private double lastLowerVelocity = 0.0;
+
 	private PIDFController upperController;
 	private PIDFController lowerController;
+	private FeedForwardController upperFF;
+	private FeedForwardController lowerFF;
 
 	private Shooter() {}
 
@@ -64,13 +61,15 @@ public class Shooter {
 			instance.upperShooter = hardwareMap.get(DcMotorEx.class, "upperShooter");
 			instance.lowerShooter = hardwareMap.get(DcMotorEx.class, "lowerShooter");
 
-			// Set zero power behavior. BRAKE helps motors stop faster and resist movement.
 			instance.upperShooter.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
 			instance.lowerShooter.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
 
-			// Initialize PIDF controllers
-			instance.upperController = new PIDFController(UPPER_P, UPPER_I, UPPER_D, UPPER_F);
-			instance.lowerController = new PIDFController(LOWER_P, LOWER_I, LOWER_D, LOWER_F);
+			instance.upperController = new PIDFController(UPPER_P, UPPER_I, UPPER_D, 0);
+			instance.lowerController = new PIDFController(LOWER_P, LOWER_I, LOWER_D, 0);
+
+			// --- Init FeedForward controllers with tuned gains
+			instance.upperFF = new FeedForwardController(UPPER_KS, UPPER_KV, 0);
+			instance.lowerFF = new FeedForwardController(LOWER_KS, LOWER_KV, 0);
 		}
 	}
 
@@ -83,82 +82,80 @@ public class Shooter {
 
 	public static void shutdown() {
 		if(instance != null) {
-			// Ensure motors are stopped when the op-mode ends.
 			instance.upperShooter.setPower(STOP_POWER);
 			instance.lowerShooter.setPower(STOP_POWER);
 		}
 	}
 
-	/**
-	 * Updates the RPM readings for both shooter motors based on their velocity.
-	 * This should be called continuously in your main robot loop to provide feedback for the controller.
-	 */
-	public void updateRPM() {
-		double upperVelocity = upperShooter.getVelocity(); // ticks per second
-		double lowerVelocity = lowerShooter.getVelocity(); // ticks per second
+	public void updateRPM(long nanoTime) {
+		double upperVelocity = upperShooter.getVelocity();
+		double lowerVelocity = lowerShooter.getVelocity();
 
 		upperRPM = (upperVelocity / TICKS_PER_REVOLUTION) * 60.0;
 		lowerRPM = (lowerVelocity / TICKS_PER_REVOLUTION) * 60.0;
-
 		averageRPM = (upperRPM + lowerRPM) / 2.0;
+
+		if (lastNanoTime != 0) {
+			double timeElapsedSeconds = (nanoTime - lastNanoTime) / 1_000_000_000.0;
+			if (timeElapsedSeconds > 0) {
+				upperAcceleration = (upperVelocity - lastUpperVelocity) / timeElapsedSeconds;
+				lowerAcceleration = (lowerVelocity - lastLowerVelocity) / timeElapsedSeconds;
+				averageAcceleration = (upperAcceleration + lowerAcceleration) / 2.0;
+			}
+		}
+		lastNanoTime = nanoTime;
+		lastUpperVelocity = upperVelocity;
+		lastLowerVelocity = lowerVelocity;
 	}
 
-	/**
-	 * Checks if the shooter's average RPM is within the tolerance band of a given target.
-	 * Use this method to determine if it's safe to feed a note for shooting.
-	 * @param targetRPM The RPM you are aiming for.
-	 * @return true if the current averageRPM is within the tolerance, false otherwise.
-	 */
 	public boolean isAtTargetRPM(double targetRPM) {
-		return Math.abs(averageRPM - targetRPM) <= RPM_TOLERANCE;
+		return !(targetRPM < 100) && Math.abs(averageRPM - targetRPM) <= RPM_TOLERANCE;
 	}
 
 	/**
-	 * Returns an Action that runs the shooter motors to maintain a target RPM using separate PIDF controllers.
-	 * Each motor is controlled independently based on its own RPM feedback.
-	 * This action must be run continuously and will maintain the target speed until cancelled.
-	 *
-	 * @param targetRPM The desired revolutions per minute for the shooter.
-	 * @return Action that runs the shooter with independent PIDF controllers.
+	 * Returns an Action that runs the shooter motors to maintain a target RPM
+	 * with sum of PID and Feedforward controllers.
 	 */
 	public Action run(double targetRPM) {
 		return packet -> {
-			// First, get the latest RPM reading. This is the "feedback" part of the loop.
-			updateRPM();
+			updateRPM(System.nanoTime());
 
 			double upperPower, lowerPower;
+			double upperFFPower = upperFF.calculate(targetRPM, 0);
+			double lowerFFPower = lowerFF.calculate(targetRPM, 0);
 
-			// If target RPM is under 100, stop the motors
 			if (targetRPM < 100) {
 				upperPower = STOP_POWER;
 				lowerPower = STOP_POWER;
 			} else {
-				// Get power output from PIDF controllers
-				upperPower = upperController.getOutput(upperRPM, targetRPM);
-				lowerPower = lowerController.getOutput(lowerRPM, targetRPM);
+				double upperPidPower = upperController.getOutput(upperRPM, targetRPM);
+				double lowerPidPower = lowerController.getOutput(lowerRPM, targetRPM);
+
+				// Final output: sum of feedforward and PID corrections
+				upperPower = upperFFPower + upperPidPower + UPPER_OFFSET;
+				lowerPower = lowerFFPower + lowerPidPower + LOWER_OFFSET;
 			}
 
-			upperShooter.setPower(upperPower + UPPER_OFFSET);
-			lowerShooter.setPower(lowerPower + LOWER_OFFSET);
+			upperShooter.setPower(upperPower);
+			lowerShooter.setPower(lowerPower);
 
-			// Optional: Add telemetry for debugging via FTC Dashboard
+			// Telemetry for dashboard analysis
 			packet.put("Shooter Target RPM", targetRPM);
 			packet.put("Shooter Upper RPM", upperRPM);
 			packet.put("Shooter Lower RPM", lowerRPM);
 			packet.put("Shooter Average RPM", averageRPM);
 			packet.put("Upper Motor Power", upperPower);
 			packet.put("Lower Motor Power", lowerPower);
+			packet.put("Upper Feedforward", upperFFPower);
+			packet.put("Upper PID", upperController.getOutput(upperRPM, targetRPM));
+			packet.put("Lower Feedforward", lowerFFPower);
+			packet.put("Lower PID", lowerController.getOutput(lowerRPM, targetRPM));
 			packet.put("Shooter At Target", isAtTargetRPM(targetRPM));
 
 			return false;
 		};
 	}
 
-	/**
-	 * Returns an InstantAction that immediately stops both shooter motors.
-	 *
-	 * @return Action that stops both shooter motors.
-	 */
 	public Action stop() {
 		return new InstantAction(() -> {
 			upperShooter.setPower(STOP_POWER);
