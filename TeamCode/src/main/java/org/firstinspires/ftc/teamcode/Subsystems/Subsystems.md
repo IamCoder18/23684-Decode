@@ -1,6 +1,7 @@
 # Subsystems Documentation
 
-All subsystems are implemented as singletons and manage robot hardware. They are initialized through `HardwareInitializer` and updated through `SubsystemUpdater`.
+All subsystems are implemented as singletons and manage robot hardware. They are initialized through
+`HardwareInitializer` and updated through `SubsystemUpdater`.
 
 ## Lifecycle Management
 
@@ -29,17 +30,19 @@ HardwareShutdown.shutdown();
 
 ### ColorDetector
 
-Singleton subsystem that manages dual color sensors for ball color detection. Uses HSV color space to detect green and purple balls with tunable thresholds.
+Singleton subsystem that manages dual color sensors for ball color detection. Uses HSV color space
+to detect green and purple balls with tunable thresholds.
 
 **Access:** `ColorDetector.getInstance()`
 
 **Methods:**
 
-- `Action update()` - Updates color readings from both sensors and outputs telemetry (finishes instantly)
-  - Reads RGB values from both sensors and averages them
-  - Converts to HSV color space
-  - Detects green/purple based on hue and saturation thresholds
-  - All methods documented with JavaDoc
+- `Action update()` - Updates color readings from both sensors and outputs telemetry (finishes
+  instantly)
+    - Reads RGB values from both sensors and averages them
+    - Converts to HSV color space
+    - Detects green/purple based on hue and saturation thresholds
+    - All methods documented with JavaDoc
 
 **Public Fields:**
 
@@ -58,7 +61,8 @@ Singleton subsystem that manages dual color sensors for ball color detection. Us
 
 ### Transfer
 
-Controls transfer servos (moves balls) and intake door servos. All action methods are documented with JavaDoc.
+Controls transfer servos (moves balls) and intake door servos. All action methods are documented
+with JavaDoc.
 
 **Access:** `Transfer.getInstance()`
 
@@ -105,14 +109,16 @@ All methods return InstantActions that complete immediately after setting motor 
 
 ### Shooter
 
-Controls upper and lower shooter motors for shooting balls. All action methods are documented with JavaDoc.
+Controls upper and lower shooter motors for shooting balls. All action methods are documented with
+JavaDoc.
 
 **Access:** `Shooter.getInstance()`
 
 **Methods:**
 
-- `Action run()` - Starts both shooter motors at full power with configured offsets (finishes instantly)
-  - Applies UPPER_OFFSET and LOWER_OFFSET for speed compensation
+- `Action run()` - Starts both shooter motors at full power with configured offsets (finishes
+  instantly)
+    - Applies UPPER_OFFSET and LOWER_OFFSET for speed compensation
 - `Action stop()` - Stops both shooter motors (finishes instantly)
 
 All methods return InstantActions that complete immediately after setting motor power.
@@ -128,7 +134,8 @@ All methods return InstantActions that complete immediately after setting motor 
 
 ### Spindexer
 
-Controls the carousel/spindexer with 3 ball slots. Provides PID-based position control and ball color tracking.
+Controls the carousel/spindexer with 3 ball slots. Provides PID-based position control and ball
+color tracking.
 
 **Access:** `Spindexer.getInstance()`
 
@@ -168,15 +175,25 @@ HardwareInitializer.initialize(hardwareMap);
 // First time only - calibrate the spindexer
 // (do this once at the beginning of your first OpMode)
 Spindexer spindexer = Spindexer.getInstance();
-Actions.runBlocking(spindexer.zero());
+Actions.
+
+runBlocking(spindexer.zero());
 
 // In loop()
-SubsystemUpdater.update();  // CRITICAL for PID
+		SubsystemUpdater.
+
+update();  // CRITICAL for PID
 
 // Usage in action sequences
-Actions.runBlocking(spindexer.intakeBall());
-Actions.runBlocking(spindexer.toPosition(0.25));  // 90 degrees
-Actions.runBlocking(spindexer.toPosition(0));     // Back to zero
+Actions.
+
+runBlocking(spindexer.intakeBall());
+		Actions.
+
+runBlocking(spindexer.toPosition(0.25));  // 90 degrees
+		Actions.
+
+runBlocking(spindexer.toPosition(0));     // Back to zero
 ```
 
 ---

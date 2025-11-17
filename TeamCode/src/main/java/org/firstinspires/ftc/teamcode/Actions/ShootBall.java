@@ -10,13 +10,13 @@ import org.firstinspires.ftc.teamcode.Utilities.BallColor;
 
 /**
  * Action that aligns and shoots a ball from the spindexer.
- * 
+ * <p>
  * This action:
  * - Determines which slot contains the target ball (or closest ball if no color preference)
  * - Calculates the rotation needed to align the slot with the shooter
  * - Commands the spindexer to rotate to that position
  * - Returns true while the spindexer is still moving, false when aligned within tolerance
- * 
+ * <p>
  * Optional color filtering allows shooting specific colored balls only.
  * If no ball of the requested color is found, the closest ball is shot instead.
  */
@@ -40,7 +40,7 @@ public class ShootBall implements Action {
 
 	/**
 	 * Creates a ShootBall action with a color preference.
-	 * 
+	 *
 	 * @param requestedColor the color of ball to shoot, or null for any color
 	 */
 	public ShootBall(BallColor requestedColor) {
@@ -74,12 +74,12 @@ public class ShootBall implements Action {
 
 	/**
 	 * Determines which slot to shoot based on color preference and proximity.
-	 * 
+	 * <p>
 	 * Selection priority:
 	 * 1. If color requested: find a matching color within tolerance
 	 * 2. Find any slot already within tolerance (no movement needed)
 	 * 3. Find the closest slot
-	 * 
+	 *
 	 * @param currentPositionDegrees current spindexer rotation in degrees
 	 * @return slot index (0, 1, or 2) to shoot
 	 */
@@ -120,8 +120,8 @@ public class ShootBall implements Action {
 	/**
 	 * Calculates the shortest angular distance from current position to a slot center.
 	 * Accounts for wrap-around at 360 degrees.
-	 * 
-	 * @param currentDegrees current spindexer position in degrees (0-360)
+	 *
+	 * @param currentDegrees    current spindexer position in degrees (0-360)
 	 * @param slotCenterDegrees target slot center in degrees
 	 * @return shortest angular distance in degrees
 	 */
@@ -135,7 +135,7 @@ public class ShootBall implements Action {
 
 	/**
 	 * Converts the spindexer encoder ticks to degrees (0-360).
-	 * 
+	 *
 	 * @return current position in degrees (0-360)
 	 */
 	private double getCurrentPositionDegrees() {

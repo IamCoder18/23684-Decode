@@ -9,10 +9,10 @@ import com.qualcomm.robotcore.hardware.TouchSensor;
 
 /**
  * Singleton subsystem that manages dual touch sensors for contact detection.
- * 
+ * <p>
  * Reads raw touch data from both sensors and provides a combined detection state.
  * Useful for limit switches, collision detection, and mechanical position sensing.
- * 
+ * <p>
  * To use:
  * 1. Call initialize(hardwareMap) once during robot initialization
  * 2. Call getInstance().update().run(packet) in the main loop
@@ -23,11 +23,17 @@ public class TouchDetector {
 
 	private static TouchDetector instance = null;
 	// Public fields to store the last read values
-	/** True if left touch sensor is pressed */
+	/**
+	 * True if left touch sensor is pressed
+	 */
 	public boolean touchLeft;
-	/** True if right touch sensor is pressed */
+	/**
+	 * True if right touch sensor is pressed
+	 */
 	public boolean touchRight;
-	/** True if either touch sensor is pressed (OR logic) */
+	/**
+	 * True if either touch sensor is pressed (OR logic)
+	 */
 	public boolean detected;
 	private TouchSensor sensorLeft;
 	private TouchSensor sensorRight;
@@ -67,7 +73,7 @@ public class TouchDetector {
 	/**
 	 * Returns an Action that updates touch sensor readings.
 	 * This action finishes immediately after one frame and should be called every loop.
-	 * 
+	 *
 	 * @return Action that performs one sensor update
 	 */
 	public Action update() {

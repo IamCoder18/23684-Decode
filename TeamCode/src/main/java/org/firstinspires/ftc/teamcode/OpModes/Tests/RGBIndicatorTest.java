@@ -20,11 +20,11 @@ import org.firstinspires.ftc.teamcode.Subsystems.RGBIndicator;
 @TeleOp(name = "RGB Indicator Test", group = "Test")
 public class RGBIndicatorTest extends OpMode {
 
-	private RGBIndicator rgbIndicator;
-	private double servoPosition = 0.5;
 	private final double INCREMENT = 0.01;
 	private final double MIN_POSITION = 0.0;
 	private final double MAX_POSITION = 1.0;
+	private RGBIndicator rgbIndicator;
+	private double servoPosition = 0.5;
 
 	@Override
 	public void init() {
@@ -76,8 +76,8 @@ public class RGBIndicatorTest extends OpMode {
 
 		// Set the servo position by converting to hex color
 		double hueValue = servoPosition * 360.0; // Convert to 0-360 hue range for visualization
-		rgbIndicator.setColor(String.format("%02X%02X%02X", 
-			(int)(255 * servoPosition), 0, (int)(255 * (1 - servoPosition))));
+		rgbIndicator.setColor(String.format("%02X%02X%02X",
+				(int) (255 * servoPosition), 0, (int) (255 * (1 - servoPosition))));
 	}
 
 	/**
