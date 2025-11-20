@@ -66,8 +66,6 @@ public class ShooterPIDF extends OpMode {
         telemetry.update();
 
 
-
-
     }
 
     public static class UPPER {

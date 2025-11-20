@@ -16,7 +16,6 @@ import org.firstinspires.ftc.teamcode.Roadrunner.MecanumDrive;
 import org.firstinspires.ftc.teamcode.Roadrunner.PinpointLocalizer;
 import org.firstinspires.ftc.teamcode.Utilities.PIDFController;
 
-@Disabled
 @Config
 @TeleOp
 public class drivetest extends OpMode {
