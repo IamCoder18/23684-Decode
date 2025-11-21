@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode;
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.hardware.limelightvision.LLResult;
+import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
@@ -12,8 +13,14 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.IMU;
 
+import org.firstinspires.ftc.robotcore.external.matrices.VectorF;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
+import org.firstinspires.ftc.vision.apriltag.AprilTagGameDatabase;
+import org.firstinspires.ftc.vision.apriltag.AprilTagLibrary;
+
+import java.util.List;
+import java.util.Vector;
 
 
 @TeleOp
@@ -21,99 +28,22 @@ public class AprilTagLimeLight extends OpMode {
 
     private Limelight3A limelight;
 
+
+
     private IMU imu;
-
-    private DcMotorEx turretEncoder;
-    private CRServo turretServo;
-    private PIDFController pidfController;
-
-
-    String team = "BLU";
-
-    public static double P = 0.005, I = 0.0, D = 0.0001, F = 0.0;
-
-     double REDGOALx = -60, REDGOALy = 60;
-    double BLUGOALx = -60, BLUGOALy = 60;
-
-    double target;
 
     public double normalizeAngle(double angle) {
         while (angle <= -Math.PI) angle += 2 * Math.PI;
         while (angle > Math.PI) angle -= 2 * Math.PI;
         return angle;
-    }
 
-    public double RedAngle(double robotX,double robotY) {
-
-
-        double vx =  (REDGOALx / 39.3700787 ) - robotX;
-        double vy = (REDGOALy / 39.3700787) - robotY;
-
-        double theta = imu.getRobotYawPitchRollAngles().getYaw();
-
-
-        double cosA = Math.cos(-theta);
-        double sinA = Math.sin(-theta);
-
-        double vrx = cosA * vx - sinA * vy;
-        double vry = sinA * vx + cosA * vy;
-
-
-        double desired = normalizeAngle(Math.atan2(vry, vrx));
-
-        return desired;
-    }
-
-    public double BluAngle(double robotX,double robotY) {
-
-
-        double vx =  (BLUGOALx / 39.3700787 ) - robotX;
-        double vy = (BLUGOALy / 39.3700787) - robotY;
-
-        double theta = imu.getRobotYawPitchRollAngles().getYaw();
-
-
-        double cosA = Math.cos(-theta);
-        double sinA = Math.sin(-theta);
-
-        double vrx = cosA * vx - sinA * vy;
-        double vry = sinA * vx + cosA * vy;
-
-
-
-        double desired = normalizeAngle(Math.atan2(vry, vrx));
-
-        return desired;
     }
 
 
-//    public double RedAngle(double x, double y){
-//        double diffx = (REDGOALx / 39.3700787 ) - x;
-//        double diffy = (REDGOALy / 39.3700787) - y;
-//
-//        double angle = Math.atan2(diffy, diffx);
-//
-//        return Math.toDegrees(angle);
-//
-//    }
-//
-//    public double BluAngle(double x, double y){
-//        double diffx = (BLUGOALx / 39.3700787) - x;
-//        double diffy = (BLUGOALy / 39.3700787) - y;
-//
-//        double angle = Math.atan2(diffy, diffx);
-//
-//        return Math.toDegrees(angle);
-//
-//    }
 
     @Override
     public void init() {
 
-        pidfController = new PIDFController(P,I,D,F);
-
-        turretEncoder = hardwareMap.get(DcMotorEx.class, "ET");
-        turretServo = hardwareMap.get(CRServo.class, "ST");
 
 
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
@@ -142,39 +72,33 @@ public class AprilTagLimeLight extends OpMode {
         LLResult llResult = limelight.getLatestResult();
 
         if (llResult != null && llResult.isValid()) {
-            Pose3D botPose = llResult.getBotpose_MT2();
+            Pose3D botPose = llResult.getBotpose();
             telemetry.addData("Tx", llResult.getTx());
             telemetry.addData("Ty", llResult.getTy());
             telemetry.addData("Ta", llResult.getTa());
             telemetry.addData("BotPose", botPose.toString());
             telemetry.addData("Orientation", botPose.getOrientation().toString());
-            telemetry.addData("ID", llResult.getFiducialResults());
-
             telemetry.addData("imuing", imu.getRobotYawPitchRollAngles());
 
-            if (team == "RED") {
-                target = RedAngle(botPose.getPosition().x, botPose.getPosition().y);
-            } else if (team == "BLU") {
-                target = BluAngle(botPose.getPosition().x, botPose.getPosition().y);
+
+
+
+            List<LLResultTypes.FiducialResult> fiducialResults = llResult.getFiducialResults();
+            for (LLResultTypes.FiducialResult fiducial : fiducialResults) {
+                int id = fiducial.getFiducialId();
+                double distance = fiducial.getRobotPoseTargetSpace().getPosition().y;
+                double x = fiducial.getRobotPoseTargetSpace().getPosition().x;
+                double z = fiducial.getRobotPoseTargetSpace().getPosition().z;
+               VectorF target =  AprilTagGameDatabase.getDecodeTagLibrary().lookupTag(id).fieldPosition.multiplied(0.0254f);
+                VectorF robotPose = new VectorF((float) botPose.getPosition().x, (float) botPose.getPosition().y, (float) botPose.getPosition().z);
+                VectorF targetDis = target.subtracted(robotPose);
+                telemetry.addLine("Id:" + id + "distance" + targetDis.magnitude());
+                //telemetry.addLine("ID: " + id + " x " + x + " y: " + distance + " z: " + z);
             }
 
 
         }
 
-
-
-
-        pidfController.setPID(P, I, D, F);
-
-
-        int currentPosition = turretEncoder.getCurrentPosition();
-        double power = -pidfController.getOutput(currentPosition, target);
-        turretServo.setPower(power);
-
-        telemetry.addData("Target", target);
-        telemetry.addData("Current Position", currentPosition);
-        telemetry.addData("Power", power);
-        telemetry.addData("Error", target - currentPosition);
         telemetry.update();
     }
 }
