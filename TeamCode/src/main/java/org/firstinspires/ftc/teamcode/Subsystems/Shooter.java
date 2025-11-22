@@ -8,20 +8,15 @@ import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.InstantAction;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import org.firstinspires.ftc.teamcode.Utilities.PIDFController;
 
 @Config
 public class Shooter {
+	// --- PIDF Controller Constants ---
+	public static double UPPER_P = 0.05, UPPER_I = 0, UPPER_D = 0.04, UPPER_F = 0;
+	public static double LOWER_P = 0.05, LOWER_I = 0, LOWER_D = 0, LOWER_F = 0;
+
 	// --- Motor Power Constants ---
-	/**
-	 * The power level for the "on" state of the bang-bang controller. This is the power
-	 * used when the shooter's RPM is below the target range.
-	 */
-	public static double BANG_BANG_HIGH_POWER = 0.72;
-	/**
-	 * The power level for the "off" or "idle" state of the bang-bang controller. This is the
-	 * minimum power applied when the RPM is above the target range to keep it spinning.
-	 */
-	public static double BANG_BANG_LOW_POWER = 0.5;
 	/**
 	 * The power level to completely stop the motors.
 	 */
@@ -29,7 +24,7 @@ public class Shooter {
 
 	// --- RPM & Control Constants ---
 	/**
-	 * The tolerance for the bang-bang controller. The shooter is considered "at target speed"
+	 * The tolerance for the PIDF controller. The shooter is considered "at target speed"
 	 * if the RPM is within `targetRPM +/- RPM_TOLERANCE`. A value of 100 is a good starting point.
 	 */
 	public static double RPM_TOLERANCE = 1.0;
@@ -57,6 +52,10 @@ public class Shooter {
 	public double upperRPM = 0.0;
 	public double lowerRPM = 0.0;
 
+	// --- PIDF Controllers ---
+	private PIDFController upperController;
+	private PIDFController lowerController;
+
 	private Shooter() {}
 
 	public static void initialize(HardwareMap hardwareMap) {
@@ -68,6 +67,10 @@ public class Shooter {
 			// Set zero power behavior. BRAKE helps motors stop faster and resist movement.
 			instance.upperShooter.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
 			instance.lowerShooter.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
+
+			// Initialize PIDF controllers
+			instance.upperController = new PIDFController(UPPER_P, UPPER_I, UPPER_D, UPPER_F);
+			instance.lowerController = new PIDFController(LOWER_P, LOWER_I, LOWER_D, LOWER_F);
 		}
 	}
 
@@ -111,64 +114,43 @@ public class Shooter {
 	}
 
 	/**
-	 * Returns an Action that runs the shooter motors to maintain a target RPM using separate bang-bang controllers.
+	 * Returns an Action that runs the shooter motors to maintain a target RPM using separate PIDF controllers.
 	 * Each motor is controlled independently based on its own RPM feedback.
 	 * This action must be run continuously and will maintain the target speed until cancelled.
 	 *
 	 * @param targetRPM The desired revolutions per minute for the shooter.
-	 * @return Action that runs the shooter with independent bang-bang controllers.
+	 * @return Action that runs the shooter with independent PIDF controllers.
 	 */
 	public Action run(double targetRPM) {
-		return new Action() {
-			private boolean upperHighPowerActive = true; // Start by powering up to reach the target.
-			private boolean lowerHighPowerActive = true; // Start by powering up to reach the target.
+		return packet -> {
+			// First, get the latest RPM reading. This is the "feedback" part of the loop.
+			updateRPM();
 
-			@Override
-			public boolean run(@NonNull TelemetryPacket packet) {
-				// First, get the latest RPM reading. This is the "feedback" part of the loop.
-				updateRPM();
+			double upperPower, lowerPower;
 
-				// --- Upper Motor Bang-Bang Controller Logic ---
-				// If RPM is too low, activate high power mode.
-				if (upperRPM < targetRPM - RPM_TOLERANCE) {
-					upperHighPowerActive = true;
-				}
-				// If RPM is too high, switch to low power (idle) mode.
-				else if (upperRPM > targetRPM + RPM_TOLERANCE) {
-					upperHighPowerActive = false;
-				}
-				// If inside the tolerance band, the state does not change.
-				// This prevents the motor from rapidly switching on/off (chattering).
-
-				// --- Lower Motor Bang-Bang Controller Logic ---
-				// If RPM is too low, activate high power mode.
-				if (lowerRPM < targetRPM - RPM_TOLERANCE) {
-					lowerHighPowerActive = true;
-				}
-				// If RPM is too high, switch to low power (idle) mode.
-				else if (lowerRPM > targetRPM + RPM_TOLERANCE) {
-					lowerHighPowerActive = false;
-				}
-				// If inside the tolerance band, the state does not change.
-
-				// Set power for each motor based on its controller's state.
-				double upperPower = upperHighPowerActive ? BANG_BANG_HIGH_POWER : BANG_BANG_LOW_POWER;
-				double lowerPower = lowerHighPowerActive ? BANG_BANG_HIGH_POWER : BANG_BANG_LOW_POWER;
-
-				upperShooter.setPower(upperPower + UPPER_OFFSET);
-				lowerShooter.setPower(lowerPower + LOWER_OFFSET);
-
-				// Optional: Add telemetry for debugging via FTC Dashboard
-				packet.put("Shooter Target RPM", targetRPM);
-				packet.put("Shooter Upper RPM", upperRPM);
-				packet.put("Shooter Lower RPM", lowerRPM);
-				packet.put("Shooter Average RPM", averageRPM);
-				packet.put("Upper Motor Power", upperPower);
-				packet.put("Lower Motor Power", lowerPower);
-				packet.put("Shooter At Target", isAtTargetRPM(targetRPM));
-
-				return false;
+			// If target RPM is under 100, stop the motors
+			if (targetRPM < 100) {
+				upperPower = STOP_POWER;
+				lowerPower = STOP_POWER;
+			} else {
+				// Get power output from PIDF controllers
+				upperPower = upperController.getOutput(upperRPM, targetRPM);
+				lowerPower = lowerController.getOutput(lowerRPM, targetRPM);
 			}
+
+			upperShooter.setPower(upperPower + UPPER_OFFSET);
+			lowerShooter.setPower(lowerPower + LOWER_OFFSET);
+
+			// Optional: Add telemetry for debugging via FTC Dashboard
+			packet.put("Shooter Target RPM", targetRPM);
+			packet.put("Shooter Upper RPM", upperRPM);
+			packet.put("Shooter Lower RPM", lowerRPM);
+			packet.put("Shooter Average RPM", averageRPM);
+			packet.put("Upper Motor Power", upperPower);
+			packet.put("Lower Motor Power", lowerPower);
+			packet.put("Shooter At Target", isAtTargetRPM(targetRPM));
+
+			return false;
 		};
 	}
 

@@ -13,12 +13,9 @@ import org.firstinspires.ftc.teamcode.Utilities.PIDFController;
 
 @Config
 @TeleOp
-public class SpinderTuning extends OpMode {
-
-
+public class SpindexerTuning extends OpMode {
 	public static double P = 0.005, I = 0.0, D = 0.003, F = 0.0;
 	public static int target = 0;
-	public int ticksperDegree = 8192 / 360;
 	private DcMotor spindexerEncoder;
 	private CRServo spindexer;
 	private PIDFController pidfController;
@@ -34,7 +31,6 @@ public class SpinderTuning extends OpMode {
 		spindexerEncoder = hardwareMap.get(DcMotor.class, "frontRight");
 		spindexerEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
-		// Make sure to configure the servo as "spindexerServo" in the robot configuration
 		spindexer = hardwareMap.get(CRServo.class, "spindexer");
 
 		pidfController = new PIDFController(P, I, D, F);
@@ -46,8 +42,7 @@ public class SpinderTuning extends OpMode {
 		pidfController.setPID(P, I, D, F);
 
 		int currentPosition = spindexerEncoder.getCurrentPosition();
-		int tar = target;
-		double power = -pidfController.getOutput(currentPosition, tar);
+		double power = -pidfController.getOutput(currentPosition, target);
 		spindexer.setPower(power);
 
 		telemetry.addData("Target", target);
@@ -56,6 +51,4 @@ public class SpinderTuning extends OpMode {
 		telemetry.addData("Error", target - currentPosition);
 		telemetry.update();
 	}
-
-
 }
