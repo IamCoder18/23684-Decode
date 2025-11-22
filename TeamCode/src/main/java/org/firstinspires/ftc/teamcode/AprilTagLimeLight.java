@@ -90,7 +90,7 @@ public class AprilTagLimeLight extends OpMode {
                 double x = fiducial.getRobotPoseTargetSpace().getPosition().x;
                 double z = fiducial.getRobotPoseTargetSpace().getPosition().z;
                VectorF target =  AprilTagGameDatabase.getDecodeTagLibrary().lookupTag(id).fieldPosition.multiplied(0.0254f);
-                VectorF robotPose = new VectorF((float) botPose.getPosition().x, (float) botPose.getPosition().y, (float) botPose.getPosition().z);
+                VectorF robotPose = new VectorF((float) botPose.getPosition().x, (float) botPose.getPosition().y, 0.7493f);
                 VectorF targetDis = target.subtracted(robotPose);
                 telemetry.addLine("Id:" + id + "distance" + targetDis.magnitude());
                 //telemetry.addLine("ID: " + id + " x " + x + " y: " + distance + " z: " + z);
