@@ -14,12 +14,12 @@ import org.firstinspires.ftc.teamcode.Utilities.FeedForwardController;
 @Config
 public class Shooter {
 	// --- PID Controller Constants ---
-	public static double UPPER_P = 13.7705, UPPER_I = 0, UPPER_D = 3.4426;
-	public static double LOWER_P = 23.9108, LOWER_I = 0, LOWER_D = 5.9777;
+	public static double UPPER_P = 0.0024, UPPER_I = 0, UPPER_D = 0;
+	public static double LOWER_P = 0.002, LOWER_I = 0, LOWER_D = 0;
 
 	// --- Feedforward Constants (Set these from your auto-tuner results) ---
-	public static double UPPER_KS = 0.226869, UPPER_KV = 0.000196;
-	public static double LOWER_KS = 0.542322, LOWER_KV = 0.000098;
+	public static double UPPER_KS = 0.28, UPPER_KV = 0.000095;
+	public static double LOWER_KS = 0.29, LOWER_KV = 0.00017;
 
 	// --- Motor Power Constants ---
 	public static double STOP_POWER = 0.0;
