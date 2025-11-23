@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.OpModes.Tuning;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
@@ -33,6 +34,7 @@ import org.firstinspires.ftc.teamcode.Utilities.ActionScheduler;
  * - No timeout - operator can tune as long as needed
  * - Focus on finding optimal detection distance for your use case
  */
+@Disabled
 @TeleOp(name = "Tune_DistanceDetector", group = "Tuning")
 public class Tune_DistanceDetector extends OpMode {
 

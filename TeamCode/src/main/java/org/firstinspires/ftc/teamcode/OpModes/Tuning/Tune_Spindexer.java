@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.OpModes.Tuning;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
@@ -42,6 +43,7 @@ import org.firstinspires.ftc.teamcode.Utilities.ActionScheduler;
  * - Use right stick for larger adjustment increments
  * - Monitor error values for tuning feedback
  */
+@Disabled
 @TeleOp(name = "Tune_Spindexer", group = "Tuning")
 public class Tune_Spindexer extends OpMode {
 	private static final double P_STEP = 0.0005;
