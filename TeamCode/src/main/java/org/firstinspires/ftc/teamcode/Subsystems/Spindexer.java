@@ -9,6 +9,7 @@ import com.acmerobotics.roadrunner.InstantAction;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.TouchSensor;
 
@@ -25,18 +26,31 @@ public class Spindexer {
 	// Offset in ticks: -11.011 * (8192 / 360) ≈ -250.7 ticks
 	public static double zeroOffset = 0 * (8192.0 / 360.0);
 
-	// PID coefficients for position control. Tune these via the FTC Dashboard.
-	public static double P = 0.01, I = 0, D = 0, F = 0;
+	// PID coefficients for position control. Tuned 2025-11-22.
+	public static double P = 0.02, I = 0.0, D = 0.0, F = 0.0;
+
+
+	public double normalizeAngle(double angle) {
+		while (angle > Math.PI) angle -= 2 * Math.PI;
+		while (angle < -Math.PI) angle += 2 * Math.PI;
+		return angle;
+	}
 
 	private static Spindexer instance = null;
 
 	private CRServo spindexer;
-	private DcMotorEx spindexerEncoder;
+	private CRServo otherSpindexer;
+	private DcMotor spindexerEncoder;
 	private TouchSensor spindexerZero;
 
 	private PIDFController controller;
-	private double targetPosition = 0;
+	public double targetPosition = 0;
+	public double power = 0;
 	private boolean isZeroed = false;
+
+	public double per = 0;
+	public double cent = 0;
+	public double fin = 0;
 
 	public double degreeToTicks = 360 / 8192.0;
 
@@ -65,16 +79,20 @@ public class Spindexer {
 		if (instance == null) {
 			instance = new Spindexer();
 			instance.spindexer = hardwareMap.get(CRServo.class, "spindexerLeft");
-			instance.spindexerEncoder = hardwareMap.get(DcMotorEx.class, "rearRight"); // Encoder plugged into a motor port
+			instance.otherSpindexer = hardwareMap.get(CRServo.class,"spindexerRight");
+			instance.spindexer.setDirection(DcMotorSimple.Direction.REVERSE);
+			instance.spindexerEncoder = hardwareMap.get(DcMotor.class, "frontRight"); // Encoder plugged into a motor port
 			instance.spindexerZero = hardwareMap.get(TouchSensor.class, "spindexerZero");
 
 			// Configure the encoder motor port to just read encoder values
-			instance.spindexerEncoder.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+			instance.spindexerEncoder.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+			instance.spindexerEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
 			instance.controller = new PIDFController(P, I, D, F);
-			instance.controller.setOutputLimits(-1, 1);
+			//instance.controller.setDirection(true);
 		}
 	}
+
 
 	public static Spindexer getInstance() {
 		if (instance == null) {
@@ -91,7 +109,7 @@ public class Spindexer {
 	 * Gets the current position of the spindexer, adjusted for the zero offset.
 	 * This accounts for both the sensor trigger point and the actual zero calibration.
 	 */
-	private double getAdjustedPosition() {
+	public double getAdjustedPosition() {
 		return spindexerEncoder.getCurrentPosition() - actualZeroPosition;
 	}
 
@@ -100,15 +118,35 @@ public class Spindexer {
 	 * controller to run and for the spindexer to hold its position.
 	 */
 	public void update() {
-		if (!isZeroed || isZeroing) {
-			// Do not run PID controller if the spindexer is not zeroed or is currently zeroing.
-			return;
+//		if (!isZeroed || isZeroing) {
+//			// Do not run PID controller if the spindexer is not zeroed or is currently zeroing.
+//			return;
+//		}
+
+		per =  spindexerEncoder.getCurrentPosition() / TICKS_PER_REV;
+		cent = per * 100;
+		if ( cent > 100){
+			fin = cent - 100;
+		} else{
+			fin = cent;
 		}
 
-		controller.setSetpoint(targetPosition);
-		double currentPosition = getAdjustedPosition() * degreeToTicks;
-		double power = controller.getOutput(currentPosition,targetPosition);
-		spindexer.setPower(power);
+
+
+
+		controller.setPID(P,I,D,F);
+		//controller.setSetpoint(targetPosition);
+		double currentPosition = spindexerEncoder.getCurrentPosition();
+		power = controller.getOutput(fin,targetPosition);
+
+		if (power <= 0.3 && power >= 0.2){
+			spindexer.setPower(power);
+		} else if (power >= 0.3 && power >= 0.2){
+			spindexer.setPower(Math.abs(power));
+		} else if (power <= 0.05) {
+			spindexer.setPower(0);
+		}
+		otherSpindexer.setPower(0);
 	}
 
 	public Action zero() {
@@ -126,14 +164,16 @@ public class Spindexer {
 	public Action toPosition(double revolutions) {
 		return packet -> {
 			// If not zeroed, keep running (return true) to wait until zeroed
-			isZeroed = true;
-			if (!isZeroed) return true;
+//			isZeroed = true;
+//			if (!isZeroed) return true;
+
+
 
 
 			// Set the target for the PID controller running in the background
 			//targetPosition = revolutions * TICKS_PER_REV;
 
-			targetPosition = revolutions;
+			targetPosition = revolutions * 100;
 
 			// This action is considered "done" when the error is small.
 			// This allows it to be a "blocking" call in a sequence.
@@ -166,9 +206,9 @@ public class Spindexer {
 	}
 
 	public void setTargetPosition(double revolutions) {
-		if (isZeroed) {
-			targetPosition = revolutions * TICKS_PER_REV;
-		}
+//		if (isZeroed) {
+			targetPosition = revolutions; //* TICKS_PER_REV;
+//		}
 	}
 
 	/**

@@ -55,9 +55,6 @@ public class MainTeleOp extends OpMode {
 	protected boolean spindexerMidCrossed = false;
 	protected boolean spindexerDownCrossed = false;
 
-	protected boolean dpadUpPressed = false;
-	protected boolean dpadLeftPressed = false;
-	protected boolean dpadrightPressed = false;
 	protected boolean transferAboveRPM = false;
 
 	@Override
@@ -259,20 +256,24 @@ public class MainTeleOp extends OpMode {
 			spindexerUpCrossed = false;
 		}
 
-		if (gamepad1.dpad_up && !dpadUpPressed) {
-			scheduler.schedule(spindexer.toPosition(0.33333));
-			dpadUpPressed = true;
+		if (gamepad2.dpad_up) {
+			spindexer.setTargetPosition(0);
 
-		}else if (gamepad1.dpad_left && !dpadLeftPressed) {
-			scheduler.schedule(spindexer.toPosition(0.5)); // 180 degrees
-			dpadLeftPressed = true;
+
+		}
+		if (gamepad2.dpad_left) {
+			spindexer.setTargetPosition(0.3333); // 120 degrees
+
 		}
 
-		if (gamepad1.dpad_right && !dpadrightPressed) {
-			scheduler.schedule(spindexer.toPosition(0.75)); // 270 degrees
-			dpadrightPressed = true;
+		if (gamepad2.dpad_right) {
+			spindexer.setTargetPosition(0.6667); // 240 degrees
 		}
+
+
+
 	}
+
 
 	/**
 	 * Display telemetry information
@@ -296,5 +297,12 @@ public class MainTeleOp extends OpMode {
 		telemetry.addData("Upper RPM", String.format("%.2f", shooter.upperRPM));
 		telemetry.addData("Lower RPM", String.format("%.2f", shooter.lowerRPM));
 		telemetry.addData("Average RPM", String.format("%.2f", shooter.averageRPM));
+
+		telemetry.addData("", "=== Spindexer ===");
+		telemetry.addData(" toatal position", spindexer.cent);
+		telemetry.addData("postion",spindexer.fin);
+		telemetry.addData("target",spindexer.targetPosition);
+		telemetry.addData("power to target", spindexer.power);
+
 	}
 }
