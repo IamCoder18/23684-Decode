@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.OpModes;
+package org.firstinspires.ftc.teamcode.OpModes.Tests;
 
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.Vector2d;
@@ -9,9 +9,11 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import org.firstinspires.ftc.teamcode.Roadrunner.MecanumDrive;
 
 @Autonomous
-public class AudienceLeave extends OpMode {
-	private static final Pose2d START_POSE = new Pose2d(62.143, -14.717, Math.toRadians(180));
-	private static final Vector2d PARK_POSITION = new Vector2d(40, -14);
+public class RedGoalTest extends OpMode {
+	private static final Pose2d START_POSE = new Pose2d(-58.45, 44.57, Math.toRadians(-54.046));
+	private static final Vector2d STRAFE_TARGET_1 = new Vector2d(-16, 16);
+	private static final double STRAFE_HEADING_1 = Math.toRadians(-45);
+	private static final Vector2d STRAFE_TARGET_2 = new Vector2d(0, 24);
 
 	private Pose2d beginPose;
 	private MecanumDrive drive;
@@ -30,7 +32,8 @@ public class AudienceLeave extends OpMode {
 	public void start() {
 		Actions.runBlocking(
 				drive.actionBuilder(beginPose)
-						.strafeTo(PARK_POSITION)
+						.strafeToLinearHeading(STRAFE_TARGET_1, STRAFE_HEADING_1)
+						.strafeToConstantHeading(STRAFE_TARGET_2)
 						.build());
 	}
 
