@@ -54,6 +54,10 @@ public class MainTeleOp extends OpMode {
 	protected boolean spindexerUpCrossed = false;
 	protected boolean spindexerMidCrossed = false;
 	protected boolean spindexerDownCrossed = false;
+
+	protected boolean dpadUpPressed = false;
+	protected boolean dpadLeftPressed = false;
+	protected boolean dpadrightPressed = false;
 	protected boolean transferAboveRPM = false;
 
 	@Override
@@ -253,6 +257,20 @@ public class MainTeleOp extends OpMode {
 			spindexerDownCrossed = true;
 			spindexerMidCrossed = false;
 			spindexerUpCrossed = false;
+		}
+
+		if (gamepad1.dpad_up && !dpadUpPressed) {
+			scheduler.schedule(spindexer.toPosition(0.33333));
+			dpadUpPressed = true;
+
+		}else if (gamepad1.dpad_left && !dpadLeftPressed) {
+			scheduler.schedule(spindexer.toPosition(0.5)); // 180 degrees
+			dpadLeftPressed = true;
+		}
+
+		if (gamepad1.dpad_right && !dpadrightPressed) {
+			scheduler.schedule(spindexer.toPosition(0.75)); // 270 degrees
+			dpadrightPressed = true;
 		}
 	}
 

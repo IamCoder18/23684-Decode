@@ -38,6 +38,9 @@ public class Spindexer {
 	private double targetPosition = 0;
 	private boolean isZeroed = false;
 
+	public double degreeToTicks = 360 / 8192.0;
+
+
 	// This boolean is used by the ZeroAction to prevent the update() method's PID
 	// from interfering with the direct power calls during the zeroing sequence.
 	private final boolean isZeroing = false;
@@ -61,7 +64,7 @@ public class Spindexer {
 	public static void initialize(HardwareMap hardwareMap) {
 		if (instance == null) {
 			instance = new Spindexer();
-			instance.spindexer = hardwareMap.get(CRServo.class, "spindexer");
+			instance.spindexer = hardwareMap.get(CRServo.class, "spindexerLeft");
 			instance.spindexerEncoder = hardwareMap.get(DcMotorEx.class, "rearRight"); // Encoder plugged into a motor port
 			instance.spindexerZero = hardwareMap.get(TouchSensor.class, "spindexerZero");
 
@@ -103,8 +106,8 @@ public class Spindexer {
 		}
 
 		controller.setSetpoint(targetPosition);
-		double currentPosition = getAdjustedPosition();
-		double power = controller.getOutput(currentPosition);
+		double currentPosition = getAdjustedPosition() * degreeToTicks;
+		double power = controller.getOutput(currentPosition,targetPosition);
 		spindexer.setPower(power);
 	}
 
@@ -126,8 +129,11 @@ public class Spindexer {
 			isZeroed = true;
 			if (!isZeroed) return true;
 
+
 			// Set the target for the PID controller running in the background
-			targetPosition = revolutions * TICKS_PER_REV;
+			//targetPosition = revolutions * TICKS_PER_REV;
+
+			targetPosition = revolutions;
 
 			// This action is considered "done" when the error is small.
 			// This allows it to be a "blocking" call in a sequence.
