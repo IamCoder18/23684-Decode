@@ -6,6 +6,7 @@ import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.InstantAction;
+import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -38,9 +39,9 @@ public class Spindexer {
 
 	private static Spindexer instance = null;
 
-	private CRServo spindexer;
-	private CRServo otherSpindexer;
-	private DcMotor spindexerEncoder;
+	private CRServo spindexerLeft;
+	private CRServo spindexerRight;
+	private AnalogInput spindexerEncoder;
 	private TouchSensor spindexerZero;
 
 	private PIDFController controller;
@@ -54,6 +55,7 @@ public class Spindexer {
 
 	public double degreeToTicks = 360 / 8192.0;
 
+	public double currentPosition;
 
 	// This boolean is used by the ZeroAction to prevent the update() method's PID
 	// from interfering with the direct power calls during the zeroing sequence.
@@ -78,15 +80,11 @@ public class Spindexer {
 	public static void initialize(HardwareMap hardwareMap) {
 		if (instance == null) {
 			instance = new Spindexer();
-			instance.spindexer = hardwareMap.get(CRServo.class, "spindexerLeft");
-			instance.otherSpindexer = hardwareMap.get(CRServo.class,"spindexerRight");
-			instance.spindexer.setDirection(DcMotorSimple.Direction.REVERSE);
-			instance.spindexerEncoder = hardwareMap.get(DcMotor.class, "frontRight"); // Encoder plugged into a motor port
+			instance.spindexerLeft = hardwareMap.get(CRServo.class, "spindexerLeft");
+			instance.spindexerRight = hardwareMap.get(CRServo.class,"spindexerRight");
+			instance.spindexerRight.setDirection(DcMotorSimple.Direction.REVERSE);
+			instance.spindexerEncoder = hardwareMap.get(AnalogInput.class, "spindexerEncoder");
 			instance.spindexerZero = hardwareMap.get(TouchSensor.class, "spindexerZero");
-
-			// Configure the encoder motor port to just read encoder values
-			instance.spindexerEncoder.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-			instance.spindexerEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
 			instance.controller = new PIDFController(P, I, D, F);
 			//instance.controller.setDirection(true);
@@ -110,7 +108,7 @@ public class Spindexer {
 	 * This accounts for both the sensor trigger point and the actual zero calibration.
 	 */
 	public double getAdjustedPosition() {
-		return spindexerEncoder.getCurrentPosition() - actualZeroPosition;
+		return ((spindexerEncoder.getVoltage()));
 	}
 
 	/**
@@ -118,12 +116,7 @@ public class Spindexer {
 	 * controller to run and for the spindexer to hold its position.
 	 */
 	public void update() {
-//		if (!isZeroed || isZeroing) {
-//			// Do not run PID controller if the spindexer is not zeroed or is currently zeroing.
-//			return;
-//		}
-
-		per =  spindexerEncoder.getCurrentPosition() / TICKS_PER_REV;
+		per = ((spindexerEncoder.getVoltage()));
 		cent = per * 100;
 		if ( cent > 100){
 			fin = cent - 100;
@@ -131,22 +124,25 @@ public class Spindexer {
 			fin = cent;
 		}
 
-
-
-
-		controller.setPID(P,I,D,F);
-		//controller.setSetpoint(targetPosition);
-		double currentPosition = spindexerEncoder.getCurrentPosition();
-		power = controller.getOutput(fin,targetPosition);
+		controller.setPID(P, I, D, F);
+		power = controller.getOutput(fin, targetPosition);
 
 		if (power <= 0.3 && power >= 0.2){
-			spindexer.setPower(power);
+			spindexerLeft.setPower(power);
+			spindexerRight.setPower(power);
 		} else if (power >= 0.3 && power >= 0.2){
-			spindexer.setPower(Math.abs(power));
+			spindexerLeft.setPower(Math.abs(power));
+			spindexerRight.setPower(Math.abs(power));
 		} else if (power <= 0.05) {
-			spindexer.setPower(0);
+			spindexerLeft.setPower(0);
+			spindexerRight.setPower(0);
 		}
-		otherSpindexer.setPower(0);
+
+		currentPosition = spindexerLeft.getController().getServoPosition(spindexerLeft.getPortNumber());
+	}
+
+	public void updateRawPosition(){
+		currentPosition = spindexerLeft.getController().getServoPosition(spindexerLeft.getPortNumber());
 	}
 
 	public Action zero() {
@@ -219,7 +215,8 @@ public class Spindexer {
 		return new InstantAction(() -> {
 			// Clamp power between -1 and 1
 			double clampedPower = Math.max(-1.0, Math.min(1.0, power));
-			spindexer.setPower(clampedPower);
+			spindexerLeft.setPower(clampedPower);
+			spindexerRight.setPower(clampedPower);
 		});
 	}
 

@@ -7,6 +7,7 @@ import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.ParallelAction;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.SequentialAction;
+import com.acmerobotics.roadrunner.SleepAction;
 import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
@@ -122,53 +123,17 @@ public abstract class AudienceAuto extends OpMode {
 
 		actionScheduler.schedule(
 				new SequentialAction(
+						trajectoryToShootingPosition.build(),
 						new ParallelAction(
-								trajectoryToShootingPosition.build(),
-								shooter.run(Shooter.AUDIENCE_RPM)
-						),
-						new DeadlineAction(
-								spindexer.setDirectPower(0.8),
-								transfer.intakeDoorForward(),
 								shooter.run(Shooter.AUDIENCE_RPM),
-								new Action() {
-									boolean initialized = false;
-									boolean wasBelow = false;
-									int count = 0;
-
-									@Override
-									public boolean run(@NonNull TelemetryPacket packet) {
-										// Get current reading
-										double currentRPM = shooter.averageRPM;
-										boolean isBelow = currentRPM < Shooter.AUDIENCE_SHOT_RPM;
-
-										// Initialize state on the first run
-										if (!initialized) {
-											wasBelow = isBelow;
-											initialized = true;
-										}
-
-										// Check for the "Rising Edge" (transition from Under to Above)
-										if (wasBelow && !isBelow) {
-											count++;
-										}
-
-										// Update state for the next loop
-										wasBelow = isBelow;
-
-										// Send telemetry for debugging (optional)
-										packet.put("RPM", currentRPM);
-										packet.put("Cycles", count);
-
-										// Return true to keep running, false to stop after 3rd completion
-										return count < 3;
-									}
-								}
-						),
-						shooter.run(0),
-						spindexer.setDirectPower(0),
-						transfer.intakeDoorStop(),
-						trajectoryToCollectionPosition.build(),
-						shooter.stop()
+								spindexer.setDirectPower(0.8),
+								transfer.intakeDoorForward()
+						)
+//						shooter.run(0),
+//						spindexer.setDirectPower(0),
+//						transfer.intakeDoorStop(),
+//						trajectoryToCollectionPosition.build(),
+//						shooter.stop()
 				)
 		);
 
