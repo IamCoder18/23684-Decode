@@ -1,9 +1,11 @@
 package org.firstinspires.ftc.teamcode.OpModes.Tests;
 
+import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.Subsystems.Spindexer;
 import org.firstinspires.ftc.teamcode.Utilities.ActionScheduler;
 
@@ -14,12 +16,15 @@ public class Test_Spindexer extends OpMode {
 
 	private Spindexer spindexer;
 	private ActionScheduler scheduler;
+	private Telemetry dashboardTelemetry;
 
 	@Override
 	public void init() {
 		Spindexer.initialize(hardwareMap);
 		spindexer = Spindexer.getInstance();
 		scheduler = ActionScheduler.getInstance();
+
+		dashboardTelemetry = FtcDashboard.getInstance().getTelemetry();
 
 		telemetry.addData("Status", "Initialized");
 		telemetry.update();
@@ -28,26 +33,17 @@ public class Test_Spindexer extends OpMode {
 	@Override
 	public void loop() {
 		// Manual control with gamepad
-		double leftStickY = -gamepad1.left_stick_y;
-		double manualControlPower = leftStickY;
+		double manualControlPower = -gamepad1.left_stick_y;
 
 		// Apply manual control
 //		scheduler.schedule(spindexer.setDirectPower(manualControlPower));
 		scheduler.update();
 
-		// Update spindexer internal state
-		spindexer.updateRawPosition();
-
 		// Telemetry
-		telemetry.addData("Manual Control Power", manualControlPower);
-		telemetry.addData("Current Position (ticks)", spindexer.getCurrentPositionTicks());
-		telemetry.addData("Current Position (raw servo)", spindexer.currentPosition);
-		telemetry.addData("Current Position (revolutions)", spindexer.per);
-		telemetry.addData("Current Position (percent)", spindexer.cent);
-		telemetry.addData("Current Position (normalized %)", spindexer.fin);
-		telemetry.addData("Target Position", spindexer.targetPosition);
-		telemetry.addData("Controller Power Output", spindexer.power);
+		telemetry.addData("Current Position (ticks)", spindexer.getPosition());
 		telemetry.update();
+		dashboardTelemetry.addData("Current Position (ticks)", spindexer.getPosition());
+		dashboardTelemetry.update();
 	}
 
 	@Override

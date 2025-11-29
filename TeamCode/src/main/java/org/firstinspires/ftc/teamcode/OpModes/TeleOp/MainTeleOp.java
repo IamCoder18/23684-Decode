@@ -291,7 +291,7 @@ public class MainTeleOp extends OpMode {
 		telemetry.addData("Left Trigger", "Intake");
 		telemetry.addData("Right Trigger", "Shooter");
 		telemetry.addData("Left Joystick Y (Spindexer)", String.format("%.2f", -gamepad2.left_stick_y));
-		telemetry.addData("Spindexer Position", String.format("%.2f rev", spindexer.getCurrentPositionTicks() / Spindexer.TICKS_PER_REV));
+		telemetry.addData("Spindexer Position", String.format("%.2f rev", spindexer.getPosition() / Spindexer.TICKS_PER_REV));
 
 		telemetry.addData("", "=== SHOOTER ===");
 		telemetry.addData("Upper RPM", String.format("%.2f", shooter.upperRPM));

@@ -20,52 +20,40 @@ import org.firstinspires.ftc.teamcode.Utilities.PIDFController;
 
 @Config
 public class Spindexer {
-	// 8192 ticks per 360 degrees for the through-bore encoder
-	public static double TICKS_PER_REV = 8192.0;
+	// 360 ticks per 360 degrees for the through-bore encoder
+	public static double TICKS_PER_REV = 360.0;
 
 	// Magnetic limit switch triggers 11.011 degrees after the desired zero point
 	// Offset in ticks: -11.011 * (8192 / 360) ≈ -250.7 ticks
-	public static double zeroOffset = 0 * (8192.0 / 360.0);
+	public static double zeroOffset = 0;
 
 	// PID coefficients for position control. Tuned 2025-11-22.
 	public static double P = 0.02, I = 0.0, D = 0.0, F = 0.0;
-
-
-	public double normalizeAngle(double angle) {
-		while (angle > Math.PI) angle -= 2 * Math.PI;
-		while (angle < -Math.PI) angle += 2 * Math.PI;
-		return angle;
-	}
 
 	private static Spindexer instance = null;
 
 	private CRServo spindexerLeft;
 	private CRServo spindexerRight;
 	private AnalogInput spindexerEncoder;
-	private TouchSensor spindexerZero;
 
 	private PIDFController controller;
 	public double targetPosition = 0;
 	public double power = 0;
-	private boolean isZeroed = false;
 
 	public double per = 0;
 	public double cent = 0;
 	public double fin = 0;
 
-	public double degreeToTicks = 360 / 8192.0;
-
 	public double currentPosition;
 
-	// This boolean is used by the ZeroAction to prevent the update() method's PID
-	// from interfering with the direct power calls during the zeroing sequence.
-	private final boolean isZeroing = false;
+	// EMA filter state variables
+	private double filteredValue = 0.0;
+	private boolean isInitialized = false;
 
-	// Stores the encoder position when the magnetic limit switch triggers
-	private final double calibrationPosition = 0;
-
-	// Stores the true zero position, accounting for the sensor offset
-	private final double actualZeroPosition = 0;
+	// EMA tuning parameters
+	public static double ALPHA_RESPONSIVE = 0.7;
+	public static double ALPHA_SMOOTH = 0.05;
+	public static double MOTION_THRESHOLD = 0.1;
 
 	// Store detected ball colors for each slot (0, 1, 2)
 	private final BallColor[] ballColors = new BallColor[3];
@@ -84,10 +72,8 @@ public class Spindexer {
 			instance.spindexerRight = hardwareMap.get(CRServo.class,"spindexerRight");
 			instance.spindexerRight.setDirection(DcMotorSimple.Direction.REVERSE);
 			instance.spindexerEncoder = hardwareMap.get(AnalogInput.class, "spindexerEncoder");
-			instance.spindexerZero = hardwareMap.get(TouchSensor.class, "spindexerZero");
 
 			instance.controller = new PIDFController(P, I, D, F);
-			//instance.controller.setDirection(true);
 		}
 	}
 
@@ -104,11 +90,19 @@ public class Spindexer {
 	}
 
 	/**
-	 * Gets the current position of the spindexer, adjusted for the zero offset.
-	 * This accounts for both the sensor trigger point and the actual zero calibration.
+	 * Gets the filtered position using Dynamic Exponential Moving Average (EMA).
+	 * This provides a smoothed position value that adapts to motion.
 	 */
-	public double getAdjustedPosition() {
-		return ((spindexerEncoder.getVoltage()));
+	public double getPosition() {
+		double rawInput = ((spindexerEncoder.getVoltage() / 3.3) * 360.0);
+		if (!isInitialized) {
+			filteredValue = rawInput;
+			isInitialized = true;
+			return filteredValue;
+		}
+		double currentAlpha = (Math.abs((spindexerLeft.getPower() + spindexerRight.getPower()) / 2.0) > MOTION_THRESHOLD) ? ALPHA_RESPONSIVE : ALPHA_SMOOTH;
+		filteredValue = (rawInput * currentAlpha) + (filteredValue * (1 - currentAlpha));
+		return filteredValue;
 	}
 
 	/**
@@ -116,7 +110,7 @@ public class Spindexer {
 	 * controller to run and for the spindexer to hold its position.
 	 */
 	public void update() {
-		per = ((spindexerEncoder.getVoltage()));
+		per = getPosition();
 		cent = per * 100;
 		if ( cent > 100){
 			fin = cent - 100;
@@ -138,50 +132,26 @@ public class Spindexer {
 			spindexerRight.setPower(0);
 		}
 
-		currentPosition = spindexerLeft.getController().getServoPosition(spindexerLeft.getPortNumber());
+		currentPosition = per;
 	}
 
-	public void updateRawPosition(){
-		currentPosition = spindexerLeft.getController().getServoPosition(spindexerLeft.getPortNumber());
-	}
-
-	public Action zero() {
-		return new ZeroAction();
-	}
-
-	private Action setTargetRevolutions(double revolutions) {
+	private Action setTarget(double angle) {
 		return new InstantAction(() -> {
-			if (isZeroed) {
-				targetPosition = revolutions * TICKS_PER_REV;
-			}
+			targetPosition = angle * TICKS_PER_REV;
 		});
 	}
 
 	public Action toPosition(double revolutions) {
 		return packet -> {
-			// If not zeroed, keep running (return true) to wait until zeroed
-//			isZeroed = true;
-//			if (!isZeroed) return true;
-
-
-
-
-			// Set the target for the PID controller running in the background
-			//targetPosition = revolutions * TICKS_PER_REV;
-
-			targetPosition = revolutions * 100;
+			targetPosition = revolutions * TICKS_PER_REV;
 
 			// This action is considered "done" when the error is small.
 			// This allows it to be a "blocking" call in a sequence.
 			// Returns true while moving (error >= threshold), false when within tolerance
-			double error = targetPosition - getAdjustedPosition();
+			double error = targetPosition - getPosition();
 			packet.put("Spindexer Error", error);
 			return Math.abs(error) >= 50; // Returns true while moving, false when within tolerance
 		};
-	}
-
-	public Action intakeBall() {
-		return new IntakeBall();
 	}
 
 	public BallColor getBallColor(int slotIndex) {
@@ -197,14 +167,8 @@ public class Spindexer {
 		}
 	}
 
-	public double getCurrentPositionTicks() {
-		return getAdjustedPosition();
-	}
-
 	public void setTargetPosition(double revolutions) {
-//		if (isZeroed) {
-			targetPosition = revolutions; //* TICKS_PER_REV;
-//		}
+		targetPosition = revolutions; //* TICKS_PER_REV;
 	}
 
 	/**
@@ -218,41 +182,5 @@ public class Spindexer {
 			spindexerLeft.setPower(clampedPower);
 			spindexerRight.setPower(clampedPower);
 		});
-	}
-
-	private class ZeroAction implements Action {
-//		private long startTime = System.currentTimeMillis();
-
-		@Override
-		public boolean run(@NonNull TelemetryPacket packet) {
-//			double currentEncoderPos = spindexerEncoder.getCurrentPosition();
-//			boolean sensorPressed = spindexerZero.isPressed();
-//			long elapsedTime = System.currentTimeMillis() - startTime;
-//
-//			packet.put("ZEROING: Encoder Position", currentEncoderPos);
-//			packet.put("ZEROING: Sensor Pressed", sensorPressed);
-//			packet.put("ZEROING: Elapsed time (ms)", elapsedTime);
-//
-//			isZeroing = true;
-//			spindexer.setPower(0.1);
-//
-//			if (sensorPressed) {
-//				spindexer.setPower(0);
-//				// Record the encoder position when the sensor triggers
-//				calibrationPosition = spindexerEncoder.getCurrentPosition();
-//				// Calculate true zero position accounting for the sensor offset
-//				actualZeroPosition = calibrationPosition + zeroOffset;
-//				targetPosition = 0;
-//				packet.put("ZEROING: COMPLETE - Calibration position", calibrationPosition);
-//				packet.put("ZEROING: COMPLETE - Actual zero position", actualZeroPosition);
-//				packet.put("ZEROING: COMPLETE - Zero offset applied", zeroOffset);
-//				isZeroed = true;
-//				isZeroing = false;
-//				return true; // Action is complete
-//			}
-//
-//			return false; // Action is still running
-			return true;
-		}
 	}
 }

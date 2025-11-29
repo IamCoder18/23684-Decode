@@ -60,7 +60,7 @@ public class ShootBall implements Action {
 		Spindexer.getInstance().setTargetPosition(targetRevolutions);
 
 		// Check if position is reached (within tolerance)
-		double currentTicks = Spindexer.getInstance().getCurrentPositionTicks();
+		double currentTicks = Spindexer.getInstance().getPosition();
 		double targetTicks = targetRevolutions * Spindexer.TICKS_PER_REV;
 		double error = targetTicks - currentTicks;
 
@@ -139,7 +139,7 @@ public class ShootBall implements Action {
 	 * @return current position in degrees (0-360)
 	 */
 	private double getCurrentPositionDegrees() {
-		double currentPositionTicks = Spindexer.getInstance().getCurrentPositionTicks();
+		double currentPositionTicks = Spindexer.getInstance().getPosition();
 		double currentPositionDegrees = (currentPositionTicks % Spindexer.TICKS_PER_REV) / Spindexer.TICKS_PER_REV * 360;
 		if (currentPositionDegrees < 0) {
 			currentPositionDegrees += 360;

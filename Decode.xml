@@ -12,6 +12,7 @@
             <ContinuousRotationServo name="intakeDoorRight" port="4" />
             <Servo name="rgbIndicator" port="5" />
             <RevColorSensorV3 name="colourRight" port="0" bus="3" />
+			<AnalogInput name="spindexerEncoder" port="1" />
         </LynxModule>
         <LynxModule name="Control Hub" port="173">
             <goBILDA5201SeriesMotor name="frontLeft" port="0" />

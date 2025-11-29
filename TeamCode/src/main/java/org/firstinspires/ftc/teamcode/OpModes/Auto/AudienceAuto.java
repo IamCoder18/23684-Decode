@@ -1,13 +1,8 @@
 package org.firstinspires.ftc.teamcode.OpModes.Auto;
 
-import androidx.annotation.NonNull;
-
-import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
-import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.ParallelAction;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.SequentialAction;
-import com.acmerobotics.roadrunner.SleepAction;
 import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
@@ -21,7 +16,6 @@ import org.firstinspires.ftc.teamcode.Subsystems.Shooter;
 import org.firstinspires.ftc.teamcode.Subsystems.Spindexer;
 import org.firstinspires.ftc.teamcode.Subsystems.Transfer;
 import org.firstinspires.ftc.teamcode.Utilities.ActionScheduler;
-import org.firstinspires.ftc.teamcode.Utilities.DeadlineAction;
 
 /**
  * Abstract base class for Audience-side autonomous modes.
@@ -77,6 +71,7 @@ public abstract class AudienceAuto extends OpMode {
 
 		intake = Intake.getInstance();
 
+		// TODO: Remove this and transition to using the subsystem
 		transferLeft = hardwareMap.get(CRServo.class, "transferLeft");
 		transferRight = hardwareMap.get(CRServo.class, "transferRight");
 		transferRight.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -126,14 +121,16 @@ public abstract class AudienceAuto extends OpMode {
 						trajectoryToShootingPosition.build(),
 						new ParallelAction(
 								shooter.run(Shooter.AUDIENCE_RPM),
-								spindexer.setDirectPower(0.8),
+								spindexer.setDirectPower(0.3),
 								transfer.intakeDoorForward()
-						)
-//						shooter.run(0),
-//						spindexer.setDirectPower(0),
-//						transfer.intakeDoorStop(),
-//						trajectoryToCollectionPosition.build(),
-//						shooter.stop()
+						),
+						shooter.runAndWait(Shooter.AUDIENCE_RPM),
+						shooter.runAndWait(Shooter.AUDIENCE_RPM),
+						shooter.runAndWait(Shooter.AUDIENCE_RPM),
+						spindexer.setDirectPower(0),
+						transfer.intakeDoorStop(),
+						shooter.stop(),
+						trajectoryToCollectionPosition.build()
 				)
 		);
 

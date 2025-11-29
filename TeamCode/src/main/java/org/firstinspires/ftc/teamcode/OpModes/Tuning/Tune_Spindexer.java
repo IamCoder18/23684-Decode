@@ -83,14 +83,6 @@ public class Tune_Spindexer extends OpMode {
 		// Calculate step multipliers
 		double stepMultiplier = gamepad1.right_stick_button ? FINE_MULTIPLIER : 1.0;
 
-		// === ZEROING ===
-		// Only schedule on button press (not held)
-		if (gamepad1.a && !prevA) {
-			scheduler.schedule(spindexer.zero());
-			telemetry.addData("Action", "Zero sequence started");
-		}
-		prevA = gamepad1.a;
-
 		// === POSITION COMMANDS ===
 		// Only schedule on button press (not held)
 		if (gamepad1.b && !prevB) {
@@ -150,7 +142,7 @@ public class Tune_Spindexer extends OpMode {
 		// === TELEMETRY DISPLAY ===
 
 		// Position information
-		double currentTicks = spindexer.getCurrentPositionTicks();
+		double currentTicks = spindexer.getPosition();
 		double currentRevolutions = currentTicks / Spindexer.TICKS_PER_REV;
 		double currentDegrees = currentRevolutions * 360.0;
 		int currentSlot = (int) ((currentDegrees / 120) % 3);
