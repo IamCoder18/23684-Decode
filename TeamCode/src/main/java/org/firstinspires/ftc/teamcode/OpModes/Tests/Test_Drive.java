@@ -7,6 +7,7 @@ import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
@@ -20,6 +21,12 @@ import org.firstinspires.ftc.teamcode.Utilities.PIDFController;
 @Config
 @TeleOp
 public class Test_Drive extends OpMode {
+
+	DcMotor frontRight;
+	DcMotor rearRight;
+	DcMotor frontLeft;
+	DcMotor rearLeft;
+
 
 	// Tuning parameters
 	public static double targetX = 0;
@@ -59,26 +66,32 @@ public class Test_Drive extends OpMode {
 		drive = new MecanumDrive(hardwareMap, pose);
 		target = new Pose2d(targetX, targetY, targetH);
 
-		xPidController = new PIDFController(XController.kP, XController.kI, XController.kD, XController.kF);
-		yPidController = new PIDFController(YController.kP, YController.kI, YController.kD, YController.kF);
-		headingPidController = new PIDFController(HController.kP, HController.kI, HController.kD, HController.kF);
+		xPidController = new PIDFController(X.kP, X.kI, X.kD, X.kF);
+		yPidController = new PIDFController(Y.kP, Y.kI, Y.kD, Y.kF);
+		headingPidController = new PIDFController(H.kP, H.kI, H.kD, H.kF);
 
 		GoBildaPinpointDriver.EncoderDirection yEncoderDirection = GoBildaPinpointDriver.EncoderDirection.REVERSED;
 		GoBildaPinpointDriver.EncoderDirection xEncoderDirection = GoBildaPinpointDriver.EncoderDirection.REVERSED;
 
 		pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
-		pinpoint.setOffsets(190, -60.10603, DistanceUnit.MM);
+		pinpoint.setOffsets(-177.8, -63.5, DistanceUnit.MM);
 		pinpoint.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
 		pinpoint.setEncoderDirections(xEncoderDirection, yEncoderDirection);
 		pinpoint.resetPosAndIMU();
+
+		frontRight = hardwareMap.get(DcMotor.class, "frontRight");
+		rearRight = hardwareMap.get(DcMotor.class, "rearRight");
+		frontLeft = hardwareMap.get(DcMotor.class, "frontLeft");
+		rearLeft = hardwareMap.get(DcMotor.class, "rearLeft");
+
 	}
 
 	@Override
 	public void loop() {
 		// Update PID gains from config
-		xPidController.setPID(XController.kP, XController.kI, XController.kD, XController.kF);
-		yPidController.setPID(YController.kP, YController.kI, YController.kD, YController.kF);
-		headingPidController.setPID(HController.kP, HController.kI, HController.kD, HController.kF);
+		xPidController.setPID(X.kP, X.kI, X.kD, X.kF);
+		yPidController.setPID(Y.kP, Y.kI, Y.kD, Y.kF);
+		headingPidController.setPID(H.kP, H.kI, H.kD, H.kF);
 
 		// Update odometry
 		pinpoint.update();
@@ -102,13 +115,14 @@ public class Test_Drive extends OpMode {
 		strafePower = Math.abs(strafePower) > DEADZONE_THRESHOLD ? strafePower : 0;
 		turnPower = Math.abs(turnPower) > DEADZONE_THRESHOLD ? turnPower : 0;
 
-		// Command drive
-		PoseVelocity2d velocity = new PoseVelocity2d(
-				new Vector2d(forwardPower, strafePower),
-				turnPower
-		);
-		drive.setDrivePowers(velocity);
+		double y = forwardPower; // Remember, Y stick is reversed!
+		double x = strafePower;
+		double rx = turnPower;
 
+		frontLeft.setPower(y + x + rx);
+		rearLeft.setPower(y - x + rx);
+		frontRight.setPower(y - x - rx);
+		rearRight.setPower(y + x - rx);
 		// Telemetry
 		telemetry.addData("Position", pose.position);
 		telemetry.addData("Heading (deg)", Math.toDegrees(pose.heading.toDouble()));
@@ -129,6 +143,8 @@ public class Test_Drive extends OpMode {
 		public static double kF = 0;
 	}
 
+	public static XController X = new XController();
+
 	/**
 	 * Y-axis (forward) PID controller gains.
 	 */
@@ -138,6 +154,7 @@ public class Test_Drive extends OpMode {
 		public static double kD = 0;
 		public static double kF = 0;
 	}
+	public static YController Y = new YController();
 
 	/**
 	 * Heading (rotation) PID controller gains.
@@ -148,4 +165,5 @@ public class Test_Drive extends OpMode {
 		public static double kD = 0;
 		public static double kF = 0;
 	}
+	public static HController H = new HController();
 }
