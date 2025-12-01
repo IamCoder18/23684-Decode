@@ -9,10 +9,10 @@
             <ContinuousRotationServo name="turret" port="0" />
             <ContinuousRotationServo name="transferRight" port="1" />
             <ContinuousRotationServo name="spindexerRight" port="2" />
-            <ContinuousRotationServo name="intakeDoorRight" port="4" />
-            <Servo name="rgbIndicator" port="5" />
+            <ContinuousRotationServo name="intakeDoorRight" port="5" />
+            <Servo name="rgbIndicator" port="4" />
+            <AnalogInput name="spindexerEncoder" port="1" />
             <RevColorSensorV3 name="colourRight" port="0" bus="3" />
-			<AnalogInput name="spindexerEncoder" port="1" />
         </LynxModule>
         <LynxModule name="Control Hub" port="173">
             <goBILDA5201SeriesMotor name="frontLeft" port="0" />

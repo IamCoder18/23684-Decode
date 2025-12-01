@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.OpModes.TeleOp;
 
+import com.acmerobotics.roadrunner.Actions;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Vector2d;
@@ -7,9 +8,11 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
 import org.firstinspires.ftc.teamcode.LifecycleManagementUtilities.HardwareInitializer;
 import org.firstinspires.ftc.teamcode.LifecycleManagementUtilities.HardwareShutdown;
+import org.firstinspires.ftc.teamcode.LifecycleManagementUtilities.SubsystemUpdater;
 import org.firstinspires.ftc.teamcode.Roadrunner.MecanumDrive;
 import org.firstinspires.ftc.teamcode.Subsystems.Intake;
 import org.firstinspires.ftc.teamcode.Subsystems.RGBIndicator;
+import org.firstinspires.ftc.teamcode.Subsystems.RobotState;
 import org.firstinspires.ftc.teamcode.Subsystems.Shooter;
 import org.firstinspires.ftc.teamcode.Subsystems.Spindexer;
 import org.firstinspires.ftc.teamcode.Subsystems.Transfer;
@@ -54,6 +57,8 @@ public class MainTeleOp extends OpMode {
 	protected boolean spindexerUpCrossed = false;
 	protected boolean spindexerMidCrossed = false;
 	protected boolean spindexerDownCrossed = false;
+	protected boolean leftBumperPressed = false;
+	protected boolean rightBumperPressed = false;
 
 	protected boolean transferAboveRPM = false;
 
@@ -67,15 +72,33 @@ public class MainTeleOp extends OpMode {
 		intake = Intake.getInstance();
 		transfer = Transfer.getInstance();
 		spindexer = Spindexer.getInstance();
+		spindexer.resetCalibrationAverage();
 		rgbIndicator = RGBIndicator.getInstance();
+
+		// Try to set starting pose from previous autonomous run
+		Pose2d savedPose = RobotState.getInstance().getAutoPose();
+		if (savedPose != null) {
+			drive.localizer.setPose(savedPose);
+			telemetry.addData("Pose Source", "Loaded from Auto: (%.2f, %.2f, %.2f°)", 
+					savedPose.position.x, savedPose.position.y, Math.toDegrees(savedPose.heading.toDouble()));
+		} else {
+			telemetry.addData("Pose Source", "Default pose used");
+			// TODO: Get position from Limelight when available
+		}
 
 		telemetry.addData("Status", "Initialized - Waiting for START");
 		telemetry.update();
 	}
 
 	@Override
+	public void init_loop() {
+		spindexer.updateCalibrationAverage();
+	}
+
+	@Override
 	public void start() {
 		// Called when START is pressed
+		spindexer.finalizeTeleOpCalibration();
 		scheduler.schedule(transfer.intakeDoorForward());
 		scheduler.schedule(transfer.transferBackward());
 		scheduler.update();
@@ -86,11 +109,7 @@ public class MainTeleOp extends OpMode {
 		// Update drive with gamepad input
 		handleDriveInput();
 
-		// Update spindexer PID
-		spindexer.update();
-
-		// Update shooter RPM readings
-		shooter.updateRPM(System.nanoTime());
+		SubsystemUpdater.update();
 
 		// Handle operator controls (must be before scheduler.update())
 		handleOperatorInput();
@@ -126,20 +145,25 @@ public class MainTeleOp extends OpMode {
 	 */
 	private void updateRGBIndicator() {
 		double rpm = shooter.averageRPM;
-		double maxRPM = 3000.0;
+		double color = 0;
 
-		// Clamp RPM to 0-maxRPM range
-		rpm = Math.max(0, Math.min(maxRPM, rpm));
+		if (rpm <= 1000) {
+			color = 0.277;
+		} else if (rpm <= 1500) {
+			color = 0.333;
+		} else if (rpm <= 2000) {
+			color = 0.388;
+		} else if (rpm <= 2400) {
+			color = 0.444;
+		} else if (rpm <= 2600) {
+			color = 0.500;
+		} else if (rpm <= 2800) {
+			color = 0.666;
+		} else if (rpm > 2800){
+			color = 0.722;
+		}
 
-		// Discrete RPM ranges (0-maxRPM) mapped to 11 color positions
-		String[] colorNames = {"OFF", "RED", "ORANGE", "YELLOW", "SAGE", "GREEN", "AZURE", "BLUE", "INDIGO", "VIOLET", "WHITE"};
-
-		// Determine which color range the current RPM falls into
-		int colorIndex = (int) (rpm / maxRPM * (colorNames.length - 1));
-		colorIndex = Math.min(colorIndex, colorNames.length - 1);
-
-		// Set the servo to the corresponding discrete position
-		rgbIndicator.setColorByName(colorNames[colorIndex]);
+		rgbIndicator.setDirectPosition(color);
 	}
 
 	/**
@@ -161,6 +185,21 @@ public class MainTeleOp extends OpMode {
 				turnPower
 		);
 		drive.setDrivePowers(velocity);
+
+		// Manual offset trim
+		if (gamepad1.left_bumper && !leftBumperPressed) {
+			scheduler.schedule(spindexer.applyManualOffsetTrim(-1.0));
+			leftBumperPressed = true;
+		} else if (!gamepad1.left_bumper && leftBumperPressed) {
+			leftBumperPressed = false;
+		}
+
+		if (gamepad1.right_bumper && !rightBumperPressed) {
+			scheduler.schedule(spindexer.applyManualOffsetTrim(1.0));
+			rightBumperPressed = true;
+		} else if (!gamepad1.right_bumper && rightBumperPressed) {
+			rightBumperPressed = false;
+		}
 	}
 
 	/**
@@ -258,20 +297,15 @@ public class MainTeleOp extends OpMode {
 
 		if (gamepad2.dpad_up) {
 			spindexer.setTargetPosition(0);
-
-
 		}
-		if (gamepad2.dpad_left) {
-			spindexer.setTargetPosition(0.3333); // 120 degrees
 
+		if (gamepad2.dpad_left) {
+			spindexer.setTargetPosition(120);
 		}
 
 		if (gamepad2.dpad_right) {
-			spindexer.setTargetPosition(0.6667); // 240 degrees
+			spindexer.setTargetPosition(240);
 		}
-
-
-
 	}
 
 
@@ -291,18 +325,11 @@ public class MainTeleOp extends OpMode {
 		telemetry.addData("Left Trigger", "Intake");
 		telemetry.addData("Right Trigger", "Shooter");
 		telemetry.addData("Left Joystick Y (Spindexer)", String.format("%.2f", -gamepad2.left_stick_y));
-		telemetry.addData("Spindexer Position", String.format("%.2f rev", spindexer.getPosition() / Spindexer.TICKS_PER_REV));
+		telemetry.addData("Spindexer Position", String.format("%.2f rev", spindexer.getCalibratedPosition() / 360.0));
 
 		telemetry.addData("", "=== SHOOTER ===");
 		telemetry.addData("Upper RPM", String.format("%.2f", shooter.upperRPM));
 		telemetry.addData("Lower RPM", String.format("%.2f", shooter.lowerRPM));
 		telemetry.addData("Average RPM", String.format("%.2f", shooter.averageRPM));
-
-		telemetry.addData("", "=== Spindexer ===");
-		telemetry.addData(" toatal position", spindexer.cent);
-		telemetry.addData("postion",spindexer.fin);
-		telemetry.addData("target",spindexer.targetPosition);
-		telemetry.addData("power to target", spindexer.power);
-
 	}
 }

@@ -4,6 +4,9 @@ import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
+import org.firstinspires.ftc.teamcode.LifecycleManagementUtilities.HardwareInitializer;
+import org.firstinspires.ftc.teamcode.LifecycleManagementUtilities.HardwareShutdown;
+import org.firstinspires.ftc.teamcode.LifecycleManagementUtilities.SubsystemUpdater;
 import org.firstinspires.ftc.teamcode.Subsystems.Intake;
 import org.firstinspires.ftc.teamcode.Subsystems.Limelight;
 import org.firstinspires.ftc.teamcode.Subsystems.Shooter;
@@ -31,11 +34,7 @@ public class Test_Shooter extends OpMode {
 
 	@Override
 	public void init() {
-		Shooter.initialize(hardwareMap);
-		Spindexer.initialize(hardwareMap);
-		Transfer.initialize(hardwareMap);
-		Intake.initialize(hardwareMap);
-		Limelight.initialize(hardwareMap);
+		HardwareInitializer.initialize(hardwareMap);  // Use centralized initializer
 
 		shooter = Shooter.getInstance();
 		spindexer = Spindexer.getInstance();
@@ -53,13 +52,14 @@ public class Test_Shooter extends OpMode {
 
 	@Override
 	public void loop() {
+		SubsystemUpdater.update();
+
 		// Right trigger controls shooter (run at target RPM or stop)
 		boolean currentShooterActive = gamepad2.right_trigger > 0.5;
-		
+
 		if (currentShooterActive) {
-			shooter.updateRPM(System.nanoTime());
 			scheduler.schedule(shooter.run(lowerTargetRPM, upperTargetRPM));
-			
+
 			// Transfer forward only if at target RPM, otherwise backward
 			if (shooter.isAtTargetRPM(lowerTargetRPM, upperTargetRPM)) {
 				scheduler.schedule(transfer.transferForward());
@@ -90,9 +90,6 @@ public class Test_Shooter extends OpMode {
 
 	@Override
 	public void stop() {
-		Shooter.shutdown();
-		Spindexer.shutdown();
-		Transfer.shutdown();
-		Intake.shutdown();
+		HardwareShutdown.shutdown();
 	}
 }
