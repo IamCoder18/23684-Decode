@@ -12,6 +12,7 @@ import org.firstinspires.ftc.teamcode.LifecycleManagementUtilities.SubsystemUpda
 import org.firstinspires.ftc.teamcode.Subsystems.RobotState;
 import org.firstinspires.ftc.teamcode.Subsystems.Spindexer;
 import org.firstinspires.ftc.teamcode.Utilities.ActionScheduler;
+import org.firstinspires.ftc.teamcode.Utilities.SpindexerPositionUtility;
 
 /**
  * Tuning OpMode for the Spindexer Subsystem
@@ -32,7 +33,7 @@ import org.firstinspires.ftc.teamcode.Utilities.ActionScheduler;
  * - B: Move to position 0.25 (90°)
  * - X: Move to position 0.5 (180°)
  * - Y: Move to position 0.75 (270°)
- * - A: Zero sequence
+ * - A: Move to next shoot position using utility
  * - Right Stick: Fine-tune with bigger increments
  * <p>
  * Expected Behavior:
@@ -110,6 +111,23 @@ public class Tune_Spindexer extends OpMode {
 		}
 		prevY = gamepad1.y;
 
+		// Button A: Use utility class to calculate next position
+		if (gamepad1.a && !prevA) {
+			// Get current position in degrees and convert to integer for utility
+			double currentDegrees = spindexer.getCalibratedPosition();
+			int currentPositionInt = (int) Math.round(currentDegrees);
+
+			// Calculate next shoot position using utility
+			int nextShootPosition = SpindexerPositionUtility.getNextShootPosition(currentPositionInt);
+
+			// Convert back to revolutions for the spindexer (0-1 range)
+			double targetRevolutions = nextShootPosition / 360.0;
+			scheduler.schedule(spindexer.toPosition(targetRevolutions));
+			targetPosition = nextShootPosition;
+			telemetry.addData("Action", "Moving to next shoot position: " + nextShootPosition + "°");
+		}
+		prevA = gamepad1.a;
+
 		// === UPDATE SCHEDULER AND PID CONTROLLER ===
 		SubsystemUpdater.update();
 		scheduler.update();
@@ -149,7 +167,7 @@ public class Tune_Spindexer extends OpMode {
 
 		// Control information
 		telemetry.addData("", "=== CONTROLS ===");
-		telemetry.addData("A: ZERO    B: 90°    X: 180°    Y: 270°", "");
+		telemetry.addData("A: NEXT SHOOT    B: 90°    X: 180°    Y: 270°", "");
 		telemetry.addData("Fine tune: " + (gamepad1.right_stick_button ? "ENABLED" : "disabled"), "Right stick button");
 		if (stepMultiplier > 1.0) {
 			telemetry.addData("Step Multiplier", String.format("%.1fx", stepMultiplier));
