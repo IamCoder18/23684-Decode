@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.OpModes.TeleOp;
 
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Actions;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
@@ -7,11 +8,15 @@ import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.Position;
 import org.firstinspires.ftc.teamcode.LifecycleManagementUtilities.HardwareInitializer;
 import org.firstinspires.ftc.teamcode.LifecycleManagementUtilities.HardwareShutdown;
 import org.firstinspires.ftc.teamcode.LifecycleManagementUtilities.SubsystemUpdater;
 import org.firstinspires.ftc.teamcode.Roadrunner.MecanumDrive;
 import org.firstinspires.ftc.teamcode.Subsystems.Intake;
+import org.firstinspires.ftc.teamcode.Subsystems.Limelight;
 import org.firstinspires.ftc.teamcode.Subsystems.RGBIndicator;
 import org.firstinspires.ftc.teamcode.Subsystems.RobotState;
 import org.firstinspires.ftc.teamcode.Subsystems.Shooter;
@@ -48,6 +53,7 @@ public class MainTeleOp extends OpMode {
 	protected Transfer transfer;
 	protected Spindexer spindexer;
 	protected RGBIndicator rgbIndicator;
+	protected Limelight limelight;
 
 	// Button state tracking to prevent continuous input
 	protected boolean leftTriggerPressed = false;
@@ -75,7 +81,6 @@ public class MainTeleOp extends OpMode {
 		return Math.atan2(-deltaY, -deltaX);
 	}
 
-
 	protected boolean transferAboveRPM = false;
 
 	@Override
@@ -90,17 +95,27 @@ public class MainTeleOp extends OpMode {
 		spindexer = Spindexer.getInstance();
 		spindexer.resetCalibrationAverage();
 		rgbIndicator = RGBIndicator.getInstance();
+		limelight = Limelight.getInstance();
 
-		// Try to set starting pose from previous autonomous run
-		Pose2d savedPose = RobotState.getInstance().getAutoPose();
-		if (savedPose != null) {
-			drive.localizer.setPose(savedPose);
-			telemetry.addData("Pose Source", "Loaded from Auto: (%.2f, %.2f, %.2f°)", 
-					savedPose.position.x, savedPose.position.y, Math.toDegrees(savedPose.heading.toDouble()));
-		} else {
-			telemetry.addData("Pose Source", "Default pose used");
-			// TODO: Get position from Limelight when available
-		}
+//		// Try to set starting pose from previous autonomous run
+//		Pose2d savedPose = RobotState.getInstance().getAutoPose();
+//		if (savedPose != null) {
+//			drive.localizer.setPose(savedPose);
+//			telemetry.addData("Pose Source", "Loaded from Auto: (%.2f, %.2f, %.2f°)",
+//					savedPose.position.x, savedPose.position.y, Math.toDegrees(savedPose.heading.toDouble()));
+//		} else {
+//			telemetry.addData("Pose Source", "Default pose used");
+//		}
+
+		TelemetryPacket limelightTelemetry = new TelemetryPacket();
+
+
+		limelight.update().run(limelightTelemetry);
+		telemetry.addLine(limelightTelemetry.toString());
+
+		Position robotPosition = limelight.botpose.getPosition().toUnit(DistanceUnit.INCH);
+
+		drive.localizer.setPose(new Pose2d(robotPosition.x, robotPosition.y, limelight.botpose.getOrientation().getYaw(AngleUnit.RADIANS)));
 
 		telemetry.addData("Status", "Initialized - Waiting for START");
 		telemetry.update();
@@ -194,7 +209,6 @@ public class MainTeleOp extends OpMode {
 		if (TeamColourRed()){
 			goalX = 60;
 			goalY = 60;
-
 		} else if (!TeamColourRed()) {
 			goalX = -60;
 			goalY = -60;
@@ -204,8 +218,6 @@ public class MainTeleOp extends OpMode {
 				.strafeToLinearHeading(new Vector2d(57, -23), calculateShotAngle(57,-23));
 		ShootingRed = drive.actionBuilder(drive.localizer.getPose())
 				.strafeToLinearHeading(new Vector2d(57, 23), calculateShotAngle(57,23));
-
-
 
 		if (gamepad1.a){
 			if (TeamColourRed()){
@@ -220,7 +232,6 @@ public class MainTeleOp extends OpMode {
 		}
 
 		if (!gamepad1.a) {
-
 			double forwardPower = -gamepad1.left_stick_y; // Left stick Y (inverted)
 			double turnPower = -gamepad1.right_stick_x;     // Right stick X
 			double strafePower = gamepad1.left_stick_x;    // Left stick X

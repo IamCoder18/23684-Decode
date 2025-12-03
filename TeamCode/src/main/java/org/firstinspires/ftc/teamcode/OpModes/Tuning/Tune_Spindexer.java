@@ -113,18 +113,17 @@ public class Tune_Spindexer extends OpMode {
 
 		// Button A: Use utility class to calculate next position
 		if (gamepad1.a && !prevA) {
-			// Get current position in degrees and convert to integer for utility
+			// Get current position in degrees (already a double)
 			double currentDegrees = spindexer.getCalibratedPosition();
-			int currentPositionInt = (int) Math.round(currentDegrees);
 
-			// Calculate next shoot position using utility
-			int nextShootPosition = SpindexerPositionUtility.getNextShootPosition(currentPositionInt);
+			// Calculate next shoot position using utility (now handles doubles)
+			double nextShootPosition = SpindexerPositionUtility.getNextShootPosition(currentDegrees);
 
-			// Convert back to revolutions for the spindexer (0-1 range)
+			// Convert to revolutions for the spindexer (0-1 range)
 			double targetRevolutions = nextShootPosition / 360.0;
 			scheduler.schedule(spindexer.toPosition(targetRevolutions));
 			targetPosition = nextShootPosition;
-			telemetry.addData("Action", "Moving to next shoot position: " + nextShootPosition + "°");
+			telemetry.addData("Action", "Moving to next shoot position: " + String.format("%.1f", nextShootPosition) + "°");
 		}
 		prevA = gamepad1.a;
 

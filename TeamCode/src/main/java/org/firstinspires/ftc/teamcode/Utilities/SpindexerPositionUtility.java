@@ -13,67 +13,67 @@ public class SpindexerPositionUtility {
      * Calculates the next position for the Spindexer to shoot a ball.
      * The next shoot position is the smallest x > currentPosition where x ≡ 0 (mod 120).
      *
-     * @param currentPosition the current position of the Spindexer
-     * @return the next position to shoot a ball
+     * @param currentPosition the current position of the Spindexer (in degrees)
+     * @return the next position to shoot a ball (in degrees)
      */
-    public static int getNextShootPosition(int currentPosition) {
+    public static double getNextShootPosition(double currentPosition) {
         // Calculate the remainder when current position is divided by 120
-        int remainder = currentPosition % 120;
+        double remainder = currentPosition % 120.0;
 
         // If remainder is 0, current position is already a shoot position
         // so next shoot position is currentPosition + 120
-        if (remainder == 0) {
-            return currentPosition + 120;
+        if (Math.abs(remainder) < 0.0001) {  // Using small epsilon for floating point comparison
+            return currentPosition + 120.0;
         }
 
         // Otherwise, next shoot position is currentPosition + (120 - remainder)
-        return currentPosition + (120 - remainder);
+        return currentPosition + (120.0 - remainder);
     }
 
     /**
      * Calculates the next position for the Spindexer to intake a ball.
      * The next intake position is the smallest x > currentPosition where x ≡ 20 (mod 120).
      *
-     * @param currentPosition the current position of the Spindexer
-     * @return the next position to intake a ball
+     * @param currentPosition the current position of the Spindexer (in degrees)
+     * @return the next position to intake a ball (in degrees)
      */
-    public static int getNextIntakePosition(int currentPosition) {
+    public static double getNextIntakePosition(double currentPosition) {
         // Calculate how far we are from the next intake position
-        int remainder = (currentPosition - 20) % 120;
+        double remainder = (currentPosition - 20.0) % 120.0;
 
         // If remainder is 0, current position is already an intake position
         // so next intake position is currentPosition + 120
-        if (remainder == 0) {
-            return currentPosition + 120;
+        if (Math.abs(remainder) < 0.0001) {  // Using small epsilon for floating point comparison
+            return currentPosition + 120.0;
         }
 
         // If remainder is negative, we need to adjust it
         if (remainder < 0) {
-            remainder += 120;
+            remainder += 120.0;
         }
 
         // Next intake position is currentPosition + (120 - remainder)
-        return currentPosition + (120 - remainder);
+        return currentPosition + (120.0 - remainder);
     }
 
     /**
      * Alternative implementation of getNextIntakePosition that might be clearer
      * This version finds the next position where (position % 120) == 20
      *
-     * @param currentPosition the current position of the Spindexer
-     * @return the next position to intake a ball
+     * @param currentPosition the current position of the Spindexer (in degrees)
+     * @return the next position to intake a ball (in degrees)
      */
-    public static int getNextIntakePositionAlternative(int currentPosition) {
-        int targetRemainder = 20;
-        int remainder = currentPosition % 120;
+    public static double getNextIntakePositionAlternative(double currentPosition) {
+        double targetRemainder = 20.0;
+        double remainder = currentPosition % 120.0;
 
         // If we're already at an intake position
-        if (remainder == targetRemainder) {
-            return currentPosition + 120;
+        if (Math.abs(remainder - targetRemainder) < 0.0001) {
+            return currentPosition + 120.0;
         }
         // If we've passed the intake position in this cycle
         else if (remainder > targetRemainder) {
-            return currentPosition + (120 - remainder + targetRemainder);
+            return currentPosition + (120.0 - remainder + targetRemainder);
         }
         // If we haven't reached the intake position yet in this cycle
         else {
