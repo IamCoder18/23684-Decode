@@ -83,8 +83,8 @@ public class Test_Shooter extends OpMode {
 		telemetry.addData("Shooter Average RPM", shooter.averageRPM);
 		telemetry.addData("At Target RPM", shooter.isAtTargetRPM(lowerTargetRPM, upperTargetRPM));
 		telemetry.addData("Spindexer Power", spindexerPower);
-		telemetry.addData("Distance to Blue Goal", limelight.getDistanceToTag(20));
-		telemetry.addData("Distance to Red Goal", limelight.getDistanceToTag(24));
+		telemetry.addData("Distance to Blue Goal", limelight.getDistanceToAprilTag(20));
+		telemetry.addData("Distance to Red Goal", limelight.getDistanceToAprilTag(24));
 		telemetry.update();
 	}
 
