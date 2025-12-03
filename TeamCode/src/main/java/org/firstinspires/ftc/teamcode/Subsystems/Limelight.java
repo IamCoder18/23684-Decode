@@ -18,12 +18,12 @@ import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 import org.firstinspires.ftc.vision.apriltag.AprilTagGameDatabase;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 public class Limelight {
-	// TODO: Deprecate
-	public List position;
 	Telemetry telemetry;
 	double ObeliskId;
 	private Limelight3A limelight;
@@ -36,8 +36,7 @@ public class Limelight {
 	public double Ta;
 	public Pose3D botpose;
 	public int aprilTagCount;
-
-
+	public Map<Integer, Double> aprilTagDistances = new HashMap<>();
 
 	private Limelight() {}
 
@@ -90,10 +89,12 @@ public class Limelight {
 			aprilTagCount = llResult.getFiducialResults().size();
 
 			List<LLResultTypes.FiducialResult> fiducialResults = llResult.getFiducialResults();
+			aprilTagDistances.clear(); // Clear previous distances
 			for (LLResultTypes.FiducialResult fiducial : fiducialResults) {
 				int id = fiducial.getFiducialId();
-
+	
 				double distanceFromAprilTag = AprilTagGameDatabase.getDecodeTagLibrary().lookupTag(id).fieldPosition.multiplied(0.0254f).subtracted(new VectorF((float) botpose.getPosition().x, (float) botpose.getPosition().y, 0.7493f)).magnitude();
+				aprilTagDistances.put(id, distanceFromAprilTag); // Store distance for this AprilTag
 			}
 		}
 		telemetry.update();
@@ -110,7 +111,6 @@ public class Limelight {
 			packet.put("Tx", Tx);
 			packet.put("Ty", Ty);
 			packet.put("Ta", Ta);
-			packet.put("ObeliskId", ObeliskId);
 			packet.put("BotPose", botpose);
 			packet.put("X", botpose.getPosition().x);
 			packet.put("Y", botpose.getPosition().y);
@@ -121,41 +121,20 @@ public class Limelight {
 		}
 	}
 
-	public List VisionPosition() {
-		limelight.pipelineSwitch(0);
-		LLResult llResult = limelight.getLatestResult();
-
-		if (llResult != null && llResult.isValid()) {
-			Pose3D botPose = llResult.getBotpose();
-			position.set(0, botPose.getPosition().x);
-			position.set(1, botPose.getPosition().y);
-			position.set(2, botPose.getPosition().z);
-		}
-
-		return position;
+	/**
+	 * Get the distance to a specific AprilTag by its ID
+	 * @param aprilTagId The ID of the AprilTag
+	 * @return The distance to the AprilTag, or null if not found
+	 */
+	public Double getDistanceToAprilTag(int aprilTagId) {
+		return aprilTagDistances.get(aprilTagId);
 	}
 
-	public double DistanceFromGoal() {
-		limelight.pipelineSwitch(0);
-		LLResult llResult = limelight.getLatestResult();
-
-		if (llResult != null && llResult.isValid()) {
-			Pose3D botPose = llResult.getBotpose();
-			List<LLResultTypes.FiducialResult> fiducialResults = llResult.getFiducialResults();
-			for (LLResultTypes.FiducialResult fiducial : fiducialResults) {
-				int id = fiducial.getFiducialId();
-				double distance = fiducial.getRobotPoseTargetSpace().getPosition().y;
-				double x = fiducial.getRobotPoseTargetSpace().getPosition().x;
-				double z = fiducial.getRobotPoseTargetSpace().getPosition().z;
-				VectorF target = AprilTagGameDatabase.getDecodeTagLibrary().lookupTag(id).fieldPosition.multiplied(0.0254f);
-				VectorF robotPose = new VectorF((float) botPose.getPosition().x, (float) botPose.getPosition().y, 0.7493f);
-				VectorF targetDis = target.subtracted(robotPose);
-				telemetry.addLine("Id:" + id + "distance" + targetDis.magnitude());
-
-				return targetDis.magnitude();
-			}
-		}
-
-		return 0;
+	/**
+	 * Get all stored AprilTag distances
+	 * @return Map of AprilTag IDs to their distances
+	 */
+	public Map<Integer, Double> getAllAprilTagDistances() {
+		return new HashMap<>(aprilTagDistances);
 	}
 }
