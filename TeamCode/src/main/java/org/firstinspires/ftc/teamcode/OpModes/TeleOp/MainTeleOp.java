@@ -217,8 +217,8 @@ public class MainTeleOp extends OpMode {
 			leftTriggerPressed = false;
 		}
 
-		// Right Trigger: schedule Shooter.run() once when pressed, Shooter.stop() when released
-		if (gamepad2.right_trigger > 0.5 && !rightTriggerPressed) {
+		// Right Trigger: schedule Shooter.run() repeatedly while pressed, Shooter.stop() once when released
+		if (gamepad2.right_trigger > 0.5) {
 			scheduler.schedule(shooter.run(Shooter.AUDIENCE_RPM));
 			rightTriggerPressed = true;
 		} else if (gamepad2.right_trigger <= 0.5 && rightTriggerPressed) {
