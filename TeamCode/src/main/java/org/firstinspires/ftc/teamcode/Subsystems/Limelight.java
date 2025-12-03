@@ -25,7 +25,6 @@ import java.util.Map;
 
 public class Limelight {
 	Telemetry telemetry;
-	double ObeliskId;
 	private Limelight3A limelight;
 	private IMU imu;
 
