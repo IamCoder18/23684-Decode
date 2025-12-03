@@ -14,4 +14,8 @@ public class RedGoalTeleOp extends MainTeleOp {
 		// Red goal starting position
 		return new Pose2d(-41.25, 52.5, Math.toRadians(270));
 	}
+
+	protected boolean TeamColourRed(){
+		return true;
+	}
 }

@@ -97,7 +97,7 @@ public class IntakeBall implements Action {
 	 * @return current position in degrees (0-360)
 	 */
 	private double getCurrentPositionDegrees() {
-		double currentPositionTicks = Spindexer.getInstance().getCurrentPositionTicks();
+		double currentPositionTicks = Spindexer.getInstance().getPosition();
 		double currentPositionDegrees = (currentPositionTicks % Spindexer.TICKS_PER_REV) / Spindexer.TICKS_PER_REV * 360;
 		if (currentPositionDegrees < 0) {
 			currentPositionDegrees += 360;
@@ -131,7 +131,7 @@ public class IntakeBall implements Action {
 				// Set target position and check if reached
 				double targetTicks = targetRevolutions * Spindexer.TICKS_PER_REV;
 				Spindexer.getInstance().setTargetPosition(targetRevolutions);
-				double error = targetTicks - Spindexer.getInstance().getCurrentPositionTicks();
+				double error = targetTicks - Spindexer.getInstance().getPosition();
 				double errorToleranceTicks = POSITION_ERROR_TOLERANCE_DEGREES * Spindexer.TICKS_PER_REV / 360.0;
 				if (Math.abs(error) < errorToleranceTicks) {
 					currentState = IndexState.RUN_INTAKE_DOOR;
@@ -167,7 +167,7 @@ public class IntakeBall implements Action {
 				double colorSensorRevolutions = COLOR_SENSOR_LOCATION_DEGREES / 360.0;
 				double targetTicks = colorSensorRevolutions * Spindexer.TICKS_PER_REV;
 				Spindexer.getInstance().setTargetPosition(colorSensorRevolutions);
-				double error = targetTicks - Spindexer.getInstance().getCurrentPositionTicks();
+				double error = targetTicks - Spindexer.getInstance().getPosition();
 				double errorToleranceTicks = POSITION_ERROR_TOLERANCE_DEGREES * Spindexer.TICKS_PER_REV / 360.0;
 				if (Math.abs(error) < errorToleranceTicks) {
 					currentState = IndexState.DETECT_COLOR;

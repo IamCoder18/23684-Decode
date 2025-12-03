@@ -139,6 +139,17 @@ public class RGBIndicator {
 		rgbServo.setPosition(SERVO_POSITIONS[colorIndex]);
 	}
 
+	public void setDirectPosition(double position) {
+		if (rgbServo == null) {
+			return;
+		}
+		rgbServo.setPosition(position);
+	}
+
+	public Action setDirectPositionAction(double position) {
+		return new InstantAction(() -> setDirectPosition(position));
+	}
+
 	/**
 	 * Sets the RGB indicator color using a HEX color string.
 	 *

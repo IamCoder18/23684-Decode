@@ -1,9 +1,5 @@
 package org.firstinspires.ftc.teamcode.OpModes.Auto;
 
-import androidx.annotation.NonNull;
-
-import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
-import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.ParallelAction;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.SequentialAction;
@@ -14,13 +10,14 @@ import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
 import org.firstinspires.ftc.teamcode.LifecycleManagementUtilities.HardwareInitializer;
+import org.firstinspires.ftc.teamcode.LifecycleManagementUtilities.SubsystemUpdater;
 import org.firstinspires.ftc.teamcode.Roadrunner.MecanumDrive;
 import org.firstinspires.ftc.teamcode.Subsystems.Intake;
+import org.firstinspires.ftc.teamcode.Subsystems.RobotState;
 import org.firstinspires.ftc.teamcode.Subsystems.Shooter;
 import org.firstinspires.ftc.teamcode.Subsystems.Spindexer;
 import org.firstinspires.ftc.teamcode.Subsystems.Transfer;
 import org.firstinspires.ftc.teamcode.Utilities.ActionScheduler;
-import org.firstinspires.ftc.teamcode.Utilities.DeadlineAction;
 
 /**
  * Abstract base class for Audience-side autonomous modes.
@@ -67,6 +64,7 @@ public abstract class AudienceAuto extends OpMode {
 		telemetry.update();
 
 		spindexer = Spindexer.getInstance();
+		spindexer.resetCalibrationAverage();
 		telemetry.addData("Subsystem Init", "Spindexer initialized");
 		telemetry.update();
 
@@ -76,6 +74,7 @@ public abstract class AudienceAuto extends OpMode {
 
 		intake = Intake.getInstance();
 
+		// TODO: Remove this and transition to using the subsystem
 		transferLeft = hardwareMap.get(CRServo.class, "transferLeft");
 		transferRight = hardwareMap.get(CRServo.class, "transferRight");
 		transferRight.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -111,6 +110,11 @@ public abstract class AudienceAuto extends OpMode {
 	}
 
 	@Override
+	public void init_loop() {
+		spindexer.updateCalibrationAverage();
+	}
+
+	@Override
 	public void start() {
 		telemetry.addData("Status", "Match started - scheduling autonomous sequence");
 		telemetry.addData("Event", "Action Sequence", "1. Move to shooting position + spin up");
@@ -120,55 +124,23 @@ public abstract class AudienceAuto extends OpMode {
 		telemetry.addData("Event", "Action Sequence", "5. Move to collection position");
 		telemetry.update();
 
+		spindexer.finalizeAutoCalibration();
+
 		actionScheduler.schedule(
 				new SequentialAction(
+						trajectoryToShootingPosition.build(),
 						new ParallelAction(
-								trajectoryToShootingPosition.build(),
-								shooter.run(Shooter.AUDIENCE_RPM)
-						),
-						new DeadlineAction(
-								spindexer.setDirectPower(0.8),
-								transfer.intakeDoorForward(),
 								shooter.run(Shooter.AUDIENCE_RPM),
-								new Action() {
-									boolean initialized = false;
-									boolean wasBelow = false;
-									int count = 0;
-
-									@Override
-									public boolean run(@NonNull TelemetryPacket packet) {
-										// Get current reading
-										double currentRPM = shooter.averageRPM;
-										boolean isBelow = currentRPM < Shooter.AUDIENCE_SHOT_RPM;
-
-										// Initialize state on the first run
-										if (!initialized) {
-											wasBelow = isBelow;
-											initialized = true;
-										}
-
-										// Check for the "Rising Edge" (transition from Under to Above)
-										if (wasBelow && !isBelow) {
-											count++;
-										}
-
-										// Update state for the next loop
-										wasBelow = isBelow;
-
-										// Send telemetry for debugging (optional)
-										packet.put("RPM", currentRPM);
-										packet.put("Cycles", count);
-
-										// Return true to keep running, false to stop after 3rd completion
-										return count < 3;
-									}
-								}
+								spindexer.setDirectPower(0.3),
+								transfer.intakeDoorForward()
 						),
-						shooter.run(0),
+						shooter.runAndWait(Shooter.AUDIENCE_RPM),
+						shooter.runAndWait(Shooter.AUDIENCE_RPM),
+						shooter.runAndWait(Shooter.AUDIENCE_RPM),
 						spindexer.setDirectPower(0),
 						transfer.intakeDoorStop(),
-						trajectoryToCollectionPosition.build(),
-						shooter.stop()
+						shooter.stop(),
+						trajectoryToCollectionPosition.build()
 				)
 		);
 
@@ -178,9 +150,9 @@ public abstract class AudienceAuto extends OpMode {
 
 	@Override
 	public void loop() {
+		SubsystemUpdater.update();
 		actionScheduler.update();
-		shooter.updateRPM(System.nanoTime());
-		drive.updatePoseEstimate();
+		drive.updatePoseEstimate(); // Keep separate as drive-specific
 
 		// Control transfer mechanism based on shooter RPM
 		if (shooter.isAtTargetRPM(Shooter.AUDIENCE_RPM)) {
@@ -199,6 +171,16 @@ public abstract class AudienceAuto extends OpMode {
 		telemetry.addData("Scheduler Status", !actionScheduler.isSchedulerEmpty() ? "Busy" : "Idle");
 		telemetry.addData("Shooter RPM", "%.0f", shooter.averageRPM);
 		telemetry.addData("Shooter Target RPM", "%.0f", Shooter.AUDIENCE_RPM);
+		telemetry.update();
+	}
+
+	@Override
+	public void stop() {
+		// Save the final pose for use in teleop
+		Pose2d finalPose = drive.localizer.getPose();
+		RobotState.getInstance().saveAutoPose(finalPose);
+		telemetry.addData("Auto Stop", "Final pose saved: (%.2f, %.2f, %.2f°)", 
+				finalPose.position.x, finalPose.position.y, Math.toDegrees(finalPose.heading.toDouble()));
 		telemetry.update();
 	}
 }

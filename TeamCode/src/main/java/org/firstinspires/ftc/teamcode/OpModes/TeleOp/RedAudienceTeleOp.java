@@ -14,4 +14,8 @@ public class RedAudienceTeleOp extends MainTeleOp {
 		// Red audience starting position
 		return new Pose2d(66, 15.5, Math.toRadians(180));
 	}
+
+	protected boolean TeamColourRed(){
+		return true;
+	}
 }

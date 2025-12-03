@@ -25,10 +25,10 @@ public class Shooter {
 	public static double STOP_POWER = 0.0;
 
 	// --- RPM & Control Constants ---
-	public static double RPM_TOLERANCE = 100.0;
+	public static double RPM_TOLERANCE = 60.0;
 	public static double TICKS_PER_REVOLUTION = 28.0;
-	public static double AUDIENCE_RPM = 2300.0;
-	public static double AUDIENCE_SHOT_RPM = 2000.0;
+	public static double AUDIENCE_RPM = 2600.0;
+	public static double AUDIENCE_SHOT_RPM = 2500.0;
 
 	// --- Motor Offsets ---
 	public static double UPPER_OFFSET = 0.0;
@@ -113,6 +113,10 @@ public class Shooter {
 		return !(targetRPM < 100) && Math.abs(averageRPM - targetRPM) <= RPM_TOLERANCE;
 	}
 
+	public boolean isAtTargetRPM(double lowerTargetRPM, double upperTargetRPM) {
+		return (!(lowerTargetRPM < 100) && Math.abs(lowerRPM - lowerTargetRPM) <= RPM_TOLERANCE) && (!(upperTargetRPM < 100) && Math.abs(upperRPM - upperTargetRPM) <= RPM_TOLERANCE);
+	}
+
 	/**
 	 * Returns an Action that runs the shooter motors to maintain a target RPM
 	 * with sum of PID and Feedforward controllers.
@@ -152,6 +156,112 @@ public class Shooter {
 			packet.put("Lower Feedforward", lowerFFPower);
 			packet.put("Lower PID", lowerController.getOutput(lowerRPM, targetRPM));
 			packet.put("Shooter At Target", isAtTargetRPM(targetRPM));
+
+			return false;
+		};
+	}
+
+	/**
+	 * Returns an Action that runs the shooter motors and waits until:
+	 * 1. Spins UP until averageRPM is within RPM_TOLERANCE of target RPM
+	 * 2. Continues running until averageRPM drops below AUDIENCE_SHOT_RPM (indicating a shot)
+	 * Returns true while waiting, false when complete.
+	 */
+	public Action runAndWait(double targetRPM) {
+		return new Action() {
+			// State variable to track if we have successfully spun up at least once
+			private boolean hasReachedTarget = false;
+
+			@Override
+			public boolean run(@NonNull TelemetryPacket packet) {
+				updateRPM(System.nanoTime());
+
+				double upperPower, lowerPower;
+				double upperFFPower = upperFF.calculate(targetRPM, 0);
+				double lowerFFPower = lowerFF.calculate(targetRPM, 0);
+
+				if (targetRPM < 100) {
+					upperPower = STOP_POWER;
+					lowerPower = STOP_POWER;
+				} else {
+					double upperPidPower = upperController.getOutput(upperRPM, targetRPM);
+					double lowerPidPower = lowerController.getOutput(lowerRPM, targetRPM);
+
+					// Final output: sum of feedforward and PID corrections
+					upperPower = upperFFPower + upperPidPower + UPPER_OFFSET;
+					lowerPower = lowerFFPower + lowerPidPower + LOWER_OFFSET;
+				}
+
+				upperShooter.setPower(upperPower);
+				lowerShooter.setPower(lowerPower);
+
+				// Check if we have reached the target speed yet
+				if (!hasReachedTarget && isAtTargetRPM(targetRPM)) {
+					hasReachedTarget = true;
+				}
+
+				// Telemetry for dashboard analysis
+				packet.put("Shooter Target RPM", targetRPM);
+				packet.put("Shooter Upper RPM", upperRPM);
+				packet.put("Shooter Lower RPM", lowerRPM);
+				packet.put("Shooter Average RPM", averageRPM);
+				packet.put("Shooter Reached Target", hasReachedTarget); // Useful for debugging
+				packet.put("Shooter At Target Now", isAtTargetRPM(targetRPM));
+
+				// LOGIC FIX:
+				// 1. If we haven't reached the target RPM yet, return true to keep spinning up.
+				if (!hasReachedTarget) {
+					return true;
+				}
+
+				// 2. Once we have reached the target, we stay in this loop (return true)
+				//    UNTIL the RPM drops below the threshold (indicating a ring was fired).
+				//    When RPM < AUDIENCE_SHOT_RPM, this returns false, ending the action.
+				return averageRPM >= AUDIENCE_SHOT_RPM;
+			}
+		};
+	}
+
+
+	/**
+	 * Returns an Action that runs the shooter motors with separate target RPMs for upper and lower
+	 */
+	public Action run(double upperTargetRPM, double lowerTargetRPM) {
+		return packet -> {
+			updateRPM(System.nanoTime());
+
+			double upperPower, lowerPower;
+			double upperFFPower = upperFF.calculate(upperTargetRPM, 0);
+			double lowerFFPower = lowerFF.calculate(lowerTargetRPM, 0);
+
+			if (upperTargetRPM < 100) {
+				upperPower = STOP_POWER;
+			} else {
+				double upperPidPower = upperController.getOutput(upperRPM, upperTargetRPM);
+				upperPower = upperFFPower + upperPidPower + UPPER_OFFSET;
+			}
+
+			if (lowerTargetRPM < 100) {
+				lowerPower = STOP_POWER;
+			} else {
+				double lowerPidPower = lowerController.getOutput(lowerRPM, lowerTargetRPM);
+				lowerPower = lowerFFPower + lowerPidPower + LOWER_OFFSET;
+			}
+
+			upperShooter.setPower(upperPower);
+			lowerShooter.setPower(lowerPower);
+
+			// Telemetry for dashboard analysis
+			packet.put("Shooter Upper Target RPM", upperTargetRPM);
+			packet.put("Shooter Lower Target RPM", lowerTargetRPM);
+			packet.put("Shooter Upper RPM", upperRPM);
+			packet.put("Shooter Lower RPM", lowerRPM);
+			packet.put("Upper Motor Power", upperPower);
+			packet.put("Lower Motor Power", lowerPower);
+			packet.put("Upper Feedforward", upperFFPower);
+			packet.put("Upper PID", upperController.getOutput(upperRPM, upperTargetRPM));
+			packet.put("Lower Feedforward", lowerFFPower);
+			packet.put("Lower PID", lowerController.getOutput(lowerRPM, lowerTargetRPM));
 
 			return false;
 		};
