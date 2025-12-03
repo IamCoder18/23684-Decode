@@ -1,7 +1,6 @@
 package org.firstinspires.ftc.teamcode.OpModes.TeleOp;
 
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
-import com.acmerobotics.roadrunner.Actions;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
@@ -18,7 +17,6 @@ import org.firstinspires.ftc.teamcode.Roadrunner.MecanumDrive;
 import org.firstinspires.ftc.teamcode.Subsystems.Intake;
 import org.firstinspires.ftc.teamcode.Subsystems.Limelight;
 import org.firstinspires.ftc.teamcode.Subsystems.RGBIndicator;
-import org.firstinspires.ftc.teamcode.Subsystems.RobotState;
 import org.firstinspires.ftc.teamcode.Subsystems.Shooter;
 import org.firstinspires.ftc.teamcode.Subsystems.Spindexer;
 import org.firstinspires.ftc.teamcode.Subsystems.Transfer;
@@ -42,10 +40,9 @@ import org.firstinspires.ftc.teamcode.Utilities.ActionScheduler;
  * - RT: IntakeDoor close
  * - DPad Up: Spindexer spin forward
  * - DPad Down: Spindexer spin backward
-	 * - Priority: X > Y > RPM-based
+ * - Priority: X > Y > RPM-based
  */
 public class MainTeleOp extends OpMode {
-
 	protected MecanumDrive drive;
 	protected ActionScheduler scheduler;
 	protected Shooter shooter;
@@ -66,22 +63,19 @@ public class MainTeleOp extends OpMode {
 	protected boolean spindexerDownCrossed = false;
 	protected boolean leftBumperPressed = false;
 	protected boolean rightBumperPressed = false;
-
 	protected boolean fronsideButtonPressed = false;
-
-	private TrajectoryActionBuilder ShootingBlu;
-	private TrajectoryActionBuilder ShootingRed;
 
 	protected double goalX = 0;
 	protected double goalY = 0;
+	protected boolean transferAboveRPM = false;
+	private TrajectoryActionBuilder ShootingBlue;
+	private TrajectoryActionBuilder ShootingRed;
 
 	protected double calculateShotAngle(double x, double y) {
 		double deltaX = goalX - x;
-		double deltaY = goalY- y;
+		double deltaY = goalY - y;
 		return Math.atan2(-deltaY, -deltaX);
 	}
-
-	protected boolean transferAboveRPM = false;
 
 	@Override
 	public void init() {
@@ -108,7 +102,6 @@ public class MainTeleOp extends OpMode {
 //		}
 
 		TelemetryPacket limelightTelemetry = new TelemetryPacket();
-
 
 		limelight.update().run(limelightTelemetry);
 		telemetry.addLine(limelightTelemetry.toString());
@@ -170,7 +163,7 @@ public class MainTeleOp extends OpMode {
 		return new Pose2d(0, 0, 0);
 	}
 
-	protected boolean TeamColourRed(){
+	protected boolean TeamColourRed() {
 		return false;
 	}
 
@@ -194,7 +187,7 @@ public class MainTeleOp extends OpMode {
 			color = 0.500;
 		} else if (rpm <= 2800) {
 			color = 0.666;
-		} else if (rpm > 2800){
+		} else if (rpm > 2800) {
 			color = 0.722;
 		}
 
@@ -206,7 +199,7 @@ public class MainTeleOp extends OpMode {
 	 */
 	private void handleDriveInput() {
 
-		if (TeamColourRed()){
+		if (TeamColourRed()) {
 			goalX = 60;
 			goalY = 60;
 		} else if (!TeamColourRed()) {
@@ -214,20 +207,19 @@ public class MainTeleOp extends OpMode {
 			goalY = -60;
 		}
 
-		ShootingBlu = drive.actionBuilder(drive.localizer.getPose())
-				.strafeToLinearHeading(new Vector2d(57, -23), calculateShotAngle(57,-23));
+		ShootingBlue = drive.actionBuilder(drive.localizer.getPose())
+				.strafeToLinearHeading(new Vector2d(57, -23), calculateShotAngle(57, -23));
 		ShootingRed = drive.actionBuilder(drive.localizer.getPose())
-				.strafeToLinearHeading(new Vector2d(57, 23), calculateShotAngle(57,23));
+				.strafeToLinearHeading(new Vector2d(57, 23), calculateShotAngle(57, 23));
 
-		if (gamepad1.a){
-			if (TeamColourRed()){
+		if (gamepad1.a) {
+			if (TeamColourRed()) {
 				scheduler.schedule(ShootingRed.build());
-			} else if (!TeamColourRed()){
-				scheduler.schedule(ShootingBlu.build());
+			} else if (!TeamColourRed()) {
+				scheduler.schedule(ShootingBlue.build());
 			}
 			fronsideButtonPressed = true;
-
-		}else if (!gamepad1.a && fronsideButtonPressed) {
+		} else if (!gamepad1.a && fronsideButtonPressed) {
 			fronsideButtonPressed = false;
 		}
 
@@ -384,8 +376,7 @@ public class MainTeleOp extends OpMode {
 		telemetry.addData("Forward", String.format("%.2f", -gamepad1.left_stick_y));
 		telemetry.addData("Strafe", String.format("%.2f", gamepad1.left_stick_x));
 		telemetry.addData("Turn", String.format("%.2f", gamepad1.right_stick_x));
-
-		telemetry.addData("location",drive.localizer.getPose());
+		telemetry.addData("Location", drive.localizer.getPose());
 
 		telemetry.addData("", "=== GAMEPAD 2 (Operator) ===");
 		telemetry.addData("Left Trigger", "Intake");

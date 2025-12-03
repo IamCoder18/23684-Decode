@@ -22,7 +22,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-
 public class Limelight {
 	Telemetry telemetry;
 	private Limelight3A limelight;
