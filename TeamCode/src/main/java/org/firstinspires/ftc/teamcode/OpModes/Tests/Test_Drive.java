@@ -5,6 +5,7 @@ import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -18,15 +19,14 @@ import org.firstinspires.ftc.teamcode.Utilities.PIDFController;
  * Drive test OpMode for testing Mecanum drive with PID control.
  * Uses GoBilda Pinpoint for odometry.
  */
+@Disabled
 @Config
 @TeleOp
 public class Test_Drive extends OpMode {
-
 	DcMotor frontRight;
 	DcMotor rearRight;
 	DcMotor frontLeft;
 	DcMotor rearLeft;
-
 
 	// Tuning parameters
 	public static double targetX = 0;
@@ -34,7 +34,6 @@ public class Test_Drive extends OpMode {
 	public static double targetH = 0;
 
 	// Drive system components
-	private MecanumDrive drive;
 	private Pose2d pose;
 	private Pose2d target;
 	private GoBildaPinpointDriver pinpoint;
@@ -63,12 +62,11 @@ public class Test_Drive extends OpMode {
 	@Override
 	public void init() {
 		pose = new Pose2d(0, 0, 0);
-		drive = new MecanumDrive(hardwareMap, pose);
 		target = new Pose2d(targetX, targetY, targetH);
 
-		xPidController = new PIDFController(X.kP, X.kI, X.kD, X.kF);
-		yPidController = new PIDFController(Y.kP, Y.kI, Y.kD, Y.kF);
-		headingPidController = new PIDFController(H.kP, H.kI, H.kD, H.kF);
+		xPidController = new PIDFController(XController.kP, XController.kI, XController.kD, XController.kF);
+		yPidController = new PIDFController(YController.kP, YController.kI, YController.kD, YController.kF);
+		headingPidController = new PIDFController(HController.kP, HController.kI, HController.kD, HController.kF);
 
 		GoBildaPinpointDriver.EncoderDirection yEncoderDirection = GoBildaPinpointDriver.EncoderDirection.REVERSED;
 		GoBildaPinpointDriver.EncoderDirection xEncoderDirection = GoBildaPinpointDriver.EncoderDirection.REVERSED;
@@ -89,9 +87,9 @@ public class Test_Drive extends OpMode {
 	@Override
 	public void loop() {
 		// Update PID gains from config
-		xPidController.setPID(X.kP, X.kI, X.kD, X.kF);
-		yPidController.setPID(Y.kP, Y.kI, Y.kD, Y.kF);
-		headingPidController.setPID(H.kP, H.kI, H.kD, H.kF);
+		xPidController.setPID(XController.kP, XController.kI, XController.kD, XController.kF);
+		yPidController.setPID(YController.kP, YController.kI, YController.kD, YController.kF);
+		headingPidController.setPID(HController.kP, HController.kI, HController.kD, HController.kF);
 
 		// Update odometry
 		pinpoint.update();
@@ -123,6 +121,7 @@ public class Test_Drive extends OpMode {
 		rearLeft.setPower(y - x + rx);
 		frontRight.setPower(y - x - rx);
 		rearRight.setPower(y + x - rx);
+
 		// Telemetry
 		telemetry.addData("Position", pose.position);
 		telemetry.addData("Heading (deg)", Math.toDegrees(pose.heading.toDouble()));
@@ -143,8 +142,6 @@ public class Test_Drive extends OpMode {
 		public static double kF = 0;
 	}
 
-	public static XController X = new XController();
-
 	/**
 	 * Y-axis (forward) PID controller gains.
 	 */
@@ -154,7 +151,6 @@ public class Test_Drive extends OpMode {
 		public static double kD = 0;
 		public static double kF = 0;
 	}
-	public static YController Y = new YController();
 
 	/**
 	 * Heading (rotation) PID controller gains.
@@ -165,5 +161,4 @@ public class Test_Drive extends OpMode {
 		public static double kD = 0;
 		public static double kF = 0;
 	}
-	public static HController H = new HController();
 }
