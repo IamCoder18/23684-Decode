@@ -2,17 +2,15 @@ package org.firstinspires.ftc.teamcode.OpModes.TeleOp;
 
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
-import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-
 
 import org.firstinspires.ftc.teamcode.LifecycleManagementUtilities.HardwareInitializer;
 import org.firstinspires.ftc.teamcode.LifecycleManagementUtilities.HardwareShutdown;
 import org.firstinspires.ftc.teamcode.LifecycleManagementUtilities.SubsystemUpdater;
 import org.firstinspires.ftc.teamcode.Roadrunner.MecanumDrive;
 import org.firstinspires.ftc.teamcode.Subsystems.Intake;
-import org.firstinspires.ftc.teamcode.Subsystems.Limelight2;
+import org.firstinspires.ftc.teamcode.Subsystems.Limelight;
 import org.firstinspires.ftc.teamcode.Subsystems.RGBIndicator;
 import org.firstinspires.ftc.teamcode.Subsystems.RobotState;
 import org.firstinspires.ftc.teamcode.Subsystems.Shooter;
@@ -20,6 +18,7 @@ import org.firstinspires.ftc.teamcode.Subsystems.Spindexer;
 import org.firstinspires.ftc.teamcode.Subsystems.Transfer;
 import org.firstinspires.ftc.teamcode.Utilities.ActionScheduler;
 import org.firstinspires.ftc.teamcode.Utilities.SpindexerPositionUtility;
+import org.firstinspires.ftc.teamcode.Utilities.Team;
 
 /**
  * Main TeleOp OpMode for driver control
@@ -39,7 +38,7 @@ import org.firstinspires.ftc.teamcode.Utilities.SpindexerPositionUtility;
  * - RT: IntakeDoor close
  * - DPad Up: Spindexer spin forward
  * - DPad Down: Spindexer spin backward
-	 * - Priority: X > Y > RPM-based
+ * - Priority: X > Y > RPM-based
  */
 public class MainTeleOp extends OpMode {
 
@@ -49,7 +48,7 @@ public class MainTeleOp extends OpMode {
 	protected Intake intake;
 	protected Transfer transfer;
 	protected Spindexer spindexer;
-	protected Limelight2 limeLight;
+	protected Limelight limelight;
 
 	protected SpindexerPositionUtility spu;
 	protected RGBIndicator rgbIndicator;
@@ -59,33 +58,22 @@ public class MainTeleOp extends OpMode {
 	protected boolean rightTriggerPressed = false;
 	protected boolean xButtonPressed = false;
 	protected boolean yButtonPressed = false;
+	protected boolean aButtonPressed = false;
 	protected boolean bButtonPressed = false;
 	protected boolean spindexerUpCrossed = false;
 	protected boolean spindexerMidCrossed = false;
 	protected boolean spindexerDownCrossed = false;
 	protected boolean leftBumperPressed = false;
 	protected boolean rightBumperPressed = false;
-
 	protected boolean dpadUpPressed = false;
-
 	protected boolean dpadDownPressed = false;
+	protected boolean transferAboveRPM = false;
 
-	protected boolean fronsideButtonPressed = false;
-
-	private TrajectoryActionBuilder ShootingBlu;
-	private TrajectoryActionBuilder ShootingRed;
-
-	protected double goalX = 0;
-	protected double goalY = 0;
-
-	protected double calculateShotAngle(double x, double y) {
+	protected double calculateShotAngle(double x, double y, double goalX, double goalY) {
 		double deltaX = goalX - x;
-		double deltaY = goalY- y;
+		double deltaY = goalY - y;
 		return Math.atan2(-deltaY, -deltaX);
 	}
-
-
-	protected boolean transferAboveRPM = false;
 
 	@Override
 	public void init() {
@@ -99,14 +87,14 @@ public class MainTeleOp extends OpMode {
 		spindexer = Spindexer.getInstance();
 		spindexer.resetCalibrationAverage();
 		rgbIndicator = RGBIndicator.getInstance();
-		limeLight = new Limelight2(hardwareMap);
+		limelight = new Limelight(hardwareMap);
 		spu = new SpindexerPositionUtility();
 
 		// Try to set starting pose from previous autonomous run
 		Pose2d savedPose = RobotState.getInstance().getAutoPose();
 		if (savedPose != null) {
 			drive.localizer.setPose(savedPose);
-			telemetry.addData("Pose Source", "Loaded from Auto: (%.2f, %.2f, %.2f°)", 
+			telemetry.addData("Pose Source", "Loaded from Auto: (%.2f, %.2f, %.2f°)",
 					savedPose.position.x, savedPose.position.y, Math.toDegrees(savedPose.heading.toDouble()));
 		} else {
 			telemetry.addData("Pose Source", "Default pose used");
@@ -129,13 +117,15 @@ public class MainTeleOp extends OpMode {
 		scheduler.schedule(transfer.intakeDoorForward());
 		scheduler.schedule(transfer.transferBackward());
 		scheduler.update();
-		limeLight.Start(getStartingPose().heading.toDouble());
+		limelight.Start(getStartingPose().heading.toDouble());
 
 		spindexer.targetPosition = 0;
 	}
 
 	@Override
 	public void loop() {
+		drive.updatePoseEstimate();
+
 		// Update drive with gamepad input
 		handleDriveInput();
 
@@ -154,25 +144,6 @@ public class MainTeleOp extends OpMode {
 		// Display telemetry
 		displayTelemetry();
 
-
-
-//		if (limeLight.AreGoalsFound()){
-//			drive.localizer.setPose(new Pose2d(
-//					(double)limeLight.VisionPosition().get(0),
-//					(double)limeLight.VisionPosition().get(1),
-//					(double)limeLight.VisionPosition().get(2)
-//			));
-//			telemetry.addLine("goals found");
-//		}
-
-
-//		if (limeLight.AreGoalsFound()){
-//			drive.localizer.setPose(limeLight.VisionPose());
-//			telemetry.addLine("goals found");
-//		} else{
-		drive.updatePoseEstimate();
-//		}
-
 		telemetry.update();
 	}
 
@@ -189,8 +160,8 @@ public class MainTeleOp extends OpMode {
 		return new Pose2d(0, 0, 0);
 	}
 
-	protected boolean TeamColourRed(){
-		return false;
+	protected Team getTeam() {
+		return Team.UNKNOWN;
 	}
 
 	/**
@@ -213,7 +184,7 @@ public class MainTeleOp extends OpMode {
 			color = 0.500;
 		} else if (rpm <= 2800) {
 			color = 0.666;
-		} else if (rpm > 2800){
+		} else if (rpm > 2800) {
 			color = 0.722;
 		}
 
@@ -224,37 +195,26 @@ public class MainTeleOp extends OpMode {
 	 * Handle driving input from gamepad1
 	 */
 	private void handleDriveInput() {
-
-		if (TeamColourRed()){
-			goalX = 60;
-			goalY = 60;
-
-		} else if (!TeamColourRed()) {
-			goalX = -60;
-			goalY = -60;
-		}
-
-		ShootingBlu = drive.actionBuilder(drive.localizer.getPose())
-				.strafeToLinearHeading(new Vector2d(59, -2), calculateShotAngle(59,-2));
-		ShootingRed = drive.actionBuilder(drive.localizer.getPose())
-				.strafeToLinearHeading(new Vector2d(59, 2), calculateShotAngle(59,2));
-
-
-
-		if (gamepad1.a && !fronsideButtonPressed){
-			if (TeamColourRed()){
-				scheduler.schedule(ShootingRed.build());
-			} else if (!TeamColourRed()){
-				scheduler.schedule(ShootingBlu.build());
+		if (gamepad1.a && !aButtonPressed) {
+			if (getTeam() == Team.RED) {
+				scheduler.schedule(
+						drive.actionBuilder(drive.localizer.getPose())
+								.strafeToLinearHeading(new Vector2d(59, 2), calculateShotAngle(59, 2, -60, 60))
+								.build()
+				);
+			} else if (getTeam() == Team.BLUE) {
+				scheduler.schedule(
+						drive.actionBuilder(drive.localizer.getPose())
+								.strafeToLinearHeading(new Vector2d(59, -2), calculateShotAngle(59, -2, -60, -60))
+								.build()
+				);
 			}
-			fronsideButtonPressed = true;
-
-		}else if (!gamepad1.a && fronsideButtonPressed) {
-			fronsideButtonPressed = false;
+			aButtonPressed = true;
+		} else if (!gamepad1.a && aButtonPressed) {
+			aButtonPressed = false;
 		}
 
 		if (!gamepad1.a) {
-
 			double forwardPower = -gamepad1.left_stick_y; // Left stick Y (inverted)
 			double turnPower = -gamepad1.right_stick_x;     // Right stick X
 			double strafePower = gamepad1.left_stick_x;    // Left stick X
@@ -286,7 +246,6 @@ public class MainTeleOp extends OpMode {
 				rightBumperPressed = false;
 			}
 		}
-
 	}
 
 	/**
@@ -328,7 +287,6 @@ public class MainTeleOp extends OpMode {
 			yButtonPressed = true;
 		} else if (!gamepad2.y && yButtonPressed) {
 			yButtonPressed = false;
-			scheduler.schedule(transfer.transferBackward());
 		}
 
 		// Automatic transfer based on RPM (only if neither X nor Y button held)
@@ -382,17 +340,15 @@ public class MainTeleOp extends OpMode {
 			spindexerUpCrossed = false;
 		}
 
-
-
 		if (gamepad2.dpad_up) {
-			spindexer.targetPosition = SpindexerPositionUtility.getNextIntakePositionAlternative((int)-spindexer.getCalibratedPosition());
+			spindexer.targetPosition = SpindexerPositionUtility.getNextIntakePositionAlternative((int) -spindexer.getCalibratedPosition());
 			dpadUpPressed = true;
 		} else if (!gamepad2.dpad_up && dpadUpPressed) {
 			dpadUpPressed = false;
 		}
 
 		if (gamepad2.dpad_down) {
-			spindexer.targetPosition = SpindexerPositionUtility.getNextShootPosition((int)-spindexer.getCalibratedPosition());
+			spindexer.targetPosition = SpindexerPositionUtility.getNextShootPosition((int) -spindexer.getCalibratedPosition());
 			dpadDownPressed = true;
 		} else if (!gamepad2.dpad_down && dpadDownPressed) {
 			dpadDownPressed = false;
@@ -412,7 +368,7 @@ public class MainTeleOp extends OpMode {
 		telemetry.addData("Strafe", String.format("%.2f", gamepad1.left_stick_x));
 		telemetry.addData("Turn", String.format("%.2f", gamepad1.right_stick_x));
 
-		telemetry.addData("location",drive.localizer.getPose());
+		telemetry.addData("location", drive.localizer.getPose());
 
 		telemetry.addData("", "=== GAMEPAD 2 (Operator) ===");
 		telemetry.addData("Left Trigger", "Intake");
@@ -426,9 +382,9 @@ public class MainTeleOp extends OpMode {
 		telemetry.addData("Average RPM", String.format("%.2f", shooter.averageRPM));
 
 		telemetry.addLine("=== Spindexer ===");
-		telemetry.addData("current Location",spindexer.getCalibratedPosition());
-		telemetry.addData("target",spindexer.targetPosition);
-		telemetry.addData("Next intake", SpindexerPositionUtility.getNextIntakePositionAlternative((int)spindexer.getCalibratedPosition()));
-		telemetry.addData("Next shoot", SpindexerPositionUtility.getNextShootPosition((int)spindexer.getCalibratedPosition()));
+		telemetry.addData("current Location", spindexer.getCalibratedPosition());
+		telemetry.addData("target", spindexer.targetPosition);
+		telemetry.addData("Next intake", SpindexerPositionUtility.getNextIntakePositionAlternative((int) spindexer.getCalibratedPosition()));
+		telemetry.addData("Next shoot", SpindexerPositionUtility.getNextShootPosition((int) spindexer.getCalibratedPosition()));
 	}
 }

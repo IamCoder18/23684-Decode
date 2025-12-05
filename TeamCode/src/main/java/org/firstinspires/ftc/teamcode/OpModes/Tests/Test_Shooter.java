@@ -8,7 +8,6 @@ import org.firstinspires.ftc.teamcode.LifecycleManagementUtilities.HardwareIniti
 import org.firstinspires.ftc.teamcode.LifecycleManagementUtilities.HardwareShutdown;
 import org.firstinspires.ftc.teamcode.LifecycleManagementUtilities.SubsystemUpdater;
 import org.firstinspires.ftc.teamcode.Subsystems.Intake;
-//import org.firstinspires.ftc.teamcode.Subsystems.Limelight;
 import org.firstinspires.ftc.teamcode.Subsystems.Shooter;
 import org.firstinspires.ftc.teamcode.Subsystems.Spindexer;
 import org.firstinspires.ftc.teamcode.Subsystems.Transfer;
@@ -28,8 +27,8 @@ public class Test_Shooter extends OpMode {
 	//private Limelight limelight;
 
 	// Edge detection for triggers
-	private boolean prevLeftTrigger = false;
-	private boolean prevRightTrigger = false;
+	private final boolean prevLeftTrigger = false;
+	private final boolean prevRightTrigger = false;
 	private boolean prevShooterActive = false;
 
 	@Override
