@@ -5,8 +5,6 @@ import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
-import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IMU;
 
@@ -21,7 +19,7 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagGameDatabase;
 import java.util.List;
 
 
-public class Limelight {
+public class Limelight2 {
     private Limelight3A limelight;
 
     private GoBildaPinpointDriver pinpoint;
@@ -43,7 +41,7 @@ public class Limelight {
 
 
 
-    public Limelight(HardwareMap hardwareMap) {
+    public Limelight2(HardwareMap hardwareMap) {
 
 
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
