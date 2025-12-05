@@ -14,38 +14,41 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import org.firstinspires.ftc.teamcode.LifecycleManagementUtilities.HardwareInitializer;
 import org.firstinspires.ftc.teamcode.Roadrunner.MecanumDrive;
 import org.firstinspires.ftc.teamcode.Subsystems.Intake;
+import org.firstinspires.ftc.teamcode.Subsystems.Shooter;
 import org.firstinspires.ftc.teamcode.Subsystems.Spindexer;
 import org.firstinspires.ftc.teamcode.Subsystems.StupidShooter;
 import org.firstinspires.ftc.teamcode.Subsystems.Transfer;
 import org.firstinspires.ftc.teamcode.Utilities.ActionScheduler;
-
+import org.firstinspires.ftc.teamcode.Utilities.GoalAngleCalculator;
 
 @Autonomous
 public class BlueAudienceAuto extends OpMode {
-	public static double shootingX = 57, shootingY = -23; // this is the position used shooting
-	public static double Goalx = -60, Goaly = -60; // this is the position of the goal
-	public double topRpM = 2000;
-	Spindexer spindexer;
-	StupidShooter shooter;
-	Pose2d beginPose;
-	Transfer transfer;
-	Intake intake;
-	CRServo transferRight;
-	CRServo transferLeft;
-	TelemetryPacket telemetryPacket;
-	MecanumDrive drive;
-	TrajectoryActionBuilder tab1;
-	TrajectoryActionBuilder tab2;
-	boolean done = false;
-	ActionScheduler actionScheduler;
 
-	public static double AngleOfShot(double x, double y) {
-		double diff_x = Goalx - x;
-		double diff_y = Goaly - y;
+	// ============== Constants ==============
+	public static double shootingX = 57, shootingY = -23;
 
-		return Math.atan2(-diff_y, -diff_x);
-	}
+	// ============== Member Variables ==============
+	// Subsystems
+	private Spindexer spindexer;
+	private StupidShooter shooter;
+	private Transfer transfer;
+	private Intake intake;
 
+	// Hardware
+	private CRServo transferRight;
+	private CRServo transferLeft;
+
+	// Drive and Trajectory
+	private MecanumDrive drive;
+	private Pose2d beginPose;
+	private TrajectoryActionBuilder tab1;
+	private TrajectoryActionBuilder tab2;
+
+	// Scheduler
+	private ActionScheduler actionScheduler;
+	private boolean done = false;
+
+	// ============== Lifecycle Methods ==============
 	@Override
 	public void init() {
 		telemetry.addData("Status", "Initializing subsystems...");
@@ -53,58 +56,67 @@ public class BlueAudienceAuto extends OpMode {
 
 		HardwareInitializer.initialize(hardwareMap);
 
+		// Initialize shooter
 		shooter = new StupidShooter(hardwareMap);
 		telemetry.addData("Subsystem Init", "StupidShooter initialized");
 		telemetry.update();
 
+		// Initialize spindexer
 		spindexer = Spindexer.getInstance();
 		telemetry.addData("Subsystem Init", "Spindexer initialized");
 		telemetry.update();
 
+		// Initialize transfer
 		transfer = Transfer.getInstance();
 		telemetry.addData("Subsystem Init", "Transfer initialized");
 		telemetry.update();
 
+		// Initialize intake
 		intake = Intake.getInstance();
+
+		// Initialize transfer servos
+		transferLeft = hardwareMap.get(CRServo.class, "transferLeft");
+		transferRight = hardwareMap.get(CRServo.class, "transferRight");
+		transferRight.setDirection(DcMotorSimple.Direction.REVERSE);
+
 		telemetry.addData("Subsystem Init", "Intake initialized");
 		telemetry.update();
 
+		// Initialize drive
 		beginPose = new Pose2d(60, -9, Math.toRadians(0));
 		drive = new MecanumDrive(hardwareMap, beginPose);
 		telemetry.addData("Subsystem Init", "Drive initialized");
-		telemetry.addData("Begin Pose", "X: %.2f, Y: %.2f, Heading: %.2f°", beginPose.position.x, beginPose.position.y, Math.toDegrees(beginPose.heading.toDouble()));
+		telemetry.addData("Begin Pose", "X: %.2f, Y: %.2f, Heading: %.2f°",
+				beginPose.position.x, beginPose.position.y, Math.toDegrees(beginPose.heading.toDouble()));
 		telemetry.update();
 
+		// Initialize action scheduler
 		actionScheduler = ActionScheduler.getInstance();
 		telemetry.addData("Subsystem Init", "ActionScheduler initialized");
 		telemetry.update();
 
-		tab1 = drive.actionBuilder(new Pose2d(60, -9, Math.toRadians(0)))
-				.strafeToLinearHeading(new Vector2d(shootingX, shootingY), AngleOfShot(shootingX, shootingY));
-		telemetry.addData("Trajectory", "Tab1 created - Target: (%.1f, %.1f)", shootingX, shootingY);
-		telemetry.addData("Trajectory", "Tab1 angle: %.2f°", Math.toDegrees(AngleOfShot(shootingX, shootingY)));
+		// Build trajectories
+		tab1 = drive.actionBuilder(new Pose2d(54, -9, Math.toRadians(0)))
+				.strafeToLinearHeading(new Vector2d(shootingX, shootingY), GoalAngleCalculator.calculateAngle(shootingX, shootingY));
+		telemetry.addData("Trajectory", "Tab1 created", shootingX, shootingY);
+		telemetry.addData("Trajectory", "Tab1 angle: %.2f°", Math.toDegrees(GoalAngleCalculator.calculateAngle(shootingX, shootingY)));
 		telemetry.update();
 
-		tab2 = drive.actionBuilder(new Pose2d(shootingX, shootingY, AngleOfShot(shootingX, shootingY)))
+		tab2 = drive.actionBuilder(new Pose2d(shootingX, shootingY, GoalAngleCalculator.calculateAngle(shootingX, shootingY)))
 				.strafeToLinearHeading(new Vector2d(35, -23), Math.toRadians(270));
-		telemetry.addData("Trajectory", "Tab2 created - Target: (35.0, -23.0)");
-		telemetry.addData("Trajectory", "Tab2 angle: 270°");
+		telemetry.addData("Trajectory", "Tab2 created");
 		telemetry.update();
 
-		transferRight = hardwareMap.get(CRServo.class, "transferRight");
-		transferLeft = hardwareMap.get(CRServo.class, "transferLeft");
-
-		transferRight.setDirection(DcMotorSimple.Direction.REVERSE);
-		telemetry.addData("Subsystem Init", "Transfer servos configured");
 		telemetry.addData("Status", "Initialization complete");
 		telemetry.update();
 	}
 
+	@Override
 	public void start() {
 		telemetry.addData("Status", "Match started - scheduling autonomous sequence");
 		telemetry.addData("Event", "Action Sequence", "1. Move to shooting position + WindUp");
 		telemetry.addData("Event", "Action Sequence", "2. Spindexer + Intake spin");
-		telemetry.addData("Event", "Action Sequence", "3. Wait for shooter spike and shoot");
+		telemetry.addData("Event", "Action Sequence", "3. Wait for shooter to shoot");
 		telemetry.addData("Event", "Action Sequence", "4. Repeat spin cycles");
 		telemetry.addData("Event", "Action Sequence", "5. Move to collection position");
 		telemetry.update();
@@ -133,8 +145,12 @@ public class BlueAudienceAuto extends OpMode {
 								spindexer.setDirectPower(0.8),
 								transfer.intakeDoorForward()
 						),
-						shooter.WaitForSpike(),
-						tab2.build()
+						shooter.WaitForSpike()
+						// TODO: Uncomment when needed
+						//tab2.build(),
+						//spindexer.setDirectPower(0),
+						//transfer.intakeDoorStop(),
+						//shooter.Stop()
 				)
 		);
 
@@ -144,9 +160,19 @@ public class BlueAudienceAuto extends OpMode {
 
 	@Override
 	public void loop() {
-		// Update action scheduler
+		// Update systems
 		actionScheduler.update();
+		shooter.updateRPM();
 		drive.updatePoseEstimate();
+
+		// Control transfer servos based on shooter RPM TODO: TEST WITH TRANSFER SUBSYSTEM INSTEAD OF DIRECTLY
+		if (shooter.averageRPM > (Shooter.AUDIENCE_RPM - 400)) {
+			transferLeft.setPower(1);
+			transferRight.setPower(1);
+		} else {
+			transferLeft.setPower(0);
+			transferRight.setPower(0);
+		}
 
 		// Telemetry - Drive position
 		Pose2d currentPose = drive.localizer.getPose();
@@ -160,7 +186,7 @@ public class BlueAudienceAuto extends OpMode {
 
 		// Telemetry - Shooter status
 		telemetry.addData("Shooter RPM", "%.0f", shooter.averageRPM);
-		telemetry.addData("Shooter Target RPM", "%.0f", topRpM);
+		telemetry.addData("Shooter Target RPM", "%.0f", Shooter.AUDIENCE_RPM);
 
 		telemetry.update();
 	}

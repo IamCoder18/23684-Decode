@@ -142,7 +142,7 @@ public class Test_ShootBall extends OpMode {
 
 		// Shooter status
 		telemetry.addData("", "=== SHOOTER STATUS ===");
-		telemetry.addData("Shooter Power", String.format("%.2f", Shooter.RUN_POWER + Shooter.UPPER_OFFSET));
+//		telemetry.addData("Shooter Power", String.format("%.2f", Shooter.RUN_POWER + Shooter.UPPER_OFFSET));
 		telemetry.addData("Upper Motor", "Ready");
 		telemetry.addData("Lower Motor", "Ready");
 

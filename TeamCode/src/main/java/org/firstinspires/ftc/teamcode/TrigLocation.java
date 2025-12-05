@@ -9,9 +9,7 @@ import org.firstinspires.ftc.teamcode.Roadrunner.Localizer;
 import org.firstinspires.ftc.teamcode.Roadrunner.MecanumDrive;
 
 public class TrigLocation {
-
-
-	public Localizer localizer;// = new TwoDeadWheelLocalizer(hardwareMap,drive.lazyImu.get(), PARAMS.inPerTick, currentPos);
+	public Localizer localizer;
 	public Pose2d currentPos;
 	public double redHypothenus = 0;
 	public double redAjecentAngle = 0;
@@ -22,14 +20,10 @@ public class TrigLocation {
 	Vector2d redGoal = new Vector2d(59, 59);
 	Vector2d bluGoal = new Vector2d(59, -59);
 
-
 	public TrigLocation(MecanumDrive mecanumDrive, Localizer localizer, HardwareMap hardwareMap) {
 		this.drive = mecanumDrive;
 		this.localizer = localizer;
-
-
 	}
-
 
 	public double TurnToRed() {
 		currentPos = localizer.getPose();
@@ -42,7 +36,6 @@ public class TrigLocation {
 		redAjecentAngle = Math.atan2(diffY, diffX);
 
 		return normalizeAngle(redAjecentAngle);
-
 	}
 
 	public double normalizeAngle(double angle) {
@@ -59,7 +52,7 @@ public class TrigLocation {
 		double c = (diffY * diffY) + (diffX * diffX);
 		bluHypothenus = Math.sqrt(c);
 
-		bluAjecentAngle = diffY / diffX;
+		bluAjecentAngle = Math.atan2(diffY, diffX);
 
 		return normalizeAngle(bluAjecentAngle);
 	}
