@@ -3,9 +3,9 @@ package org.firstinspires.ftc.teamcode.OpModes.Tests;
 import androidx.annotation.NonNull;
 
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
+import com.acmerobotics.roadrunner.Action;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.acmerobotics.roadrunner.Action;
 
 import org.firstinspires.ftc.teamcode.Actions.IntakeBall;
 import org.firstinspires.ftc.teamcode.Actions.ShootBall;
@@ -49,7 +49,7 @@ public class ComprehensiveTest extends OpMode {
 	private boolean emergencyStop = false;
 	private boolean aButtonPrev = false;
 	private boolean yButtonPrev = false;
-	
+
 	// Test results
 	private boolean intakeTest = false;
 	private boolean shooterTest = false;
@@ -108,7 +108,7 @@ public class ComprehensiveTest extends OpMode {
 	private void startComprehensiveTest() {
 		testRunning = true;
 		emergencyStop = false;
-		
+
 		// Reset test results
 		intakeTest = false;
 		shooterTest = false;
@@ -116,10 +116,10 @@ public class ComprehensiveTest extends OpMode {
 		spindexerTest = false;
 		colorTest = false;
 		actionTest = false;
-		
+
 		// Schedule test phases in sequence
 		scheduleTestPhases();
-		
+
 		telemetry.addData("Action", "Starting Comprehensive Test");
 	}
 
@@ -127,7 +127,7 @@ public class ComprehensiveTest extends OpMode {
 		// Phase 1: Subsystem checks
 		scheduler.schedule(new Action() {
 			private int stage = 0;
-			
+
 			@Override
 			public boolean run(@NonNull TelemetryPacket packet) {
 				packet.put("Current Test", "Subsystem Checks");
@@ -173,7 +173,7 @@ public class ComprehensiveTest extends OpMode {
 		// Phase 2: Spindexer validation
 		scheduler.schedule(new Action() {
 			private int stage = 0;
-			
+
 			@Override
 			public boolean run(@NonNull TelemetryPacket packet) {
 				packet.put("Current Test", "Spindexer Validation");
@@ -198,7 +198,7 @@ public class ComprehensiveTest extends OpMode {
 		// Phase 3: Color detection
 		scheduler.schedule(new Action() {
 			private int stage = 0;
-			
+
 			@Override
 			public boolean run(@NonNull TelemetryPacket packet) {
 				packet.put("Current Test", "Color Detection");
@@ -218,7 +218,7 @@ public class ComprehensiveTest extends OpMode {
 		// Phase 4: Action sequence
 		scheduler.schedule(new Action() {
 			private int stage = 0;
-			
+
 			@Override
 			public boolean run(@NonNull TelemetryPacket packet) {
 				packet.put("Current Test", "Action Sequence");
@@ -263,8 +263,8 @@ public class ComprehensiveTest extends OpMode {
 			} else {
 				// Calculate overall status
 				int passedTests = (intakeTest ? 1 : 0) + (shooterTest ? 1 : 0) + (transferTest ? 1 : 0) +
-								(spindexerTest ? 1 : 0) + (colorTest ? 1 : 0) + (actionTest ? 1 : 0);
-				
+						(spindexerTest ? 1 : 0) + (colorTest ? 1 : 0) + (actionTest ? 1 : 0);
+
 				telemetry.addData("", "=== FINAL SUMMARY ===");
 				telemetry.addData("Passed Tests", passedTests + "/6");
 				telemetry.addData("Failed Tests", (6 - passedTests));

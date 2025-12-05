@@ -101,7 +101,7 @@ public class Test_ShootBall extends OpMode {
 		scheduler.update();
 
 		// Check if action is still running
-		if (actionRunning && !scheduler.hasRunningActions()) {
+		if (actionRunning && scheduler.isSchedulerEmpty()) {
 			actionRunning = false;
 			telemetry.addData("Action", "ShootBall sequence completed");
 		}
@@ -201,11 +201,11 @@ public class Test_ShootBall extends OpMode {
 		// Target position is slot center + shooter alignment offset
 		double targetDegrees = (targetSlot * 120.0 + 131.011) % 360.0;
 		double error = targetDegrees - currentDegrees;
-		
+
 		// Normalize to shortest path
 		if (error > 180) error -= 360;
 		if (error < -180) error += 360;
-		
+
 		return error;
 	}
 
@@ -228,31 +228,31 @@ public class Test_ShootBall extends OpMode {
 		status.append("=== SHOOT BALL ACTION STATUS ===\n");
 		status.append("Action Running: ").append(actionRunning).append("\n");
 		status.append("Actions in Queue: ").append(scheduler.getRunningActionCount()).append("\n");
-		
+
 		// Spindexer details
 		double currentTicks = org.firstinspires.ftc.teamcode.Subsystems.Spindexer.getInstance().getCurrentPositionTicks();
 		double currentDegrees = (currentTicks % org.firstinspires.ftc.teamcode.Subsystems.Spindexer.TICKS_PER_REV) / org.firstinspires.ftc.teamcode.Subsystems.Spindexer.TICKS_PER_REV * 360;
 		if (currentDegrees < 0) currentDegrees += 360;
-		
+
 		status.append("Spindexer Position: ").append(String.format("%.1f", currentDegrees)).append("°\n");
 		status.append("Current Slot: ").append((int) ((currentDegrees / 120) % 3)).append("\n");
-		
+
 		// Ball colors
 		status.append("Stored Ball Colors:\n");
 		for (int i = 0; i < 3; i++) {
 			BallColor color = org.firstinspires.ftc.teamcode.Subsystems.Spindexer.getInstance().getBallColor(i);
 			status.append("  Slot ").append(i).append(": ").append(color.toString()).append("\n");
 		}
-		
+
 		// Target calculation
 		int targetSlot = calculateTargetSlot(currentDegrees);
 		double targetDegrees = (targetSlot * 120.0 + 131.011) % 360.0;
 		double error = calculateAlignmentError(currentDegrees, targetSlot);
-		
+
 		status.append("Target Slot: ").append(targetSlot).append("\n");
 		status.append("Target Position: ").append(String.format("%.1f", targetDegrees)).append("°\n");
 		status.append("Alignment Error: ").append(String.format("%.1f", error)).append("°\n");
-		
+
 		telemetry.addData("Status Output", status.toString());
 	}
 }

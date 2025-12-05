@@ -3,7 +3,6 @@ package org.firstinspires.ftc.teamcode.Subsystems;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.InstantAction;
-import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
@@ -17,23 +16,21 @@ public class Shooter {
 	// Offsets to resolve minor speed differences between motors
 	public static double UPPER_OFFSET = 0.0;
 	public static double LOWER_OFFSET = 0.0;
-	
+
 	// Shooter motor specifications
 	public static double TICKS_PER_REVOLUTION = 28.0;
-	
+
 	private static Shooter instance = null;
-	private DcMotorEx upperShooter;
-	private DcMotorEx lowerShooter;
-	
+	private static final double OSCILLATION_PERIOD = 500.0; // milliseconds for full cycle
 	// Average RPM of the shooter motors
 	public double averageRPM = 0.0;
 	// Individual RPM values for each shooter motor
 	public double upperRPM = 0.0;
 	public double lowerRPM = 0.0;
-	
+	private DcMotorEx upperShooter;
+	private DcMotorEx lowerShooter;
 	// Oscillation timing
 	private long oscillationStartTime = 0;
-	private static double OSCILLATION_PERIOD = 500.0; // milliseconds for full cycle
 
 	private Shooter() {
 	}
@@ -64,11 +61,11 @@ public class Shooter {
 	public void updateRPM() {
 		double upperVelocity = upperShooter.getVelocity(); // ticks per second
 		double lowerVelocity = lowerShooter.getVelocity(); // ticks per second
-		
+
 		// Convert ticks per second to RPM: (ticks_per_second / ticks_per_revolution) * 60
 		upperRPM = (upperVelocity / TICKS_PER_REVOLUTION) * 60.0;
 		lowerRPM = (lowerVelocity / TICKS_PER_REVOLUTION) * 60.0;
-		
+
 		// Calculate average RPM
 		averageRPM = (upperRPM + lowerRPM) / 2.0;
 	}
@@ -85,14 +82,14 @@ public class Shooter {
 			if (oscillationStartTime == 0) {
 				oscillationStartTime = System.currentTimeMillis();
 			}
-			
+
 			// Calculate elapsed time and position in oscillation cycle
 			long elapsedTime = System.currentTimeMillis() - oscillationStartTime;
 			double cyclePosition = (elapsedTime % (long) OSCILLATION_PERIOD) / OSCILLATION_PERIOD;
-			
+
 			// Oscillate between MIN_POWER and RUN_POWER using sine wave
 			double oscillatingPower = MIN_POWER + (RUN_POWER - MIN_POWER) * 0.5 * (1 + Math.sin(2 * Math.PI * cyclePosition - Math.PI / 2));
-			
+
 			upperShooter.setPower(oscillatingPower + UPPER_OFFSET);
 			lowerShooter.setPower(oscillatingPower + LOWER_OFFSET);
 		});

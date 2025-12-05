@@ -7,15 +7,14 @@ import androidx.annotation.NonNull;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
-import com.acmerobotics.roadrunner.InstantAction;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 /**
  * Singleton subsystem that manages dual color sensors for ball color detection.
- * 
+ * <p>
  * Uses HSV color space to detect green and purple balls.
  * Configuration values can be tuned via FTC Dashboard.
- * 
+ * <p>
  * To use:
  * 1. Call initialize(hardwareMap) once during robot initialization
  * 2. Call getInstance().update().run(packet) in the main loop
@@ -25,30 +24,52 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 public class ColorDetector {
 
 	// HSV Thresholds (tunable via FTC Dashboard)
-	/** Minimum hue value for green detection */
+	/**
+	 * Minimum hue value for green detection
+	 */
 	public static double GREEN_HUE_MIN = 100;
-	/** Maximum hue value for green detection */
+	/**
+	 * Maximum hue value for green detection
+	 */
 	public static double GREEN_HUE_MAX = 140;
-	/** Minimum hue value for purple detection */
+	/**
+	 * Minimum hue value for purple detection
+	 */
 	public static double PURPLE_HUE_MIN = 250;
-	/** Maximum hue value for purple detection */
+	/**
+	 * Maximum hue value for purple detection
+	 */
 	public static double PURPLE_HUE_MAX = 290;
-	/** Minimum saturation required to consider a color valid */
+	/**
+	 * Minimum saturation required to consider a color valid
+	 */
 	public static double MIN_SATURATION = 0.4;
 
 	private static ColorDetector instance = null;
 	// Public fields to store the last read values
-	/** Average red value from both sensors (0-255) */
+	/**
+	 * Average red value from both sensors (0-255)
+	 */
 	public int avgRed;
-	/** Average green value from both sensors (0-255) */
+	/**
+	 * Average green value from both sensors (0-255)
+	 */
 	public int avgGreen;
-	/** Average blue value from both sensors (0-255) */
+	/**
+	 * Average blue value from both sensors (0-255)
+	 */
 	public int avgBlue;
-	/** Average HSV values: [0]=hue (0-360), [1]=saturation (0-1), [2]=value (0-1) */
+	/**
+	 * Average HSV values: [0]=hue (0-360), [1]=saturation (0-1), [2]=value (0-1)
+	 */
 	public float[] avgHSV = new float[3];
-	/** True if the last reading detected a green ball */
+	/**
+	 * True if the last reading detected a green ball
+	 */
 	public boolean isGreen;
-	/** True if the last reading detected a purple ball */
+	/**
+	 * True if the last reading detected a purple ball
+	 */
 	public boolean isPurple;
 	private com.qualcomm.robotcore.hardware.ColorSensor colourLeft;
 	private com.qualcomm.robotcore.hardware.ColorSensor colourRight;
@@ -102,7 +123,7 @@ public class ColorDetector {
 	/**
 	 * Returns an Action that updates color sensor readings.
 	 * This action finishes immediately after one frame and should be called every loop.
-	 * 
+	 *
 	 * @return Action that performs one sensor update
 	 */
 	public Action update() {

@@ -111,23 +111,23 @@ public class Test_Spindexer extends OpMode {
 //		scheduler.schedule(spindexer.update());
 
 		// Check for completion
-		if (isRunningZero && !scheduler.hasRunningActions()) {
+		if (isRunningZero && scheduler.isSchedulerEmpty()) {
 			isRunningZero = false;
 			telemetry.addData("Action", "Zero Sequence Complete!");
 		}
 
-		if (isMovingToPosition && !scheduler.hasRunningActions()) {
+		if (isMovingToPosition && scheduler.isSchedulerEmpty()) {
 			isMovingToPosition = false;
 			telemetry.addData("Action", "Position reached!");
 		}
 
 		// === DISPLAY TELEMETRY ===
-		
+
 		// Position information
 		double currentTicks = spindexer.getCurrentPositionTicks();
 		double currentDegrees = getCurrentPositionDegrees();
 		int currentSlot = getCurrentSlot();
-		
+
 		// Calculate position error
 		double positionError = Math.abs(targetPosition * Spindexer.TICKS_PER_REV - currentTicks);
 		String accuracyStatus = positionError < 50 ? "✓ ACCURATE" : (positionError < 100 ? "⚠ CLOSE" : "✗ ERROR");
