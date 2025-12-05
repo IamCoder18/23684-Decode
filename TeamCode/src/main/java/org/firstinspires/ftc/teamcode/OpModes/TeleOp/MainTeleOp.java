@@ -7,12 +7,14 @@ import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
+
 import org.firstinspires.ftc.teamcode.LifecycleManagementUtilities.HardwareInitializer;
 import org.firstinspires.ftc.teamcode.LifecycleManagementUtilities.HardwareShutdown;
 import org.firstinspires.ftc.teamcode.LifecycleManagementUtilities.SubsystemUpdater;
 import org.firstinspires.ftc.teamcode.Roadrunner.MecanumDrive;
 import org.firstinspires.ftc.teamcode.Subsystems.Intake;
-import org.firstinspires.ftc.teamcode.Subsystems.LimeLight;
+import org.firstinspires.ftc.teamcode.Subsystems.Limelight;
+import org.firstinspires.ftc.teamcode.Subsystems.Limelight;
 import org.firstinspires.ftc.teamcode.Subsystems.RGBIndicator;
 import org.firstinspires.ftc.teamcode.Subsystems.RobotState;
 import org.firstinspires.ftc.teamcode.Subsystems.Shooter;
@@ -49,7 +51,7 @@ public class MainTeleOp extends OpMode {
 	protected Intake intake;
 	protected Transfer transfer;
 	protected Spindexer spindexer;
-	protected LimeLight limeLight;
+	protected Limelight limeLight;
 
 	protected SpindexerPositionUtility spu;
 	protected RGBIndicator rgbIndicator;
@@ -99,7 +101,7 @@ public class MainTeleOp extends OpMode {
 		spindexer = Spindexer.getInstance();
 		spindexer.resetCalibrationAverage();
 		rgbIndicator = RGBIndicator.getInstance();
-		limeLight = new LimeLight(hardwareMap);
+		limeLight = new Limelight(hardwareMap);
 		spu = new SpindexerPositionUtility();
 
 		// Try to set starting pose from previous autonomous run
@@ -129,6 +131,9 @@ public class MainTeleOp extends OpMode {
 		scheduler.schedule(transfer.intakeDoorForward());
 		scheduler.schedule(transfer.transferBackward());
 		scheduler.update();
+		limeLight.Start(getStartingPose().heading.toDouble());
+
+		spindexer.targetPosition = 0;
 	}
 
 	@Override
@@ -140,6 +145,7 @@ public class MainTeleOp extends OpMode {
 
 		// Handle operator controls (must be before scheduler.update())
 		handleOperatorInput();
+		spindexer.update();
 
 		// Update action scheduler
 		scheduler.update();
@@ -150,15 +156,24 @@ public class MainTeleOp extends OpMode {
 		// Display telemetry
 		displayTelemetry();
 
-		spindexer.update();
 
-		if (limeLight.AreGoalsFound()){
-			drive.localizer.setPose(new Pose2d(
-					(double)limeLight.VisionPosition().get(0),
-					(double)limeLight.VisionPosition().get(1),
-					(double)limeLight.VisionPosition().get(2)
-			));
-		}
+
+//		if (limeLight.AreGoalsFound()){
+//			drive.localizer.setPose(new Pose2d(
+//					(double)limeLight.VisionPosition().get(0),
+//					(double)limeLight.VisionPosition().get(1),
+//					(double)limeLight.VisionPosition().get(2)
+//			));
+//			telemetry.addLine("goals found");
+//		}
+
+
+//		if (limeLight.AreGoalsFound()){
+//			drive.localizer.setPose(limeLight.VisionPose());
+//			telemetry.addLine("goals found");
+//		} else{
+		drive.updatePoseEstimate();
+//		}
 
 		telemetry.update();
 	}
@@ -222,9 +237,9 @@ public class MainTeleOp extends OpMode {
 		}
 
 		ShootingBlu = drive.actionBuilder(drive.localizer.getPose())
-				.strafeToLinearHeading(new Vector2d(59, -20), calculateShotAngle(59,-20));
+				.strafeToLinearHeading(new Vector2d(59, -2), calculateShotAngle(59,-2));
 		ShootingRed = drive.actionBuilder(drive.localizer.getPose())
-				.strafeToLinearHeading(new Vector2d(59, 20), calculateShotAngle(59,20));
+				.strafeToLinearHeading(new Vector2d(59, 2), calculateShotAngle(59,2));
 
 
 
@@ -369,15 +384,17 @@ public class MainTeleOp extends OpMode {
 			spindexerUpCrossed = false;
 		}
 
-		if (gamepad2.dpad_up && !dpadUpPressed ) {
-			scheduler.schedule(spindexer.toPosition(SpindexerPositionUtility.getNextIntakePosition((int)spindexer.getCalibratedPosition())));
+
+
+		if (gamepad2.dpad_up) {
+			spindexer.targetPosition = SpindexerPositionUtility.getNextIntakePositionAlternative((int)-spindexer.getCalibratedPosition());
 			dpadUpPressed = true;
 		} else if (!gamepad2.dpad_up && dpadUpPressed) {
 			dpadUpPressed = false;
 		}
 
-		if (gamepad2.dpad_down && !dpadDownPressed) {
-			scheduler.schedule(spindexer.toPosition(SpindexerPositionUtility.getNextShootPosition((int)spindexer.getCalibratedPosition())));
+		if (gamepad2.dpad_down) {
+			spindexer.targetPosition = SpindexerPositionUtility.getNextShootPosition((int)-spindexer.getCalibratedPosition());
 			dpadDownPressed = true;
 		} else if (!gamepad2.dpad_down && dpadDownPressed) {
 			dpadDownPressed = false;
@@ -409,5 +426,11 @@ public class MainTeleOp extends OpMode {
 		telemetry.addData("Upper RPM", String.format("%.2f", shooter.upperRPM));
 		telemetry.addData("Lower RPM", String.format("%.2f", shooter.lowerRPM));
 		telemetry.addData("Average RPM", String.format("%.2f", shooter.averageRPM));
+
+		telemetry.addLine("=== Spindexer ===");
+		telemetry.addData("current Location",spindexer.getCalibratedPosition());
+		telemetry.addData("target",spindexer.targetPosition);
+		telemetry.addData("Next intake", SpindexerPositionUtility.getNextIntakePositionAlternative((int)spindexer.getCalibratedPosition()));
+		telemetry.addData("Next shoot", SpindexerPositionUtility.getNextShootPosition((int)spindexer.getCalibratedPosition()));
 	}
 }

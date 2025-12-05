@@ -22,9 +22,16 @@ public class SpindexerPositionUtility {
 
         // If remainder is 0, current position is already a shoot position
         // so next shoot position is currentPosition + 120
-        if (remainder == 0) {
+        if (remainder < 10) {
             return currentPosition + 120;
         }
+
+        // If remainder is negative, we need to adjust it
+//        if (remainder < 0) {
+//            remainder += 120;
+//        }
+
+
 
         // Otherwise, next shoot position is currentPosition + (120 - remainder)
         return currentPosition + (120 - remainder);
@@ -39,18 +46,20 @@ public class SpindexerPositionUtility {
      */
     public static int getNextIntakePosition(int currentPosition) {
         // Calculate how far we are from the next intake position
-        int remainder = (currentPosition - 20) % 120;
+         int remainder = (currentPosition - 20) % 120;
 
         // If remainder is 0, current position is already an intake position
         // so next intake position is currentPosition + 120
-        if (remainder == 0) {
+        if (remainder < 10) {
             return currentPosition + 120;
         }
 
         // If remainder is negative, we need to adjust it
-        if (remainder < 0) {
-            remainder += 120;
-        }
+//        if (remainder < 0) {
+//            remainder += 120;
+//        }
+
+
 
         // Next intake position is currentPosition + (120 - remainder)
         return currentPosition + (120 - remainder);
@@ -68,7 +77,7 @@ public class SpindexerPositionUtility {
         int remainder = currentPosition % 120;
 
         // If we're already at an intake position
-        if (remainder == targetRemainder) {
+        if (remainder <= targetRemainder + 10 && remainder >= targetRemainder -10) {
             return currentPosition + 120;
         }
         // If we've passed the intake position in this cycle

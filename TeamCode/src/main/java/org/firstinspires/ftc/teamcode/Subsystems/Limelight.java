@@ -1,4 +1,6 @@
 package org.firstinspires.ftc.teamcode.Subsystems;
+import com.acmerobotics.roadrunner.Pose2d;
+import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
@@ -10,6 +12,8 @@ import com.qualcomm.robotcore.hardware.IMU;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.matrices.VectorF;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 import org.firstinspires.ftc.vision.apriltag.AprilTagGameDatabase;
@@ -17,8 +21,10 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagGameDatabase;
 import java.util.List;
 
 
-public class LimeLight {
+public class Limelight {
     private Limelight3A limelight;
+
+    private GoBildaPinpointDriver pinpoint;
 
     Telemetry telemetry;
 
@@ -37,12 +43,12 @@ public class LimeLight {
 
 
 
-    public LimeLight(HardwareMap hardwareMap) {
+    public Limelight(HardwareMap hardwareMap) {
 
 
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
         limelight.pipelineSwitch(0);
-        limelight.start();
+
 
         imu = hardwareMap.get(IMU.class, "imu");
         RevHubOrientationOnRobot orientation = new RevHubOrientationOnRobot(
@@ -51,6 +57,21 @@ public class LimeLight {
         );
         imu.initialize(new IMU.Parameters(orientation));
         imu.resetYaw();
+
+        GoBildaPinpointDriver.EncoderDirection yEncoderDirection = GoBildaPinpointDriver.EncoderDirection.REVERSED;
+        GoBildaPinpointDriver.EncoderDirection xEncoderDirection = GoBildaPinpointDriver.EncoderDirection.REVERSED;
+
+
+        pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
+        pinpoint.setOffsets(-177.8, -63.5, DistanceUnit.MM);
+        pinpoint.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
+        pinpoint.setEncoderDirections(xEncoderDirection, yEncoderDirection);
+        pinpoint.resetPosAndIMU();
+    }
+
+    public  void Start(double initialHeading){
+        limelight.start();
+        pinpoint.setHeading(initialHeading, AngleUnit.DEGREES);
     }
 
     public void UpdateData() {
@@ -108,20 +129,18 @@ public class LimeLight {
 
     }
 
-
-
-    public List VisionPosition(){
+    public Pose2d VisionPose(){
         limelight.pipelineSwitch(0);
         LLResult llResult = limelight.getLatestResult();
-
+        limelight.updateRobotOrientation(pinpoint.getHeading(AngleUnit.DEGREES));
         if (llResult != null && llResult.isValid()) {
-            Pose3D botPose = llResult.getBotpose();
-            position.set(0, botPose.getPosition().x);
-            position.set(1, botPose.getPosition().y);
-            position.set(2, botPose.getOrientation());
-        }
+            Pose3D botPose = llResult.getBotpose_MT2();
 
-        return position;
+            return new Pose2d(botPose.getPosition().x * 39.3701,
+                    botPose.getPosition().y  * 39.3701,
+                    Math.toRadians(botPose.getOrientation().getYaw()));
+        }
+        return new Pose2d(0,0,0);
     }
 
 
@@ -163,4 +182,5 @@ public class LimeLight {
 
 
 }
+
 

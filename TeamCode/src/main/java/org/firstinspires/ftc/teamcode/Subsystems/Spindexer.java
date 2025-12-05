@@ -203,10 +203,10 @@ public class Spindexer {
 	}
 
 	public void update() {
-		currentPositionDegrees = getCalibratedPosition();
+		currentPositionDegrees = -getCalibratedPosition();
 
 		controller.setPID(P,I,D,F);
-		power = -controller.getOutput(currentPositionDegrees, targetPosition);
+		power = controller.getOutput(currentPositionDegrees, targetPosition);
 		instance.spindexerRight.setDirection(DcMotorSimple.Direction.REVERSE);
 		spindexerLeft.setPower(power);
 		spindexerRight.setPower(power);
@@ -229,7 +229,7 @@ public class Spindexer {
 			// Returns true while moving (error >= threshold), false when within tolerance
 			double error = targetPosition - getPosition();
 			packet.put("Spindexer Error", error);
-			return Math.abs(error) >= 7; // Returns true while moving, false when within tolerance
+			return Math.abs(error) >= 17; // Returns true while moving, false when within tolerance
 		};
 	}
 
