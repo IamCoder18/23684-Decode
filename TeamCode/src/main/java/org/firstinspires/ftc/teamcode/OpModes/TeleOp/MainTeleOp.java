@@ -41,7 +41,6 @@ import org.firstinspires.ftc.teamcode.Utilities.Team;
  * - Priority: X > Y > RPM-based
  */
 public class MainTeleOp extends OpMode {
-
 	protected MecanumDrive drive;
 	protected ActionScheduler scheduler;
 	protected Shooter shooter;
@@ -49,8 +48,6 @@ public class MainTeleOp extends OpMode {
 	protected Transfer transfer;
 	protected Spindexer spindexer;
 	protected Limelight limelight;
-
-	protected SpindexerPositionUtility spu;
 	protected RGBIndicator rgbIndicator;
 
 	// Button state tracking to prevent continuous input
@@ -88,7 +85,6 @@ public class MainTeleOp extends OpMode {
 		spindexer.resetCalibrationAverage();
 		rgbIndicator = RGBIndicator.getInstance();
 		limelight = new Limelight(hardwareMap);
-		spu = new SpindexerPositionUtility();
 
 		// Try to set starting pose from previous autonomous run
 		Pose2d savedPose = RobotState.getInstance().getAutoPose();

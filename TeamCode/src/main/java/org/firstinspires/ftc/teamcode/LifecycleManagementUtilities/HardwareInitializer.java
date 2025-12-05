@@ -25,7 +25,6 @@ public class HardwareInitializer {
 		Intake.initialize(hardwareMap);
 		RGBIndicator.initialize(hardwareMap);
 		DistanceDetector.initialize(hardwareMap);
-		Limelight.initialize(hardwareMap);
 
 		// Initialize Spindexer last (depends on Transfer and ColorSensor)
 		Spindexer.initialize(hardwareMap);

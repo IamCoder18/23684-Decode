@@ -117,7 +117,7 @@ public class Tune_Spindexer extends OpMode {
 			double currentDegrees = spindexer.getCalibratedPosition();
 
 			// Calculate next shoot position using utility (now handles doubles)
-			double nextShootPosition = SpindexerPositionUtility.getNextShootPosition(currentDegrees);
+			double nextShootPosition = SpindexerPositionUtility.getNextShootPosition((int) currentDegrees);
 
 			// Convert to revolutions for the spindexer (0-1 range)
 			double targetRevolutions = nextShootPosition / 360.0;
