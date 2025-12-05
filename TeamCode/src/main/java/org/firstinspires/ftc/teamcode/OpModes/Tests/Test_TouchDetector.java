@@ -132,10 +132,10 @@ public class Test_TouchDetector extends OpMode {
 		telemetry.addData("", "=== DETAILED ANALYSIS ===");
 		telemetry.addData("Left Sensor", touchDetector.touchLeft ? "Pressed" : "Released");
 		telemetry.addData("Right Sensor", touchDetector.touchRight ? "Pressed" : "Released");
-		
+
 		// Analyze sensor combination
 		String analysis;
-		
+
 		if (touchDetector.touchLeft && touchDetector.touchRight) {
 			analysis = "Both sensors pressed";
 		} else if (touchDetector.touchLeft) {
@@ -145,7 +145,7 @@ public class Test_TouchDetector extends OpMode {
 		} else {
 			analysis = "No sensors pressed";
 		}
-		
+
 		telemetry.addData("Analysis", analysis);
 	}
 }

@@ -2,16 +2,20 @@
 
 **Status:** Planning Phase  
 **Last Updated:** 2025-11-09  
-**Scope:** Comprehensive separation of Testing and Tuning OpModes with improved Action calling patterns
+**Scope:** Comprehensive separation of Testing and Tuning OpModes with improved Action calling
+patterns
 
 ---
 
 ## Overview
 
-This document outlines the complete refactoring strategy for reorganizing test and tuning OpModes. The goal is to establish a clear separation of concerns:
+This document outlines the complete refactoring strategy for reorganizing test and tuning OpModes.
+The goal is to establish a clear separation of concerns:
 
-- **Testing OpModes** (`OpModes/Tests/`): Used for hands-on exploration of each subsystem's behavior.
-- **Tuning OpModes** (`OpModes/Tuning/`): Used for adjusting constants and control parameters (FTC Dashboard).
+- **Testing OpModes** (`OpModes/Tests/`): Used for hands-on exploration of each subsystem's
+  behavior.
+- **Tuning OpModes** (`OpModes/Tuning/`): Used for adjusting constants and control parameters (FTC
+  Dashboard).
 - **Comprehensive Test** (`OpModes/Tests/`): Run prior to competition for high-level system checks.
 
 ---
@@ -43,6 +47,7 @@ This document outlines the complete refactoring strategy for reorganizing test a
 
 **Tests are not for validation or automation.**  
 A test OpMode should:
+
 - Allow a human operator to *experiment and visually inspect* subsystems
 - Report only telemetry feedback
 - Never provide automatic pass/fail, nor block execution
@@ -52,10 +57,10 @@ A test OpMode should:
 
 **Tuning is strictly for optimization.**  
 A tuning OpMode should:
+
 - Allow the operator to adjust parameters in real-time
 - Be modal, focused on individual subsystem behaviour
 - Avoid any automated validation or reporting
-
 
 ---
 
@@ -91,7 +96,8 @@ All test OpModes follow this pattern:
 - Required Setup: None unless noted in individual specs.
 - Driver Controls: Gamepad controls mapped to subsystem actions.
 - Telemetry Output: Display key states, sensor data, actuator feedback.
-- *No automated pass/fail reporting. Only visual feedback and operator judgment guide further action.*
+- *No automated pass/fail reporting. Only visual feedback and operator judgment guide further
+  action.*
 
 ---
 
@@ -304,17 +310,21 @@ Color changing: No
 To support maintainability and onboarding, create two comprehensive guides:
 
 **1. HOW_TO_TEST.md**
-- **Purpose:** Document detailed step-by-step procedures for running each Test OpMode and interpreting results.
+
+- **Purpose:** Document detailed step-by-step procedures for running each Test OpMode and
+  interpreting results.
 - **Required Sections:**
     - Overview of available Test OpModes and their intended purpose.
     - Setup instructions for each test (robot position, required hardware state).
-    - Step-by-step guide for running each test, including control mappings and expected operator actions.
+    - Step-by-step guide for running each test, including control mappings and expected operator
+      actions.
     - Explanation of telemetry and PASS/FAIL feedback—how to interpret output and what to check.
     - Troubleshooting common failure modes per OpMode.
     - Checklist before competition day to ensure coverage.
     - Emergency stop instructions and warnings.
 
 **2. HOW_TO_TUNE.md**
+
 - **Purpose:** Document procedures and tips for tuning robot subsystems using Tuning OpModes.
 - **Required Sections:**
     - Overview of each tunable subsystem and its associated OpMode.
@@ -339,14 +349,17 @@ The codebase has mixed patterns:
 
 ### Modernized Pattern: ActionScheduler Singleton
 
-Created **`Utilities/ActionScheduler.java`** - A singleton utility that manages the scheduling and execution of Actions without blocking the main loop.
+Created **`Utilities/ActionScheduler.java`** - A singleton utility that manages the scheduling and
+execution of Actions without blocking the main loop.
 
 **Key Features:**
+
 - **Singleton pattern**: Use `ActionScheduler.getInstance()` to access
 - **`schedule(Action action)`**: Queue a new action
 - **`update()`**: Run all active actions and remove completed ones (call once per loop)
 - **`update(TelemetryPacket packet)`**: Update actions with an existing telemetry packet
-- **Utility methods**: `hasRunningActions()`, `getRunningActionCount()`, `clearActions()`, `sendTelemetry()`
+- **Utility methods**: `hasRunningActions()`, `getRunningActionCount()`, `clearActions()`,
+  `sendTelemetry()`
 
 **Usage in Test OpModes:**
 
@@ -366,7 +379,8 @@ if (gamepad1.a) {
 scheduler.update();
 ```
 
-This replaces manual `action.run()` loops and provides consistent telemetry integration across all OpModes.
+This replaces manual `action.run()` loops and provides consistent telemetry integration across all
+OpModes.
 
 ---
 

@@ -10,15 +10,15 @@ import org.firstinspires.ftc.teamcode.Utilities.ActionScheduler;
 
 /**
  * Tuning OpMode for the Shooter Subsystem
- * 
+ * <p>
  * Purpose: Synchronize upper and lower motors via offsets using real-time adjustment
- * 
+ * <p>
  * FTC Dashboard Constants:
  * - RUN_POWER: [-1.0, 1.0] (default: 1.0)
  * - UPPER_OFFSET: [-1.0, 1.0] (default: 0.0)
  * - LOWER_OFFSET: [-1.0, 1.0] (default: 0.0)
  * - STOP_POWER: [-1.0, 1.0] (default: 0.0)
- * 
+ * <p>
  * Controls:
  * - DPAD UP/DOWN: Adjust RUN_POWER (±0.05)
  * - LB/RB: Adjust UPPER_OFFSET (±0.01)
@@ -26,13 +26,13 @@ import org.firstinspires.ftc.teamcode.Utilities.ActionScheduler;
  * - A: Run both motors
  * - B: Stop both motors
  * - Y: Reset to defaults
- * 
+ * <p>
  * Expected Behavior:
  * - Real-time motor speed synchronization
  * - Motor RPM display in telemetry
  * - Clear visual feedback on speed differences
  * - Fine-grained offset adjustment for precision tuning
- * 
+ * <p>
  * Notes:
  * - Values update in real-time through FTC Dashboard
  * - No timeout - operator can tune as long as needed
@@ -42,10 +42,10 @@ import org.firstinspires.ftc.teamcode.Utilities.ActionScheduler;
 @TeleOp(name = "Tune_Shooter", group = "Tuning")
 public class Tune_Shooter extends OpMode {
 
-	private Shooter shooter;
-	private ActionScheduler scheduler;
 	private static final double POWER_STEP = 0.05;
 	private static final double OFFSET_STEP = 0.01;
+	private Shooter shooter;
+	private ActionScheduler scheduler;
 
 	@Override
 	public void init() {
