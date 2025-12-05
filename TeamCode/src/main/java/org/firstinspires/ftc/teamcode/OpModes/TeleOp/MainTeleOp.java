@@ -1,6 +1,5 @@
 package org.firstinspires.ftc.teamcode.OpModes.TeleOp;
 
-import com.acmerobotics.roadrunner.Actions;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
@@ -13,8 +12,7 @@ import org.firstinspires.ftc.teamcode.LifecycleManagementUtilities.HardwareShutd
 import org.firstinspires.ftc.teamcode.LifecycleManagementUtilities.SubsystemUpdater;
 import org.firstinspires.ftc.teamcode.Roadrunner.MecanumDrive;
 import org.firstinspires.ftc.teamcode.Subsystems.Intake;
-import org.firstinspires.ftc.teamcode.Subsystems.Limelight;
-import org.firstinspires.ftc.teamcode.Subsystems.Limelight;
+import org.firstinspires.ftc.teamcode.Subsystems.Limelight2;
 import org.firstinspires.ftc.teamcode.Subsystems.RGBIndicator;
 import org.firstinspires.ftc.teamcode.Subsystems.RobotState;
 import org.firstinspires.ftc.teamcode.Subsystems.Shooter;
@@ -51,7 +49,7 @@ public class MainTeleOp extends OpMode {
 	protected Intake intake;
 	protected Transfer transfer;
 	protected Spindexer spindexer;
-	protected Limelight limeLight;
+	protected Limelight2 limeLight;
 
 	protected SpindexerPositionUtility spu;
 	protected RGBIndicator rgbIndicator;
@@ -101,7 +99,7 @@ public class MainTeleOp extends OpMode {
 		spindexer = Spindexer.getInstance();
 		spindexer.resetCalibrationAverage();
 		rgbIndicator = RGBIndicator.getInstance();
-		limeLight = new Limelight(hardwareMap);
+		limeLight = new Limelight2(hardwareMap);
 		spu = new SpindexerPositionUtility();
 
 		// Try to set starting pose from previous autonomous run
