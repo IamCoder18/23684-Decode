@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.OpModes.TeleOp;
 
 import com.acmerobotics.roadrunner.Pose2d;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import org.firstinspires.ftc.teamcode.Utilities.Team;
 
 /**
  * TeleOp OpMode for Blue Audience starting position
@@ -15,7 +16,8 @@ public class BlueAudienceTeleOp extends MainTeleOp {
 		return new Pose2d(35, -23, Math.toRadians(270));
 	}
 
-	protected boolean TeamColourRed(){
-		return false;
+	@Override
+	protected Team getTeam(){
+		return Team.BLUE;
 	}
 }

@@ -10,6 +10,7 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Position;
+import org.firstinspires.ftc.teamcode.Utilities.Team;
 import org.firstinspires.ftc.teamcode.LifecycleManagementUtilities.HardwareInitializer;
 import org.firstinspires.ftc.teamcode.LifecycleManagementUtilities.HardwareShutdown;
 import org.firstinspires.ftc.teamcode.LifecycleManagementUtilities.SubsystemUpdater;
@@ -57,21 +58,19 @@ public class MainTeleOp extends OpMode {
 	protected boolean rightTriggerPressed = false;
 	protected boolean xButtonPressed = false;
 	protected boolean yButtonPressed = false;
+	protected boolean aButtonPressed = false;
 	protected boolean bButtonPressed = false;
 	protected boolean spindexerUpCrossed = false;
 	protected boolean spindexerMidCrossed = false;
 	protected boolean spindexerDownCrossed = false;
 	protected boolean leftBumperPressed = false;
 	protected boolean rightBumperPressed = false;
-	protected boolean fronsideButtonPressed = false;
-
-	protected double goalX = 0;
-	protected double goalY = 0;
 	protected boolean transferAboveRPM = false;
+
 	private TrajectoryActionBuilder ShootingBlue;
 	private TrajectoryActionBuilder ShootingRed;
 
-	protected double calculateShotAngle(double x, double y) {
+	protected double calculateShotAngle(double x, double y, double goalX, double goalY) {
 		double deltaX = goalX - x;
 		double deltaY = goalY - y;
 		return Math.atan2(-deltaY, -deltaX);
@@ -90,16 +89,6 @@ public class MainTeleOp extends OpMode {
 		spindexer.resetCalibrationAverage();
 		rgbIndicator = RGBIndicator.getInstance();
 		limelight = Limelight.getInstance();
-
-//		// Try to set starting pose from previous autonomous run
-//		Pose2d savedPose = RobotState.getInstance().getAutoPose();
-//		if (savedPose != null) {
-//			drive.localizer.setPose(savedPose);
-//			telemetry.addData("Pose Source", "Loaded from Auto: (%.2f, %.2f, %.2f°)",
-//					savedPose.position.x, savedPose.position.y, Math.toDegrees(savedPose.heading.toDouble()));
-//		} else {
-//			telemetry.addData("Pose Source", "Default pose used");
-//		}
 
 		TelemetryPacket limelightTelemetry = new TelemetryPacket();
 
@@ -163,8 +152,16 @@ public class MainTeleOp extends OpMode {
 		return new Pose2d(0, 0, 0);
 	}
 
-	protected boolean TeamColourRed() {
-		return false;
+	/**
+	 * Get the team color for this OpMode.
+	 * <p>
+	 * Override this method in subclasses to return the appropriate team color.
+	 * </p>
+	 *
+	 * @return The team color, or Team.UNKNOWN if not specified
+	 */
+	protected Team getTeam() {
+		return Team.UNKNOWN;
 	}
 
 	/**
@@ -198,35 +195,31 @@ public class MainTeleOp extends OpMode {
 	 * Handle driving input from gamepad1
 	 */
 	private void handleDriveInput() {
-
-		if (TeamColourRed()) {
-			goalX = 60;
-			goalY = 60;
-		} else if (!TeamColourRed()) {
-			goalX = -60;
-			goalY = -60;
-		}
-
-		ShootingBlue = drive.actionBuilder(drive.localizer.getPose())
-				.strafeToLinearHeading(new Vector2d(57, -23), calculateShotAngle(57, -23));
-		ShootingRed = drive.actionBuilder(drive.localizer.getPose())
-				.strafeToLinearHeading(new Vector2d(57, 23), calculateShotAngle(57, 23));
-
 		if (gamepad1.a) {
-			if (TeamColourRed()) {
-				scheduler.schedule(ShootingRed.build());
-			} else if (!TeamColourRed()) {
-				scheduler.schedule(ShootingBlue.build());
+			drive.localizer.update();
+
+			if (getTeam() == Team.RED) {
+				scheduler.schedule(
+						drive.actionBuilder(drive.localizer.getPose())
+								.strafeToLinearHeading(new Vector2d(57, 23), calculateShotAngle(57, 23, 60, 60))
+								.build()
+				);
+			} else if (getTeam() == Team.BLUE) {
+				scheduler.schedule(
+						drive.actionBuilder(drive.localizer.getPose())
+								.strafeToLinearHeading(new Vector2d(57, -23), calculateShotAngle(57, -23, -60, -60))
+								.build()
+				);
 			}
-			fronsideButtonPressed = true;
-		} else if (!gamepad1.a && fronsideButtonPressed) {
-			fronsideButtonPressed = false;
+			aButtonPressed = true;
+		} else if (!gamepad1.a && aButtonPressed) {
+			aButtonPressed = false;
 		}
 
 		if (!gamepad1.a) {
 			double forwardPower = -gamepad1.left_stick_y; // Left stick Y (inverted)
-			double turnPower = -gamepad1.right_stick_x;     // Right stick X
-			double strafePower = gamepad1.left_stick_x;    // Left stick X
+			double turnPower = -gamepad1.right_stick_x; // Right stick X
+			double strafePower = gamepad1.left_stick_x; // Left stick X
 
 			// Apply deadzone
 			forwardPower = Math.abs(forwardPower) > 0.05 ? forwardPower : 0;
