@@ -28,7 +28,7 @@ public class Spindexer {
 	public static double zeroOffset = 73.6;
 
 	// PID coefficients for position control. Tuned 2025-11-22.
-	public static double P = 0.0, I = 0.0, D = 0.0, F = 0.0;
+	public static double P = 0.01, I = 0.0, D = 0.0, F = 0.0;
 
 	private static Spindexer instance = null;
 
@@ -209,9 +209,9 @@ public class Spindexer {
 		power = -controller.getOutput(currentPositionDegrees, targetPosition);
 		instance.spindexerRight.setDirection(DcMotorSimple.Direction.REVERSE);
 		spindexerLeft.setPower(power);
-		spindexerRight.setPower(0);
+		spindexerRight.setPower(power);
 
-		currentPosition = currentPositionDegrees;
+		//currentPosition = currentPositionDegrees;
 	}
 
 	private Action setTarget(double angle) {

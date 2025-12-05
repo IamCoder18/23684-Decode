@@ -8,7 +8,7 @@ import org.firstinspires.ftc.teamcode.LifecycleManagementUtilities.HardwareIniti
 import org.firstinspires.ftc.teamcode.LifecycleManagementUtilities.HardwareShutdown;
 import org.firstinspires.ftc.teamcode.LifecycleManagementUtilities.SubsystemUpdater;
 import org.firstinspires.ftc.teamcode.Subsystems.Intake;
-import org.firstinspires.ftc.teamcode.Subsystems.Limelight;
+//import org.firstinspires.ftc.teamcode.Subsystems.Limelight;
 import org.firstinspires.ftc.teamcode.Subsystems.Shooter;
 import org.firstinspires.ftc.teamcode.Subsystems.Spindexer;
 import org.firstinspires.ftc.teamcode.Subsystems.Transfer;
@@ -25,7 +25,7 @@ public class Test_Shooter extends OpMode {
 	private Transfer transfer;
 	private Intake intake;
 	private ActionScheduler scheduler;
-	private Limelight limelight;
+	//private Limelight limelight;
 
 	// Edge detection for triggers
 	private boolean prevLeftTrigger = false;
@@ -41,7 +41,7 @@ public class Test_Shooter extends OpMode {
 		transfer = Transfer.getInstance();
 		intake = Intake.getInstance();
 		scheduler = ActionScheduler.getInstance();
-		limelight = Limelight.getInstance();
+		//limelight = Limelight.getInstance();
 
 		scheduler.schedule(transfer.intakeDoorForward());
 		scheduler.update();
@@ -83,8 +83,8 @@ public class Test_Shooter extends OpMode {
 		telemetry.addData("Shooter Average RPM", shooter.averageRPM);
 		telemetry.addData("At Target RPM", shooter.isAtTargetRPM(lowerTargetRPM, upperTargetRPM));
 		telemetry.addData("Spindexer Power", spindexerPower);
-		telemetry.addData("Distance to Blue Goal", limelight.getDistanceToTag(20));
-		telemetry.addData("Distance to Red Goal", limelight.getDistanceToTag(24));
+		//telemetry.addData("Distance to Blue Goal", limelight.getDistanceToTag(20));
+		//telemetry.addData("Distance to Red Goal", limelight.getDistanceToTag(24));
 		telemetry.update();
 	}
 

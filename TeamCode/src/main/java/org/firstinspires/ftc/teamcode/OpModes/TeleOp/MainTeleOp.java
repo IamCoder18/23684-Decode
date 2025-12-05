@@ -12,12 +12,14 @@ import org.firstinspires.ftc.teamcode.LifecycleManagementUtilities.HardwareShutd
 import org.firstinspires.ftc.teamcode.LifecycleManagementUtilities.SubsystemUpdater;
 import org.firstinspires.ftc.teamcode.Roadrunner.MecanumDrive;
 import org.firstinspires.ftc.teamcode.Subsystems.Intake;
+import org.firstinspires.ftc.teamcode.Subsystems.LimeLight;
 import org.firstinspires.ftc.teamcode.Subsystems.RGBIndicator;
 import org.firstinspires.ftc.teamcode.Subsystems.RobotState;
 import org.firstinspires.ftc.teamcode.Subsystems.Shooter;
 import org.firstinspires.ftc.teamcode.Subsystems.Spindexer;
 import org.firstinspires.ftc.teamcode.Subsystems.Transfer;
 import org.firstinspires.ftc.teamcode.Utilities.ActionScheduler;
+import org.firstinspires.ftc.teamcode.Utilities.SpindexerPositionUtility;
 
 /**
  * Main TeleOp OpMode for driver control
@@ -47,6 +49,9 @@ public class MainTeleOp extends OpMode {
 	protected Intake intake;
 	protected Transfer transfer;
 	protected Spindexer spindexer;
+	protected LimeLight limeLight;
+
+	protected SpindexerPositionUtility spu;
 	protected RGBIndicator rgbIndicator;
 
 	// Button state tracking to prevent continuous input
@@ -60,6 +65,10 @@ public class MainTeleOp extends OpMode {
 	protected boolean spindexerDownCrossed = false;
 	protected boolean leftBumperPressed = false;
 	protected boolean rightBumperPressed = false;
+
+	protected boolean dpadUpPressed = false;
+
+	protected boolean dpadDownPressed = false;
 
 	protected boolean fronsideButtonPressed = false;
 
@@ -90,6 +99,8 @@ public class MainTeleOp extends OpMode {
 		spindexer = Spindexer.getInstance();
 		spindexer.resetCalibrationAverage();
 		rgbIndicator = RGBIndicator.getInstance();
+		limeLight = new LimeLight(hardwareMap);
+		spu = new SpindexerPositionUtility();
 
 		// Try to set starting pose from previous autonomous run
 		Pose2d savedPose = RobotState.getInstance().getAutoPose();
@@ -138,6 +149,16 @@ public class MainTeleOp extends OpMode {
 
 		// Display telemetry
 		displayTelemetry();
+
+		spindexer.update();
+
+		if (limeLight.AreGoalsFound()){
+			drive.localizer.setPose(new Pose2d(
+					(double)limeLight.VisionPosition().get(0),
+					(double)limeLight.VisionPosition().get(1),
+					(double)limeLight.VisionPosition().get(2)
+			));
+		}
 
 		telemetry.update();
 	}
@@ -201,13 +222,13 @@ public class MainTeleOp extends OpMode {
 		}
 
 		ShootingBlu = drive.actionBuilder(drive.localizer.getPose())
-				.strafeToLinearHeading(new Vector2d(57, -23), calculateShotAngle(57,-23));
+				.strafeToLinearHeading(new Vector2d(59, -20), calculateShotAngle(59,-20));
 		ShootingRed = drive.actionBuilder(drive.localizer.getPose())
-				.strafeToLinearHeading(new Vector2d(57, 23), calculateShotAngle(57,23));
+				.strafeToLinearHeading(new Vector2d(59, 20), calculateShotAngle(59,20));
 
 
 
-		if (gamepad1.a){
+		if (gamepad1.a && !fronsideButtonPressed){
 			if (TeamColourRed()){
 				scheduler.schedule(ShootingRed.build());
 			} else if (!TeamColourRed()){
@@ -348,16 +369,18 @@ public class MainTeleOp extends OpMode {
 			spindexerUpCrossed = false;
 		}
 
-		if (gamepad2.dpad_up) {
-			spindexer.setTargetPosition(0);
+		if (gamepad2.dpad_up && !dpadUpPressed ) {
+			scheduler.schedule(spindexer.toPosition(SpindexerPositionUtility.getNextIntakePosition((int)spindexer.getCalibratedPosition())));
+			dpadUpPressed = true;
+		} else if (!gamepad2.dpad_up && dpadUpPressed) {
+			dpadUpPressed = false;
 		}
 
-		if (gamepad2.dpad_left) {
-			spindexer.setTargetPosition(120);
-		}
-
-		if (gamepad2.dpad_right) {
-			spindexer.setTargetPosition(240);
+		if (gamepad2.dpad_down && !dpadDownPressed) {
+			scheduler.schedule(spindexer.toPosition(SpindexerPositionUtility.getNextShootPosition((int)spindexer.getCalibratedPosition())));
+			dpadDownPressed = true;
+		} else if (!gamepad2.dpad_down && dpadDownPressed) {
+			dpadDownPressed = false;
 		}
 	}
 
