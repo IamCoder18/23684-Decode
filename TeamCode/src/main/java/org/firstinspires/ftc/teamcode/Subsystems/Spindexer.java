@@ -149,7 +149,7 @@ public class Spindexer {
 	 * Returns the calibrated position using quadrature + offset.
 	 */
 	public double getCalibratedPosition() {
-		return getQuadraturePosition() + RobotState.getInstance().absoluteOffset;
+		return -(getQuadraturePosition() + RobotState.getInstance().absoluteOffset);
 	}
 
 	/**
@@ -184,7 +184,7 @@ public class Spindexer {
 	}
 
 	public void update() {
-		currentPositionDegrees = -getCalibratedPosition();
+		currentPositionDegrees = getCalibratedPosition();
 
 		controller.setPID(P, I, D, F);
 		power = controller.getOutput(currentPositionDegrees, targetPosition);
