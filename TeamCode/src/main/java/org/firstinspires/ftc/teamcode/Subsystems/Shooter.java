@@ -163,61 +163,87 @@ public class Shooter {
 
 	/**
 	 * Returns an Action that runs the shooter motors and waits until:
-	 * 1. Spins UP until averageRPM is within RPM_TOLERANCE of target RPM
-	 * 2. Continues running until averageRPM drops below AUDIENCE_SHOT_RPM (indicating a shot)
-	 * Returns true while waiting, false when complete.
+	 * 1. Spins UP until both motors are within RPM_TOLERANCE of their targets.
+	 * 2. Continues running until average RPM drops significantly (indicating a shot).
+	 * 3. Includes a safety timeout to prevent infinite waiting.
 	 */
-	public Action runAndWait(double targetRPM) {
+	public Action runAndWait(double upperTargetRPM, double lowerTargetRPM) {
 		return new Action() {
-			// State variable to track if we have successfully spun up at least once
 			private boolean hasReachedTarget = false;
+			private long startTime = -1;
+
+			// Safety: Stop waiting after 2 seconds if the shot isn't detected
+			private final long TIMEOUT_NS = 7_000_000_000L;
 
 			@Override
 			public boolean run(@NonNull TelemetryPacket packet) {
-				updateRPM(System.nanoTime());
+				long now = System.nanoTime();
+				if (startTime == -1) startTime = now;
 
+				// 1. TIMEOUT CHECK
+				if (now - startTime > TIMEOUT_NS) {
+					// Optional: Cut power if you don't want them running after timeout
+					// upperShooter.setPower(0);
+					// lowerShooter.setPower(0);
+					return false;
+				}
+
+				updateRPM(now);
+
+				// 2. CONTROL LOGIC (Inlined from your working 'run' method)
 				double upperPower, lowerPower;
-				double upperFFPower = upperFF.calculate(targetRPM, 0);
-				double lowerFFPower = lowerFF.calculate(targetRPM, 0);
+				double upperFFPower = upperFF.calculate(upperTargetRPM, 0);
+				double lowerFFPower = lowerFF.calculate(lowerTargetRPM, 0);
 
-				if (targetRPM < 100) {
+				// Upper Motor Calculation
+				if (upperTargetRPM < 100) {
 					upperPower = STOP_POWER;
+				} else {
+					double upperPidPower = upperController.getOutput(upperRPM, upperTargetRPM);
+					upperPower = upperFFPower + upperPidPower + UPPER_OFFSET;
+				}
+
+				// Lower Motor Calculation
+				if (lowerTargetRPM < 100) {
 					lowerPower = STOP_POWER;
 				} else {
-					double upperPidPower = upperController.getOutput(upperRPM, targetRPM);
-					double lowerPidPower = lowerController.getOutput(lowerRPM, targetRPM);
-
-					// Final output: sum of feedforward and PID corrections
-					upperPower = upperFFPower + upperPidPower + UPPER_OFFSET;
+					double lowerPidPower = lowerController.getOutput(lowerRPM, lowerTargetRPM);
 					lowerPower = lowerFFPower + lowerPidPower + LOWER_OFFSET;
 				}
 
 				upperShooter.setPower(upperPower);
 				lowerShooter.setPower(lowerPower);
 
-				// Check if we have reached the target speed yet
-				if (!hasReachedTarget && isAtTargetRPM(targetRPM)) {
+				// 3. CHECK IF AT TARGET (Inline check for both motors)
+				// We check if both motors are within tolerance
+				boolean upperReady = Math.abs(upperRPM - upperTargetRPM) < RPM_TOLERANCE;
+				boolean lowerReady = Math.abs(lowerRPM - lowerTargetRPM) < RPM_TOLERANCE;
+
+				if (!hasReachedTarget && upperReady && lowerReady) {
 					hasReachedTarget = true;
 				}
 
-				// Telemetry for dashboard analysis
-				packet.put("Shooter Target RPM", targetRPM);
+				// Telemetry
+				packet.put("Shooter Upper Target", upperTargetRPM);
+				packet.put("Shooter Lower Target", lowerTargetRPM);
 				packet.put("Shooter Upper RPM", upperRPM);
 				packet.put("Shooter Lower RPM", lowerRPM);
-				packet.put("Shooter Average RPM", averageRPM);
-				packet.put("Shooter Reached Target", hasReachedTarget); // Useful for debugging
-				packet.put("Shooter At Target Now", isAtTargetRPM(targetRPM));
+				packet.put("Shooter Ready", hasReachedTarget);
 
-				// LOGIC FIX:
-				// 1. If we haven't reached the target RPM yet, return true to keep spinning up.
+				// 4. SHOT DETECTION LOGIC
 				if (!hasReachedTarget) {
-					return true;
+					return true; // Keep spinning up
 				}
 
-				// 2. Once we have reached the target, we stay in this loop (return true)
-				//    UNTIL the RPM drops below the threshold (indicating a ring was fired).
-				//    When RPM < AUDIENCE_SHOT_RPM, this returns false, ending the action.
-				return averageRPM >= AUDIENCE_SHOT_RPM;
+				// Calculate a dynamic threshold based on the current target
+				// If average RPM drops below 92% of target average, assume shot fired
+				double targetAvg = (upperTargetRPM + lowerTargetRPM) / 2.0;
+				double currentAvg = (upperRPM + lowerRPM) / 2.0;
+
+				boolean shotFired = currentAvg < (targetAvg * 0.92);
+
+				// Return true (keep running) until the shot is fired
+				return !shotFired;
 			}
 		};
 	}
