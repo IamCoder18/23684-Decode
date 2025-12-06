@@ -25,7 +25,7 @@ public class Shooter {
 	public static double STOP_POWER = 0.0;
 
 	// --- RPM & Control Constants ---
-	public static double RPM_TOLERANCE = 60.0;
+	public static double RPM_TOLERANCE = 100.0;
 	public static double TICKS_PER_REVOLUTION = 28.0;
 	public static double AUDIENCE_RPM = 2600.0;
 	public static double AUDIENCE_SHOT_RPM = 2500.0;

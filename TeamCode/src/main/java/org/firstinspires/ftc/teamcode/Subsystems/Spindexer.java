@@ -106,18 +106,19 @@ public class Spindexer {
 		calibrationCount++;
 	}
 
-	/**
-	 * Finalizes auto calibration by calculating offset and saving to RobotState.
-	 */
-	public void finalizeAutoCalibration() {
-		if (!calibrationActive || calibrationCount == 0) return;
-		double avgAbs = calibrationSum / calibrationCount;
-		RobotState state = RobotState.getInstance();
-		state.absoluteOffset = avgAbs;
-		state.averageQuality = (System.nanoTime() - calibrationStartTime) / 1e9; // seconds
-		state.hasValidData = true;
-		calibrationActive = false;
-	}
+	// TODO: Deprecate this
+//	/**
+//	 * Finalizes auto calibration by calculating offset and saving to RobotState.
+//	 */
+//	public void finalizeAutoCalibration() {
+//		if (!calibrationActive || calibrationCount == 0) return;
+//		double avgAbs = calibrationSum / calibrationCount;
+//		RobotState state = RobotState.getInstance();
+//		state.absoluteOffset = avgAbs;
+//		state.averageQuality = (System.nanoTime() - calibrationStartTime) / 1e9; // seconds
+//		state.hasValidData = true;
+//		calibrationActive = false;
+//	}
 
 	/**
 	 * Finalizes teleop calibration with validation against existing data.

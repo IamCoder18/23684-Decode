@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.OpModes.Auto;
 import com.acmerobotics.roadrunner.ParallelAction;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.SequentialAction;
+import com.acmerobotics.roadrunner.SleepAction;
 import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
@@ -133,18 +134,28 @@ public abstract class AudienceAuto extends OpMode {
 		telemetry.addData("Event", "Action Sequence", "5. Move to collection position");
 		telemetry.update();
 
-		spindexer.finalizeAutoCalibration();
+		spindexer.finalizeTeleOpCalibration();
 
 		actionScheduler.schedule(
 				new SequentialAction(
 						trajectoryToShootingPosition.build(),
 						transfer.intakeDoorForward(),
-						spindexer.toPosition(shooterTarget1),
-						shooter.runAndWait(Shooter.AUDIENCE_RPM),
-						spindexer.toPosition(shooterTarget2),
-						shooter.runAndWait(Shooter.AUDIENCE_RPM),
-						spindexer.toPosition(shooterTarget3),
-						shooter.runAndWait(Shooter.AUDIENCE_RPM),
+						intake.slow(),
+						spindexer.setTarget(shooterTarget1),
+						new ParallelAction(
+								shooter.runAndWait(Shooter.AUDIENCE_RPM),
+								new SleepAction(1)
+						),
+						spindexer.setTarget(shooterTarget2),
+						new ParallelAction(
+								shooter.runAndWait(Shooter.AUDIENCE_RPM),
+								new SleepAction(1)
+						),
+						spindexer.setTarget(shooterTarget3),
+						new ParallelAction(
+								shooter.runAndWait(Shooter.AUDIENCE_RPM),
+								new SleepAction(1)
+						),
 						transfer.intakeDoorStop(),
 						shooter.stop(),
 						trajectoryToCollectionPosition.build()
@@ -160,6 +171,7 @@ public abstract class AudienceAuto extends OpMode {
 		SubsystemUpdater.update();
 		actionScheduler.update();
 		drive.updatePoseEstimate(); // Keep separate as drive-specific
+		spindexer.update();
 
 		// Control transfer mechanism based on readiness (spindexer position + shooter RPM)
 		if (TransferUtility.isTransferReady(spindexer, shooter, Shooter.AUDIENCE_RPM)) {
@@ -178,6 +190,9 @@ public abstract class AudienceAuto extends OpMode {
 		telemetry.addData("Scheduler Status", !actionScheduler.isSchedulerEmpty() ? "Busy" : "Idle");
 		telemetry.addData("Shooter RPM", "%.0f", shooter.averageRPM);
 		telemetry.addData("Shooter Target RPM", "%.0f", Shooter.AUDIENCE_RPM);
+		telemetry.addData("Spindexer at Shooting Pos", TransferUtility.isSpindexerAtShootingPosition(spindexer));
+		telemetry.addData("Shooter at Target RPM", TransferUtility.isShooterAtTargetRPM(shooter, Shooter.AUDIENCE_RPM));
+		telemetry.addData("Transfer Ready", TransferUtility.isTransferReady(spindexer, shooter, Shooter.AUDIENCE_RPM));
 		telemetry.update();
 	}
 

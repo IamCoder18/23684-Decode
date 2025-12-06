@@ -117,7 +117,7 @@ public class MainTeleOp extends OpMode {
 
 	@Override
 	public void loop() {
-		//drive.updatePoseEstimate();
+		drive.updatePoseEstimate();
 
 		// Update drive with gamepad input
 		handleDriveInput();
@@ -139,11 +139,11 @@ public class MainTeleOp extends OpMode {
 
 		telemetry.update();
 
-		if (limelight.AreGoalsFound()){
-			drive.localizer.setPose(limelight.VisionPose());
-		}else{
-			drive.updatePoseEstimate();
-		}
+//		if (limelight.AreGoalsFound()){
+//			drive.localizer.setPose(limelight.VisionPose());
+//		}else{
+//			drive.updatePoseEstimate();
+//		}
 	}
 
 	@Override
@@ -214,9 +214,19 @@ public class MainTeleOp extends OpMode {
 		}
 
 		if (!gamepad1.a) {
-			double forwardPower = -gamepad1.left_stick_y; // Left stick Y (inverted)
-			double turnPower = gamepad1.right_stick_x; // Right stick X
-			double strafePower = gamepad1.left_stick_x; // Left stick X
+			double forwardPower = 0;
+			double turnPower = 0;
+			double strafePower = 0;
+
+			if (gamepad1.right_bumper){
+				forwardPower = -gamepad1.left_stick_y / 2; // Left stick Y (inverted)
+				turnPower = -gamepad1.right_stick_x / 2; // Right stick X
+				strafePower = -gamepad1.left_stick_x / 2; // Left stick X
+			}else{
+				 forwardPower = -gamepad1.left_stick_y; // Left stick Y (inverted)
+				 turnPower = -gamepad1.right_stick_x; // Right stick X
+				 strafePower = -gamepad1.left_stick_x; // Left stick X
+			}
 
 			// Apply deadzone
 			forwardPower = Math.abs(forwardPower) > 0.05 ? forwardPower : 0;

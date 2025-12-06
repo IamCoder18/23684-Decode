@@ -47,7 +47,7 @@ public class Test_Spindexer extends OpMode {
 
 	@Override
 	public void start() {
-		spindexer.finalizeAutoCalibration();
+		spindexer.finalizeTeleOpCalibration();
 	}
 
 	@Override

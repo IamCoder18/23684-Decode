@@ -14,7 +14,7 @@ public class TransferUtility {
 	public static final double SPINDEXER_TOLERANCE_DEGREES = 10.0;
 	
 	// Shooting positions (in degrees)
-	private static final double[] SHOOTING_POSITIONS = {0.0, 120.0, 240.0};
+	private static final double[] SHOOTING_POSITIONS = {20.0, 140.0, 260.0};
 	
 	/**
 	 * Checks if the spindexer is within tolerance of any shooting position.
