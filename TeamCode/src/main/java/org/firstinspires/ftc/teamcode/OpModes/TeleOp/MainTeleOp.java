@@ -40,7 +40,7 @@ import org.firstinspires.ftc.teamcode.Utilities.TransferUtility;
  * - RT: IntakeDoor close
  * - DPad Up: Spindexer spin forward
  * - DPad Down: Spindexer spin backward
- * - Priority: X > Y > RPM-based
+ * - Priority: X then RPM-based
  */
 public class MainTeleOp extends OpMode {
 	protected MecanumDrive drive;
@@ -288,14 +288,6 @@ public class MainTeleOp extends OpMode {
 			xButtonPressed = false;
 		}
 
-		// Y Button: Override transfer backward - manual control
-		if (gamepad2.y && !yButtonPressed) {
-			scheduler.schedule(transfer.transferBackward());
-			yButtonPressed = true;
-		} else if (!gamepad2.y && yButtonPressed) {
-			yButtonPressed = false;
-		}
-
 		// Automatic transfer based on readiness (only if neither X nor Y button held)
 		if (!gamepad2.x && !gamepad2.y) {
 			boolean isReady = TransferUtility.isTransferReady(spindexer, shooter, Shooter.AUDIENCE_RPM);
@@ -307,7 +299,7 @@ public class MainTeleOp extends OpMode {
 			transferAboveRPM = isReady;
 		}
 
-		// B Button: Intake door backward and intake out when pressed, forward and intake in when released
+		// B Button: Intake door backward and intake out when pressed, forward and intake stop when released
 		if (gamepad2.b && !bButtonPressed) {
 			scheduler.schedule(transfer.intakeDoorBackward());
 			scheduler.schedule(intake.out());
