@@ -13,7 +13,7 @@ public class BlueAudienceTeleOp extends MainTeleOp {
 	@Override
 	protected Pose2d getStartingPose() {
 		// Blue audience starting position
-		return new Pose2d(35, -23, Math.toRadians(270));
+		return new Pose2d(36, -32, Math.toRadians(270));
 	}
 
 	@Override

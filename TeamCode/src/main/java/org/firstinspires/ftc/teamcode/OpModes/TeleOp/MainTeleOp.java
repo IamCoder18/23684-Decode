@@ -198,13 +198,13 @@ public class MainTeleOp extends OpMode {
 			if (getTeam() == Team.RED) {
 				scheduler.schedule(
 						drive.actionBuilder(drive.localizer.getPose())
-								.strafeToLinearHeading(new Vector2d(56.75, 10.25),ShotAngleUtility.calculateShotAngle(59, 2, -72, 72))
+								.strafeToLinearHeading(new Vector2d(56.75, 10.25),ShotAngleUtility.calculateShotAngle(56.75, 10.25, -72, 72))
 								.build()
 				);
 			} else if (getTeam() == Team.BLUE) {
 				scheduler.schedule(
 						drive.actionBuilder(drive.localizer.getPose())
-								.strafeToLinearHeading(new Vector2d(56.75, -10.25),ShotAngleUtility.calculateShotAngle(59, -2, -72, -72))
+								.strafeToLinearHeading(new Vector2d(56.75, -10.25),ShotAngleUtility.calculateShotAngle(56.75, -10.25, -72, -72))
 								.build()
 				);
 			}
