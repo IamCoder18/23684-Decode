@@ -27,7 +27,7 @@ public class Shooter {
 	// --- RPM & Control Constants ---
 	public static double RPM_TOLERANCE = 100.0;
 	public static double TICKS_PER_REVOLUTION = 28.0;
-	public static double AUDIENCE_RPM = 2550.0;
+	public static double AUDIENCE_RPM = 2570.0;
 	public static double AUDIENCE_SHOT_RPM = 2500.0;
 
 	// --- Motor Offsets ---

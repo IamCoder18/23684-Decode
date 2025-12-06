@@ -13,10 +13,10 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 public class RedAudienceAuto extends AudienceAuto {
 
 	// Red positions are mirror images of blue across the Y-axis
-	private static final double RED_SHOOTING_X = 57;
-	private static final double RED_SHOOTING_Y = 23;
-	private static final double RED_GOAL_X = -60;
-	private static final double RED_GOAL_Y = 60;
+	private static final double RED_SHOOTING_X = 54.75;
+	private static final double RED_SHOOTING_Y = 10.25;
+	private static final double RED_GOAL_X = -72;
+	private static final double RED_GOAL_Y = 72;
 	private static final Pose2d RED_START_POSE = new Pose2d(60, 9, Math.toRadians(0));
 	private static final Pose2d RED_INITIAL_TRAJECTORY_START = new Pose2d(54, 9, Math.toRadians(0));
 	private static final Vector2d RED_COLLECTION_POSITION = new Vector2d(35, 23);
