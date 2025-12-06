@@ -45,6 +45,9 @@ public abstract class AudienceAuto extends OpMode {
 	private MecanumDrive drive;
 	private TrajectoryActionBuilder trajectoryToShootingPosition;
 	private TrajectoryActionBuilder trajectoryToCollectionPosition;
+	private int shooterTarget1;
+	private int shooterTarget2;
+	private int shooterTarget3;
 	private ActionScheduler actionScheduler;
 
 	protected double calculateShotAngle(double x, double y) {
@@ -107,6 +110,10 @@ public abstract class AudienceAuto extends OpMode {
 		telemetry.addData("Trajectory", "Collection angle: %.2f°", getCollectionHeading());
 		telemetry.update();
 
+		shooterTarget1 = SpindexerPositionUtility.getNextShootPosition(0);
+		shooterTarget2 = SpindexerPositionUtility.getNextShootPosition(shooterTarget1);
+		shooterTarget3 = SpindexerPositionUtility.getNextShootPosition(shooterTarget2);
+
 		telemetry.addData("Status", "Initialization complete");
 		telemetry.update();
 	}
@@ -131,15 +138,12 @@ public abstract class AudienceAuto extends OpMode {
 		actionScheduler.schedule(
 				new SequentialAction(
 						trajectoryToShootingPosition.build(),
-						new ParallelAction(
-								shooter.run(Shooter.AUDIENCE_RPM),
-								transfer.intakeDoorForward()
-						),
-						spindexer.toPosition(SpindexerPositionUtility.getNextShootPosition(0)),
+						transfer.intakeDoorForward(),
+						spindexer.toPosition(shooterTarget1),
 						shooter.runAndWait(Shooter.AUDIENCE_RPM),
-						spindexer.toPosition(SpindexerPositionUtility.getNextShootPosition(120)),
+						spindexer.toPosition(shooterTarget2),
 						shooter.runAndWait(Shooter.AUDIENCE_RPM),
-						spindexer.toPosition(SpindexerPositionUtility.getNextShootPosition(240)),
+						spindexer.toPosition(shooterTarget3),
 						shooter.runAndWait(Shooter.AUDIENCE_RPM),
 						transfer.intakeDoorStop(),
 						shooter.stop(),
