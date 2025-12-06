@@ -162,7 +162,7 @@ public abstract class AudienceAuto extends OpMode {
 
 								// Check if less than 1 second (1,000,000,000 nanoseconds) has passed
 								if (elapsedTime < 1_000_000_000L) {
-									shooter.run(Shooter.AUDIENCE_RPM);
+									shooter.run(Shooter.AUDIENCE_RPM).run(new TelemetryPacket());
 									return true; // Continue running this action
 								} else {
 									// Optional: Stop the shooter when finished
@@ -187,7 +187,7 @@ public abstract class AudienceAuto extends OpMode {
 
 								// Check if less than 1 second (1,000,000,000 nanoseconds) has passed
 								if (elapsedTime < 1_000_000_000L) {
-									shooter.run(Shooter.AUDIENCE_RPM);
+									shooter.run(Shooter.AUDIENCE_RPM).run(new TelemetryPacket());
 									return true; // Continue running this action
 								} else {
 									// Optional: Stop the shooter when finished
@@ -212,7 +212,7 @@ public abstract class AudienceAuto extends OpMode {
 
 								// Check if less than 1 second (1,000,000,000 nanoseconds) has passed
 								if (elapsedTime < 1_000_000_000L) {
-									shooter.run(Shooter.AUDIENCE_RPM);
+									shooter.run(Shooter.AUDIENCE_RPM).run(new TelemetryPacket());
 									return true; // Continue running this action
 								} else {
 									// Optional: Stop the shooter when finished
