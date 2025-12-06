@@ -117,7 +117,7 @@ public class MainTeleOp extends OpMode {
 
 	@Override
 	public void loop() {
-		drive.updatePoseEstimate();
+		//drive.updatePoseEstimate();
 
 		// Update drive with gamepad input
 		handleDriveInput();
@@ -138,6 +138,12 @@ public class MainTeleOp extends OpMode {
 		displayTelemetry();
 
 		telemetry.update();
+
+		if (limelight.AreGoalsFound()){
+			drive.localizer.setPose(limelight.VisionPose());
+		}else{
+			drive.updatePoseEstimate();
+		}
 	}
 
 	@Override
@@ -192,13 +198,13 @@ public class MainTeleOp extends OpMode {
 			if (getTeam() == Team.RED) {
 				scheduler.schedule(
 						drive.actionBuilder(drive.localizer.getPose())
-								.strafeToLinearHeading(new Vector2d(59, 2), ShotAngleUtility.calculateShotAngle(59, 2, -72, 72))
+								.strafeToLinearHeading(new Vector2d(56.75, 10.25),ShotAngleUtility.calculateShotAngle(59, 2, -72, 72))
 								.build()
 				);
 			} else if (getTeam() == Team.BLUE) {
 				scheduler.schedule(
 						drive.actionBuilder(drive.localizer.getPose())
-								.strafeToLinearHeading(new Vector2d(59, -2), ShotAngleUtility.calculateShotAngle(59, -2, -72, -72))
+								.strafeToLinearHeading(new Vector2d(56.75, -10.25),ShotAngleUtility.calculateShotAngle(59, -2, -72, -72))
 								.build()
 				);
 			}
@@ -209,7 +215,7 @@ public class MainTeleOp extends OpMode {
 
 		if (!gamepad1.a) {
 			double forwardPower = -gamepad1.left_stick_y; // Left stick Y (inverted)
-			double turnPower = -gamepad1.right_stick_x; // Right stick X
+			double turnPower = gamepad1.right_stick_x; // Right stick X
 			double strafePower = gamepad1.left_stick_x; // Left stick X
 
 			// Apply deadzone

@@ -124,9 +124,8 @@ public class Limelight {
 	public Pose2d VisionPose() {
 		limelight.pipelineSwitch(0);
 		LLResult llResult = limelight.getLatestResult();
-		limelight.updateRobotOrientation(pinpoint.getHeading(AngleUnit.DEGREES));
 		if (llResult != null && llResult.isValid()) {
-			Pose3D botPose = llResult.getBotpose_MT2();
+			Pose3D botPose = llResult.getBotpose();
 
 			return new Pose2d(botPose.getPosition().x * 39.3701,
 					botPose.getPosition().y * 39.3701,
