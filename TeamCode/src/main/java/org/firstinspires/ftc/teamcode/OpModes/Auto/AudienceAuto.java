@@ -18,6 +18,7 @@ import org.firstinspires.ftc.teamcode.Subsystems.Shooter;
 import org.firstinspires.ftc.teamcode.Subsystems.Spindexer;
 import org.firstinspires.ftc.teamcode.Subsystems.Transfer;
 import org.firstinspires.ftc.teamcode.Utilities.ActionScheduler;
+import org.firstinspires.ftc.teamcode.Utilities.SpindexerPositionUtility;
 import org.firstinspires.ftc.teamcode.Utilities.TransferUtility;
 
 /**
@@ -134,9 +135,11 @@ public abstract class AudienceAuto extends OpMode {
 								shooter.run(Shooter.AUDIENCE_RPM),
 								transfer.intakeDoorForward()
 						),
-						spindexer.toPosition(0),
+						spindexer.toPosition(SpindexerPositionUtility.getNextShootPosition(0)),
 						shooter.runAndWait(Shooter.AUDIENCE_RPM),
+						spindexer.toPosition(SpindexerPositionUtility.getNextShootPosition(120)),
 						shooter.runAndWait(Shooter.AUDIENCE_RPM),
+						spindexer.toPosition(SpindexerPositionUtility.getNextShootPosition(240)),
 						shooter.runAndWait(Shooter.AUDIENCE_RPM),
 						transfer.intakeDoorStop(),
 						shooter.stop(),

@@ -209,8 +209,8 @@ public class MainTeleOp extends OpMode {
 
 		if (!gamepad1.a) {
 			double forwardPower = -gamepad1.left_stick_y; // Left stick Y (inverted)
-			double turnPower = -gamepad1.right_stick_x;     // Right stick X
-			double strafePower = gamepad1.left_stick_x;    // Left stick X
+			double turnPower = -gamepad1.right_stick_x; // Right stick X
+			double strafePower = gamepad1.left_stick_x; // Left stick X
 
 			// Apply deadzone
 			forwardPower = Math.abs(forwardPower) > 0.05 ? forwardPower : 0;
