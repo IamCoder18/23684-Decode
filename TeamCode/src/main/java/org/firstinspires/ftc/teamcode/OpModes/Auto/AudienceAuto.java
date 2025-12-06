@@ -218,14 +218,12 @@ public abstract class AudienceAuto extends OpMode {
 									shooter.run(Shooter.AUDIENCE_RPM).run(new TelemetryPacket());
 									return true; // Continue running this action
 								} else {
-									// Optional: Stop the shooter when finished
-									// shooter.run(0);
 									return false; // Action is done
 								}
 							}
-						}
-//						shooter.stop(),
-//						trajectoryToCollectionPosition.build()
+						},
+						shooter.stop(),
+						trajectoryToCollectionPosition.build()
 				)
 		);
 
