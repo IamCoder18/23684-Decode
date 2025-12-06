@@ -1,5 +1,9 @@
 package org.firstinspires.ftc.teamcode.OpModes.Auto;
 
+import androidx.annotation.NonNull;
+
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
+import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.ParallelAction;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.SequentialAction;
@@ -142,20 +146,81 @@ public abstract class AudienceAuto extends OpMode {
 						transfer.intakeDoorForward(),
 						intake.slow(),
 						spindexer.setTarget(shooterTarget1),
-						new ParallelAction(
-								shooter.runAndWait(Shooter.AUDIENCE_RPM),
-								new SleepAction(1)
-						),
+						// TODO: Extract into a helper function later
+						new Action() {
+							long startTime = -1;
+
+							@Override
+							public boolean run(@NonNull TelemetryPacket telemetryPacket) {
+								// Initialize startTime on the first run
+								if (startTime == -1) {
+									startTime = System.nanoTime();
+								}
+
+								// Calculate how much time has passed
+								long elapsedTime = System.nanoTime() - startTime;
+
+								// Check if less than 1 second (1,000,000,000 nanoseconds) has passed
+								if (elapsedTime < 1_000_000_000L) {
+									shooter.run(Shooter.AUDIENCE_RPM);
+									return true; // Continue running this action
+								} else {
+									// Optional: Stop the shooter when finished
+									// shooter.run(0);
+									return false; // Action is done
+								}
+							}
+						},
 						spindexer.setTarget(shooterTarget2),
-						new ParallelAction(
-								shooter.runAndWait(Shooter.AUDIENCE_RPM),
-								new SleepAction(1)
-						),
+						new Action() {
+							long startTime = -1;
+
+							@Override
+							public boolean run(@NonNull TelemetryPacket telemetryPacket) {
+								// Initialize startTime on the first run
+								if (startTime == -1) {
+									startTime = System.nanoTime();
+								}
+
+								// Calculate how much time has passed
+								long elapsedTime = System.nanoTime() - startTime;
+
+								// Check if less than 1 second (1,000,000,000 nanoseconds) has passed
+								if (elapsedTime < 1_000_000_000L) {
+									shooter.run(Shooter.AUDIENCE_RPM);
+									return true; // Continue running this action
+								} else {
+									// Optional: Stop the shooter when finished
+									// shooter.run(0);
+									return false; // Action is done
+								}
+							}
+						},
 						spindexer.setTarget(shooterTarget3),
-						new ParallelAction(
-								shooter.runAndWait(Shooter.AUDIENCE_RPM),
-								new SleepAction(1)
-						),
+						new Action() {
+							long startTime = -1;
+
+							@Override
+							public boolean run(@NonNull TelemetryPacket telemetryPacket) {
+								// Initialize startTime on the first run
+								if (startTime == -1) {
+									startTime = System.nanoTime();
+								}
+
+								// Calculate how much time has passed
+								long elapsedTime = System.nanoTime() - startTime;
+
+								// Check if less than 1 second (1,000,000,000 nanoseconds) has passed
+								if (elapsedTime < 1_000_000_000L) {
+									shooter.run(Shooter.AUDIENCE_RPM);
+									return true; // Continue running this action
+								} else {
+									// Optional: Stop the shooter when finished
+									// shooter.run(0);
+									return false; // Action is done
+								}
+							}
+						},
 						transfer.intakeDoorStop(),
 						shooter.stop(),
 						trajectoryToCollectionPosition.build()
