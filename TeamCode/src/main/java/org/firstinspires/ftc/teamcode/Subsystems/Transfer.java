@@ -69,7 +69,7 @@ public class Transfer {
 		return new InstantAction(() -> {
 			setTransferDirections();
 			transferLeft.setPower(FORWARD_POWER);
-			transferRight.setPower(FORWARD_POWER);
+			transferRight.setPower(FORWARD_POWER * 0.8);
 		});
 	}
 
@@ -83,7 +83,7 @@ public class Transfer {
 		return new InstantAction(() -> {
 			setTransferDirections();
 			transferLeft.setPower(BACKWARD_POWER);
-			transferRight.setPower(BACKWARD_POWER);
+			transferRight.setPower(BACKWARD_POWER * 0.8);
 		});
 	}
 
