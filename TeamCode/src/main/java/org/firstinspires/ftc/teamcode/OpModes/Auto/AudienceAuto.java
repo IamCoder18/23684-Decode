@@ -146,6 +146,7 @@ public abstract class AudienceAuto extends OpMode {
 						transfer.intakeDoorForward(),
 						intake.slow(),
 						spindexer.setTarget(shooterTarget1),
+						shooter.runAndWait(Shooter.AUDIENCE_RPM),
 						// TODO: Extract into a helper function later
 						new Action() {
 							long startTime = -1;
@@ -172,6 +173,7 @@ public abstract class AudienceAuto extends OpMode {
 							}
 						},
 						spindexer.setTarget(shooterTarget2),
+						shooter.runAndWait(Shooter.AUDIENCE_RPM),
 						new Action() {
 							long startTime = -1;
 
@@ -197,6 +199,7 @@ public abstract class AudienceAuto extends OpMode {
 							}
 						},
 						spindexer.setTarget(shooterTarget3),
+						shooter.runAndWait(Shooter.AUDIENCE_RPM),
 						new Action() {
 							long startTime = -1;
 
