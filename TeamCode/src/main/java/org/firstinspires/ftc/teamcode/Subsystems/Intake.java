@@ -11,6 +11,7 @@ public class Intake {
 
 	// Motor power constants
 	public static double IN_POWER = 1.0;
+	public static double SLOW_POWER = 0.3;
 	public static double OUT_POWER = -1.0;
 	public static double STOP_POWER = 0.0;
 	private static Intake instance = null;
@@ -45,6 +46,16 @@ public class Intake {
 	 */
 	public Action in() {
 		return new InstantAction(() -> intake.setPower(IN_POWER));
+	}
+
+	/**
+	 * Returns an InstantAction that runs the intake motor forward slowly.
+	 * This action completes immediately after setting power.
+	 *
+	 * @return Action that starts intake motor forward slowly
+	 */
+	public Action slow() {
+		return new InstantAction(() -> intake.setPower(SLOW_POWER));
 	}
 
 	/**
