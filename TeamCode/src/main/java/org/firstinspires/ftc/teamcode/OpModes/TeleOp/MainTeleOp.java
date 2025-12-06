@@ -358,28 +358,27 @@ public class MainTeleOp extends OpMode {
 		}
 	}
 
-
 	/**
 	 * Display telemetry information
 	 */
 	protected void displayTelemetry() {
-		telemetry.addData("", "=== MAIN TELEOP ===");
+		telemetry.addLine("=== MAIN TELEOP ===");
 		telemetry.addData("Drive Mode", "Mecanum");
 
-		telemetry.addData("", "=== GAMEPAD 1 (Driver) ===");
+		telemetry.addLine("=== GAMEPAD 1 (Driver) ===");
 		telemetry.addData("Forward", String.format("%.2f", -gamepad1.left_stick_y));
 		telemetry.addData("Strafe", String.format("%.2f", gamepad1.left_stick_x));
 		telemetry.addData("Turn", String.format("%.2f", gamepad1.right_stick_x));
 
 		telemetry.addData("location", drive.localizer.getPose());
 
-		telemetry.addData("", "=== GAMEPAD 2 (Operator) ===");
+		telemetry.addLine("=== GAMEPAD 2 (Operator) ===");
 		telemetry.addData("Left Trigger", "Intake");
 		telemetry.addData("Right Trigger", "Shooter");
 		telemetry.addData("Left Joystick Y (Spindexer)", String.format("%.2f", -gamepad2.left_stick_y));
-		telemetry.addData("Spindexer Position", String.format("%.2f rev", spindexer.getCalibratedPosition() / 360.0));
+		telemetry.addData("Spindexer Position", String.format("%.2f", spindexer.getCalibratedPosition() / 360.0));
 
-		telemetry.addData("", "=== SHOOTER ===");
+		telemetry.addLine("=== SHOOTER ===");
 		telemetry.addData("Upper RPM", String.format("%.2f", shooter.upperRPM));
 		telemetry.addData("Lower RPM", String.format("%.2f", shooter.lowerRPM));
 		telemetry.addData("Average RPM", String.format("%.2f", shooter.averageRPM));
@@ -389,5 +388,10 @@ public class MainTeleOp extends OpMode {
 		telemetry.addData("Target", spindexer.targetPosition);
 		telemetry.addData("Next intake", SpindexerPositionUtility.getNextIntakePosition((int) spindexer.getCalibratedPosition()));
 		telemetry.addData("Next shoot", SpindexerPositionUtility.getNextShootPosition((int) spindexer.getCalibratedPosition()));
+
+		telemetry.addLine("=== Transfer ===");
+		telemetry.addData("Spindexer at Shooting Pos", TransferUtility.isSpindexerAtShootingPosition(spindexer));
+		telemetry.addData("Shooter at Target RPM", TransferUtility.isShooterAtTargetRPM(shooter, Shooter.AUDIENCE_RPM));
+		telemetry.addData("Transfer Ready", TransferUtility.isTransferReady(spindexer, shooter, Shooter.AUDIENCE_RPM));
 	}
 }
