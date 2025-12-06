@@ -18,6 +18,7 @@ import org.firstinspires.ftc.teamcode.Subsystems.Shooter;
 import org.firstinspires.ftc.teamcode.Subsystems.Spindexer;
 import org.firstinspires.ftc.teamcode.Subsystems.Transfer;
 import org.firstinspires.ftc.teamcode.Utilities.ActionScheduler;
+import org.firstinspires.ftc.teamcode.Utilities.TransferUtility;
 
 /**
  * Abstract base class for Audience-side autonomous modes.
@@ -118,7 +119,7 @@ public abstract class AudienceAuto extends OpMode {
 	public void start() {
 		telemetry.addData("Status", "Match started - scheduling autonomous sequence");
 		telemetry.addData("Event", "Action Sequence", "1. Move to shooting position + spin up");
-		telemetry.addData("Event", "Action Sequence", "2. Spindexer + Intake spin");
+		telemetry.addData("Event", "Action Sequence", "2. Spindexer to intake position + fire");
 		telemetry.addData("Event", "Action Sequence", "3. Maintain shooter RPM and fire");
 		telemetry.addData("Event", "Action Sequence", "4. Repeat spin cycles");
 		telemetry.addData("Event", "Action Sequence", "5. Move to collection position");
@@ -131,13 +132,12 @@ public abstract class AudienceAuto extends OpMode {
 						trajectoryToShootingPosition.build(),
 						new ParallelAction(
 								shooter.run(Shooter.AUDIENCE_RPM),
-								spindexer.setDirectPower(0.3),
 								transfer.intakeDoorForward()
 						),
+						spindexer.toPosition(0),
 						shooter.runAndWait(Shooter.AUDIENCE_RPM),
 						shooter.runAndWait(Shooter.AUDIENCE_RPM),
 						shooter.runAndWait(Shooter.AUDIENCE_RPM),
-						spindexer.setDirectPower(0),
 						transfer.intakeDoorStop(),
 						shooter.stop(),
 						trajectoryToCollectionPosition.build()
@@ -154,8 +154,8 @@ public abstract class AudienceAuto extends OpMode {
 		actionScheduler.update();
 		drive.updatePoseEstimate(); // Keep separate as drive-specific
 
-		// Control transfer mechanism based on shooter RPM
-		if (shooter.isAtTargetRPM(Shooter.AUDIENCE_RPM)) {
+		// Control transfer mechanism based on readiness (spindexer position + shooter RPM)
+		if (TransferUtility.isTransferReady(spindexer, shooter, Shooter.AUDIENCE_RPM)) {
 			transferLeft.setPower(1);
 			transferRight.setPower(1);
 		} else {

@@ -16,7 +16,6 @@ import org.firstinspires.ftc.teamcode.Utilities.PIDFController;
 public class Spindexer {
 	// 360 ticks per 360 degrees for the through-bore encoder
 	public static double TICKS_PER_REV = 360.0;
-	public static double quadratureTicks = 8192;
 
 	public static double zeroOffset = 73.6;
 
@@ -37,7 +36,6 @@ public class Spindexer {
 	public double targetPosition = 0;
 	public double power = 0;
 	public double currentPositionDegrees = 0;
-	public double currentPosition;
 	public double quadratureOffest = 0;
 	private CRServo spindexerLeft;
 	private CRServo spindexerRight;
@@ -197,15 +195,15 @@ public class Spindexer {
 		//currentPosition = currentPositionDegrees;
 	}
 
-	private Action setTarget(double angle) {
+	public Action setTarget(double angle) {
 		return new InstantAction(() -> {
-			targetPosition = angle * TICKS_PER_REV;
+			targetPosition = angle;
 		});
 	}
 
-	public Action toPosition(double revolutions) {
+	public Action toPosition(double angle) {
 		return packet -> {
-			targetPosition = revolutions * TICKS_PER_REV;
+			targetPosition = angle;
 
 			// This action is considered "done" when the error is small.
 			// This allows it to be a "blocking" call in a sequence.

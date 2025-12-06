@@ -17,8 +17,10 @@ import org.firstinspires.ftc.teamcode.Subsystems.Shooter;
 import org.firstinspires.ftc.teamcode.Subsystems.Spindexer;
 import org.firstinspires.ftc.teamcode.Subsystems.Transfer;
 import org.firstinspires.ftc.teamcode.Utilities.ActionScheduler;
+import org.firstinspires.ftc.teamcode.Utilities.ShotAngleUtility;
 import org.firstinspires.ftc.teamcode.Utilities.SpindexerPositionUtility;
 import org.firstinspires.ftc.teamcode.Utilities.Team;
+import org.firstinspires.ftc.teamcode.Utilities.TransferUtility;
 
 /**
  * Main TeleOp OpMode for driver control
@@ -65,12 +67,7 @@ public class MainTeleOp extends OpMode {
 	protected boolean dpadUpPressed = false;
 	protected boolean dpadDownPressed = false;
 	protected boolean transferAboveRPM = false;
-
-	protected double calculateShotAngle(double x, double y, double goalX, double goalY) {
-		double deltaX = goalX - x;
-		double deltaY = goalY - y;
-		return Math.atan2(-deltaY, -deltaX);
-	}
+	protected int lastSpindexerTarget = 0;
 
 	@Override
 	public void init() {
@@ -115,7 +112,7 @@ public class MainTeleOp extends OpMode {
 		scheduler.update();
 		limelight.Start(getStartingPose().heading.toDouble());
 
-		spindexer.targetPosition = 0;
+		scheduler.schedule(spindexer.setTarget(0));
 	}
 
 	@Override
@@ -195,13 +192,13 @@ public class MainTeleOp extends OpMode {
 			if (getTeam() == Team.RED) {
 				scheduler.schedule(
 						drive.actionBuilder(drive.localizer.getPose())
-								.strafeToLinearHeading(new Vector2d(59, 2), calculateShotAngle(59, 2, -72, 72))
+								.strafeToLinearHeading(new Vector2d(59, 2), ShotAngleUtility.calculateShotAngle(59, 2, -72, 72))
 								.build()
 				);
 			} else if (getTeam() == Team.BLUE) {
 				scheduler.schedule(
 						drive.actionBuilder(drive.localizer.getPose())
-								.strafeToLinearHeading(new Vector2d(59, -2), calculateShotAngle(59, -2, -72, -72))
+								.strafeToLinearHeading(new Vector2d(59, -2), ShotAngleUtility.calculateShotAngle(59, -2, -72, -72))
 								.build()
 				);
 			}
@@ -226,21 +223,21 @@ public class MainTeleOp extends OpMode {
 					turnPower
 			);
 			drive.setDrivePowers(velocity);
+		}
 
-			// Manual offset trim
-			if (gamepad1.left_bumper && !leftBumperPressed) {
-				scheduler.schedule(spindexer.applyManualOffsetTrim(-1.0));
-				leftBumperPressed = true;
-			} else if (!gamepad1.left_bumper && leftBumperPressed) {
-				leftBumperPressed = false;
-			}
+		// Manual offset trim
+		if (gamepad1.left_bumper && !leftBumperPressed) {
+			scheduler.schedule(spindexer.applyManualOffsetTrim(-1.0));
+			leftBumperPressed = true;
+		} else if (!gamepad1.left_bumper && leftBumperPressed) {
+			leftBumperPressed = false;
+		}
 
-			if (gamepad1.right_bumper && !rightBumperPressed) {
-				scheduler.schedule(spindexer.applyManualOffsetTrim(1.0));
-				rightBumperPressed = true;
-			} else if (!gamepad1.right_bumper && rightBumperPressed) {
-				rightBumperPressed = false;
-			}
+		if (gamepad1.right_bumper && !rightBumperPressed) {
+			scheduler.schedule(spindexer.applyManualOffsetTrim(1.0));
+			rightBumperPressed = true;
+		} else if (!gamepad1.right_bumper && rightBumperPressed) {
+			rightBumperPressed = false;
 		}
 	}
 
@@ -285,15 +282,15 @@ public class MainTeleOp extends OpMode {
 			yButtonPressed = false;
 		}
 
-		// Automatic transfer based on RPM (only if neither X nor Y button held)
+		// Automatic transfer based on readiness (only if neither X nor Y button held)
 		if (!gamepad2.x && !gamepad2.y) {
-			boolean isAboveRPM = rpm >= Shooter.AUDIENCE_RPM;
-			if (isAboveRPM && !transferAboveRPM) {
+			boolean isReady = TransferUtility.isTransferReady(spindexer, shooter, Shooter.AUDIENCE_RPM);
+			if (isReady && !transferAboveRPM) {
 				scheduler.schedule(transfer.transferForward());
-			} else if (!isAboveRPM && transferAboveRPM) {
+			} else if (!isReady && transferAboveRPM) {
 				scheduler.schedule(transfer.transferBackward());
 			}
-			transferAboveRPM = isAboveRPM;
+			transferAboveRPM = isReady;
 		}
 
 		// B Button: Intake door backward and intake out when pressed, forward and intake in when released
@@ -336,18 +333,22 @@ public class MainTeleOp extends OpMode {
 			spindexerUpCrossed = false;
 		}
 
-		if (gamepad2.dpad_up) {
-			spindexer.targetPosition = SpindexerPositionUtility.getNextIntakePositionAlternative((int) -spindexer.getCalibratedPosition());
-			dpadUpPressed = true;
-		} else if (!gamepad2.dpad_up && dpadUpPressed) {
-			dpadUpPressed = false;
-		}
-
-		if (gamepad2.dpad_down) {
-			spindexer.targetPosition = SpindexerPositionUtility.getNextShootPosition((int) -spindexer.getCalibratedPosition());
+		if (gamepad2.dpad_down && !dpadDownPressed) {
+			double nextIntakePosition = SpindexerPositionUtility.getNextIntakePosition(lastSpindexerTarget);
+			lastSpindexerTarget = (int) nextIntakePosition;
+			scheduler.schedule(spindexer.setTarget(nextIntakePosition));
 			dpadDownPressed = true;
 		} else if (!gamepad2.dpad_down && dpadDownPressed) {
 			dpadDownPressed = false;
+		}
+
+		if (gamepad2.dpad_up && !dpadUpPressed) {
+			double nextShootPosition = SpindexerPositionUtility.getNextShootPosition(lastSpindexerTarget);
+			lastSpindexerTarget = (int) nextShootPosition;
+			scheduler.schedule(spindexer.setTarget(nextShootPosition));
+			dpadUpPressed = true;
+		} else if (!gamepad2.dpad_up && dpadUpPressed) {
+			dpadUpPressed = false;
 		}
 	}
 
@@ -378,9 +379,9 @@ public class MainTeleOp extends OpMode {
 		telemetry.addData("Average RPM", String.format("%.2f", shooter.averageRPM));
 
 		telemetry.addLine("=== Spindexer ===");
-		telemetry.addData("current Location", spindexer.getCalibratedPosition());
-		telemetry.addData("target", spindexer.targetPosition);
-		telemetry.addData("Next intake", SpindexerPositionUtility.getNextIntakePositionAlternative((int) spindexer.getCalibratedPosition()));
+		telemetry.addData("Current Location", spindexer.getCalibratedPosition());
+		telemetry.addData("Target", spindexer.targetPosition);
+		telemetry.addData("Next intake", SpindexerPositionUtility.getNextIntakePosition((int) spindexer.getCalibratedPosition()));
 		telemetry.addData("Next shoot", SpindexerPositionUtility.getNextShootPosition((int) spindexer.getCalibratedPosition()));
 	}
 }
