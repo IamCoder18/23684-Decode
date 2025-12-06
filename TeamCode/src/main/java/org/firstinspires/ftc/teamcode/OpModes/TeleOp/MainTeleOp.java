@@ -83,16 +83,16 @@ public class MainTeleOp extends OpMode {
 		rgbIndicator = RGBIndicator.getInstance();
 		limelight = new Limelight(hardwareMap);
 
-		// Try to set starting pose from previous autonomous run
-		Pose2d savedPose = RobotState.getInstance().getAutoPose();
-		if (savedPose != null) {
-			drive.localizer.setPose(savedPose);
-			telemetry.addData("Pose Source", "Loaded from Auto: (%.2f, %.2f, %.2f°)",
-					savedPose.position.x, savedPose.position.y, Math.toDegrees(savedPose.heading.toDouble()));
-		} else {
-			telemetry.addData("Pose Source", "Default pose used");
-			// TODO: Get position from Limelight when available
-		}
+//		// Try to set starting pose from previous autonomous run
+//		Pose2d savedPose = RobotState.getInstance().getAutoPose();
+//		if (savedPose != null) {
+//			drive.localizer.setPose(savedPose);
+//			telemetry.addData("Pose Source", "Loaded from Auto: (%.2f, %.2f, %.2f°)",
+//					savedPose.position.x, savedPose.position.y, Math.toDegrees(savedPose.heading.toDouble()));
+//		} else {
+//			telemetry.addData("Pose Source", "Default pose used");
+//			// TODO: Get position from Limelight when available
+//		}
 
 		telemetry.addData("Status", "Initialized - Waiting for START");
 		telemetry.update();
@@ -214,9 +214,9 @@ public class MainTeleOp extends OpMode {
 		}
 
 		if (!gamepad1.a) {
-			double forwardPower = 0;
-			double turnPower = 0;
-			double strafePower = 0;
+			double forwardPower;
+			double turnPower;
+			double strafePower;
 
 			if (gamepad1.right_bumper){
 				forwardPower = -gamepad1.left_stick_y / 2; // Left stick Y (inverted)
@@ -241,28 +241,26 @@ public class MainTeleOp extends OpMode {
 			drive.setDrivePowers(velocity);
 		}
 
-		// Manual offset trim
-		if (gamepad1.left_bumper && !leftBumperPressed) {
-			scheduler.schedule(spindexer.applyManualOffsetTrim(-1.0));
-			leftBumperPressed = true;
-		} else if (!gamepad1.left_bumper && leftBumperPressed) {
-			leftBumperPressed = false;
-		}
-
-		if (gamepad1.right_bumper && !rightBumperPressed) {
-			scheduler.schedule(spindexer.applyManualOffsetTrim(1.0));
-			rightBumperPressed = true;
-		} else if (!gamepad1.right_bumper && rightBumperPressed) {
-			rightBumperPressed = false;
-		}
+//		// Manual offset trim
+//		if (gamepad1.left_bumper && !leftBumperPressed) {
+//			scheduler.schedule(spindexer.applyManualOffsetTrim(-1.0));
+//			leftBumperPressed = true;
+//		} else if (!gamepad1.left_bumper && leftBumperPressed) {
+//			leftBumperPressed = false;
+//		}
+//
+//		if (gamepad1.right_bumper && !rightBumperPressed) {
+//			scheduler.schedule(spindexer.applyManualOffsetTrim(1.0));
+//			rightBumperPressed = true;
+//		} else if (!gamepad1.right_bumper && rightBumperPressed) {
+//			rightBumperPressed = false;
+//		}
 	}
 
 	/**
 	 * Handle operator controls from gamepad2
 	 */
 	protected void handleOperatorInput() {
-		double rpm = shooter.averageRPM;
-
 		// Left Trigger: run intake
 		if (gamepad2.left_trigger > 0.5 && !leftTriggerPressed) {
 			scheduler.schedule(intake.in());
@@ -380,7 +378,7 @@ public class MainTeleOp extends OpMode {
 		telemetry.addData("Strafe", String.format("%.2f", gamepad1.left_stick_x));
 		telemetry.addData("Turn", String.format("%.2f", gamepad1.right_stick_x));
 
-		telemetry.addData("location", drive.localizer.getPose());
+		telemetry.addData("Location", drive.localizer.getPose().toString());
 
 		telemetry.addLine("=== GAMEPAD 2 (Operator) ===");
 		telemetry.addData("Left Trigger", "Intake");
