@@ -173,7 +173,7 @@ public class Shooter {
 			private long startTime = -1;
 
 			// Safety: Stop waiting after 2 seconds if the shot isn't detected
-			private final long TIMEOUT_NS = 7_000_000_000L;
+			private final long TIMEOUT_NS = 5_000_000_000L;
 
 			@Override
 			public boolean run(@NonNull TelemetryPacket packet) {

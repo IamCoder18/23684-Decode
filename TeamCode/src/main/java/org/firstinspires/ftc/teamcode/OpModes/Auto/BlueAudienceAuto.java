@@ -19,6 +19,7 @@ public class BlueAudienceAuto extends AudienceAuto {
 	private static final Pose2d BLUE_INITIAL_TRAJECTORY_START = new Pose2d(54, -9, Math.toRadians(0));
 	private static final Vector2d BLUE_COLLECTION_POSITION = new Vector2d(35, -23);
 	private static final double BLUE_COLLECTION_HEADING = 270;
+	private static final double ShootHeading = -35;
 
 	@Override
 	protected double getShootingX() {
@@ -59,4 +60,7 @@ public class BlueAudienceAuto extends AudienceAuto {
 	protected double getCollectionHeading() {
 		return BLUE_COLLECTION_HEADING;
 	}
+
+	@Override
+	protected double GetShootingHeading(){return ShootHeading;}
 }

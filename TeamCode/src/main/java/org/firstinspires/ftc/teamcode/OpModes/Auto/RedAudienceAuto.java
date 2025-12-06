@@ -18,9 +18,10 @@ public class RedAudienceAuto extends AudienceAuto {
 	private static final double RED_GOAL_X = -72;
 	private static final double RED_GOAL_Y = 72;
 	private static final Pose2d RED_START_POSE = new Pose2d(60, 9, Math.toRadians(0));
-	private static final Pose2d RED_INITIAL_TRAJECTORY_START = new Pose2d(54, 9, Math.toRadians(0));
+	private static final Pose2d RED_INITIAL_TRAJECTORY_START = new Pose2d(55, 9, Math.toRadians(0));
 	private static final Vector2d RED_COLLECTION_POSITION = new Vector2d(35, 23);
 	private static final double RED_COLLECTION_HEADING = 90;
+	private static final double ShootHeading = 35;
 
 	@Override
 	protected double getShootingX() {
@@ -61,4 +62,7 @@ public class RedAudienceAuto extends AudienceAuto {
 	protected double getCollectionHeading() {
 		return RED_COLLECTION_HEADING;
 	}
+
+	@Override
+	protected double GetShootingHeading(){return ShootHeading;}
 }

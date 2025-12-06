@@ -40,6 +40,7 @@ public abstract class AudienceAuto extends OpMode {
 	protected abstract Pose2d getInitialTrajectoryStartPose();
 	protected abstract Vector2d getCollectionPosition();
 	protected abstract double getCollectionHeading();
+	protected abstract double GetShootingHeading();
 
 	private Spindexer spindexer;
 	private Shooter shooter;
@@ -102,15 +103,16 @@ public abstract class AudienceAuto extends OpMode {
 		telemetry.addData("Subsystem Init", "ActionScheduler initialized");
 		telemetry.update();
 
-		double shotAngle = calculateShotAngle(getShootingX(), getShootingY());
-		trajectoryToShootingPosition = drive.actionBuilder(getInitialTrajectoryStartPose())
-				.strafeToLinearHeading(new Vector2d(getShootingX(), getShootingY()), shotAngle);
+		//double shotAngle = calculateShotAngle(getShootingX(), getShootingY());
+		double shotAngle = GetShootingHeading();
+		trajectoryToShootingPosition = drive.actionBuilder(new Pose2d(60, -9, Math.toRadians(0)))
+				.strafeToLinearHeading(new Vector2d(55, -9), Math.toRadians(25));
 		telemetry.addData("Trajectory", "To Shooting Position - Target: (%.1f, %.1f)", getShootingX(), getShootingY());
 		telemetry.addData("Trajectory", "Shot angle: %.2f°", Math.toDegrees(shotAngle));
 		telemetry.update();
 
-		trajectoryToCollectionPosition = drive.actionBuilder(new Pose2d(getShootingX(), getShootingY(), shotAngle))
-				.strafeToLinearHeading(getCollectionPosition(), Math.toRadians(getCollectionHeading()));
+		trajectoryToCollectionPosition = drive.actionBuilder(new Pose2d(55,-9, Math.toDegrees(25)))
+				.strafeToLinearHeading(new Vector2d(35, -23), Math.toRadians(-90));
 		telemetry.addData("Trajectory", "To Collection Position - Target: (%.1f, %.1f)", getCollectionPosition().x, getCollectionPosition().y);
 		telemetry.addData("Trajectory", "Collection angle: %.2f°", getCollectionHeading());
 		telemetry.update();
@@ -223,9 +225,10 @@ public abstract class AudienceAuto extends OpMode {
 									return false; // Action is done
 								}
 							}
-						}
-//						shooter.stop(),
-//						trajectoryToCollectionPosition.build()
+						},
+						shooter.stop(),
+						trajectoryToCollectionPosition.build(),
+						new SleepAction(3)
 				)
 		);
 
