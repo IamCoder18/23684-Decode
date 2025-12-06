@@ -223,10 +223,9 @@ public abstract class AudienceAuto extends OpMode {
 									return false; // Action is done
 								}
 							}
-						},
-						transfer.intakeDoorStop(),
-						shooter.stop(),
-						trajectoryToCollectionPosition.build()
+						}
+//						shooter.stop(),
+//						trajectoryToCollectionPosition.build()
 				)
 		);
 
