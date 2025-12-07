@@ -17,7 +17,7 @@ import org.firstinspires.ftc.teamcode.Subsystems.TouchDetector;
 public class SubsystemUpdater {
 	// Telemetry throttling to reduce loop time
 	private static int telemetryCounter = 0;
-	private static final int TELEMETRY_INTERVAL = 5; // Only send every 5th loop
+	public static int TELEMETRY_INTERVAL = 5; // Only send every 5th loop
 
 	/**
 	 * Updates all subsystems that require periodic updates.
