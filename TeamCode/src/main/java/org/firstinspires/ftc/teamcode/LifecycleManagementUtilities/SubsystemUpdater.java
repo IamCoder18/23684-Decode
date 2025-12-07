@@ -15,20 +15,24 @@ import org.firstinspires.ftc.teamcode.Subsystems.TouchDetector;
  * Call this once per loop cycle in your OpMode.
  */
 public class SubsystemUpdater {
+	// Telemetry throttling to reduce loop time
+	private static int telemetryCounter = 0;
+	private static final int TELEMETRY_INTERVAL = 5; // Only send every 5th loop
+
 	/**
 	 * Updates all subsystems that require periodic updates.
 	 * Must be called every loop cycle for proper PID control and sensor readings.
 	 */
 	public static void update() {
-		// Update shooter RPM calculations
+		// Critical: Update shooter RPM calculations every loop
 		Shooter.getInstance().updateRPM(System.nanoTime());
 
-		// Update sensor readings (run Actions that complete immediately)
-		TelemetryPacket telemetryPacket = new TelemetryPacket();
-		ColorDetector.getInstance().update().run(telemetryPacket);
-		DistanceDetector.getInstance().update().run(telemetryPacket);
-
-		// Log telemetry data
-		FtcDashboard.getInstance().sendTelemetryPacket(telemetryPacket);
+		// Throttled telemetry updates to reduce loop overhead
+		if (telemetryCounter++ % TELEMETRY_INTERVAL == 0) {
+			TelemetryPacket telemetryPacket = new TelemetryPacket();
+			ColorDetector.getInstance().update().run(telemetryPacket);
+			DistanceDetector.getInstance().update().run(telemetryPacket);
+			FtcDashboard.getInstance().sendTelemetryPacket(telemetryPacket);
+		}
 	}
 }

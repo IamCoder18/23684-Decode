@@ -27,6 +27,10 @@ public class Shooter {
 	// --- RPM & Control Constants ---
 	public static double RPM_TOLERANCE = 100.0;
 	public static double TICKS_PER_REVOLUTION = 28.0;
+
+	// --- Pre-calculated constants for performance ---
+	private static final double RPM_CONVERSION = 60.0 / TICKS_PER_REVOLUTION;
+	private static final double HALF_DIVISOR = 0.5;
 	public static double AUDIENCE_RPM = 2570.0;
 	public static double AUDIENCE_SHOT_RPM = 2500.0;
 
@@ -92,16 +96,18 @@ public class Shooter {
 		double upperVelocity = upperShooter.getVelocity();
 		double lowerVelocity = lowerShooter.getVelocity();
 
-		upperRPM = (upperVelocity / TICKS_PER_REVOLUTION) * 60.0;
-		lowerRPM = (lowerVelocity / TICKS_PER_REVOLUTION) * 60.0;
-		averageRPM = (upperRPM + lowerRPM) / 2.0;
+		// Optimized RPM calculations using pre-computed constants
+		upperRPM = upperVelocity * RPM_CONVERSION;
+		lowerRPM = lowerVelocity * RPM_CONVERSION;
+		averageRPM = (upperRPM + lowerRPM) * HALF_DIVISOR;
 
 		if (lastNanoTime != 0) {
 			double timeElapsedSeconds = (nanoTime - lastNanoTime) / 1_000_000_000.0;
 			if (timeElapsedSeconds > 0) {
+				// Optimized acceleration calculations
 				upperAcceleration = (upperVelocity - lastUpperVelocity) / timeElapsedSeconds;
 				lowerAcceleration = (lowerVelocity - lastLowerVelocity) / timeElapsedSeconds;
-				averageAcceleration = (upperAcceleration + lowerAcceleration) / 2.0;
+				averageAcceleration = (upperAcceleration + lowerAcceleration) * HALF_DIVISOR;
 			}
 		}
 		lastNanoTime = nanoTime;
