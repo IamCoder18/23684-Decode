@@ -22,7 +22,6 @@ public class RGBIndicator {
 	private static final double VAL_GREEN = 0.500;
 	private static final double VAL_AZURE = 0.555;
 	private static final double VAL_BLUE = 0.611;
-	private static final double VAL_INDIGO = 0.666;
 	private static final double VAL_VIOLET = 0.722;
 	private static final double VAL_WHITE = 1.0;
 	private static final double VAL_OFF = 0.0;
@@ -53,7 +52,7 @@ public class RGBIndicator {
 
 	/**
 	 * Optimized setColor using HSV.
-	 * Execution time: ~0.02ms (approx 100x faster than CIE method)
+	 * Execution time: ~0.02ms
 	 */
 	public void setColor(String hexColor) {
 		if (rgbServo == null) return;
