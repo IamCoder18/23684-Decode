@@ -2,29 +2,32 @@
 <Robot type="FirstInspires-FTC">
     <LynxUsbDevice name="Control Hub Portal" serialNumber="(embedded)" parentModuleAddress="173">
         <LynxModule name="Expansion Hub 9" port="9">
-            <goBILDA5201SeriesMotor name="frontLeft" port="0" />
+            <goBILDA5201SeriesMotor name="frontRight" port="0" />
             <RevRoboticsUltraplanetaryHDHexMotor name="upperShooter" port="1" />
             <goBILDA5201SeriesMotor name="intake" port="2" />
-            <goBILDA5201SeriesMotor name="rearLeft" port="3" />
+            <goBILDA5201SeriesMotor name="rearRight" port="3" />
             <ContinuousRotationServo name="turret" port="0" />
             <ContinuousRotationServo name="transferRight" port="1" />
-            <ContinuousRotationServo name="intakeDoorRight" port="4" />
-            <Servo name="rgbIndicator" port="5" />
+            <ContinuousRotationServo name="spindexerRight" port="2" />
+            <ContinuousRotationServo name="intakeDoorRight" port="5" />
+            <Servo name="rgbIndicator" port="4" />
+            <AnalogInput name="spindexerEncoder" port="1" />
             <RevColorSensorV3 name="colourRight" port="0" bus="3" />
         </LynxModule>
         <LynxModule name="Control Hub" port="173">
-            <goBILDA5201SeriesMotor name="frontRight" port="0" />
+            <goBILDA5201SeriesMotor name="frontLeft" port="0" />
             <RevRoboticsUltraplanetaryHDHexMotor name="lowerShooter" port="2" />
-            <goBILDA5201SeriesMotor name="rearRight" port="3" />
-            <ContinuousRotationServo name="spindexer" port="0" />
+            <goBILDA5201SeriesMotor name="rearLeft" port="3" />
+            <ContinuousRotationServo name="spindexerLeft" port="0" />
             <ContinuousRotationServo name="transferLeft" port="1" />
             <ContinuousRotationServo name="intakeDoorLeft" port="2" />
             <RevTouchSensor name="spindexerZero" port="2" />
             <RevTouchSensor name="turretZero" port="4" />
-            <REV_VL53L0X_RANGE_SENSOR name="frontDistance" port="0" bus="2" />
             <RevColorSensorV3 name="colourLeft" port="0" bus="1" />
+            <REV_VL53L0X_RANGE_SENSOR name="frontDistance" port="0" bus="2" />
             <LynxEmbeddedIMU name="imu" port="0" bus="0" />
             <goBILDAPinpoint name="pinpoint" port="0" bus="3" />
         </LynxModule>
     </LynxUsbDevice>
+    <EthernetDevice name="limelight" serialNumber="EthernetOverUsb:eth0:172.29.0.25" name="limelight" port="-1" ipAddress="172.29.0.1" />
 </Robot>

@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.OpModes.TeleOp;
 
 import com.acmerobotics.roadrunner.Pose2d;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import org.firstinspires.ftc.teamcode.Utilities.Team;
 
 /**
  * TeleOp OpMode for Red Goal starting position
@@ -13,5 +14,10 @@ public class RedGoalTeleOp extends MainTeleOp {
 	protected Pose2d getStartingPose() {
 		// Red goal starting position
 		return new Pose2d(-41.25, 52.5, Math.toRadians(270));
+	}
+
+	@Override
+	protected Team getTeam(){
+		return Team.RED;
 	}
 }

@@ -1,111 +1,94 @@
-//package org.firstinspires.ftc.teamcode.OpModes.Tests;
-//
-//import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-//import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-//
-//import org.firstinspires.ftc.teamcode.LifecycleManagementUtilities.HardwareInitializer;
-//import org.firstinspires.ftc.teamcode.LifecycleManagementUtilities.HardwareShutdown;
-//import org.firstinspires.ftc.teamcode.Subsystems.Shooter;
-//import org.firstinspires.ftc.teamcode.Utilities.ActionScheduler;
-//
-///**
-// * Unit Test OpMode for the Shooter Subsystem
-// * <p>
-// * Purpose: Test both shooter motors (upper and lower) for consistent operation
-// * <p>
-// * Controls:
-// * - A button: Start both shooter motors
-// * - B button: Stop both shooter motors
-// * <p>
-// * Expected Behavior:
-// * - A button spins both motors at RUN_POWER speed
-// * - B button stops both motors immediately
-// * - Both motors should spin in the same direction
-// * - Monitor for smooth, synchronized operation
-// * <p>
-// * Testing Focus:
-// * - Verify both motors respond to commands
-// * - Check motor synchronization
-// * - Confirm stop function works for both motors
-// * - Monitor for vibration or noise
-// * <p>
-// * Duration: ≤1 minute (unit test)
-// */
-//@TeleOp(name = "Test_Shooter", group = "Unit Tests")
-//public class Test_Shooter extends OpMode {
-//
-//	private Shooter shooter;
-//	private ActionScheduler scheduler;
-//	private String shooterState = "STOPPED";
-//	private boolean aButtonPrev = false;
-//	private boolean bButtonPrev = false;
-//
-//	@Override
-//	public void init() {
-//		// Initialize hardware
-//		HardwareInitializer.initialize(hardwareMap);
-//		shooter = Shooter.getInstance();
-//		scheduler = ActionScheduler.getInstance();
-//
-//		telemetry.addData("Status", "Initialized - Waiting for START");
-//		telemetry.addData("Purpose", "Test shooter motor synchronization");
-//	}
-//
-//	@Override
-//	public void loop() {
-//		// A button - Start both shooter motors - edge detection
-//		if (gamepad1.a && !aButtonPrev) {
-//			scheduler.schedule(shooter.run());
-//			shooterState = "RUNNING";
-//			telemetry.addData("Action", "Starting both shooter motors");
-//		}
-//		aButtonPrev = gamepad1.a;
-//
-//		// B button - Stop both shooter motors - edge detection
-//		if (gamepad1.b && !bButtonPrev) {
-//			scheduler.schedule(shooter.stop());
-//			shooterState = "STOPPED";
-//			telemetry.addData("Action", "Stopping both shooter motors");
-//		}
-//		bButtonPrev = gamepad1.b;
-//
-//		// Calculate motor powers for display
-//		double upperPower = Shooter.RUN_POWER + Shooter.UPPER_OFFSET;
-//		double lowerPower = Shooter.RUN_POWER + Shooter.LOWER_OFFSET;
-//		double powerDifference = Math.abs(upperPower - lowerPower);
-//		String syncStatus = powerDifference < 0.05 ? "✓ SYNCED" : "⚠ OFFSET";
-//
-//		// Display telemetry
-//		telemetry.addData("", "=== MOTOR STATUS ===");
-//		telemetry.addData("Current State", shooterState);
-//		telemetry.addData("Upper Motor Power", String.format("%.3f", upperPower));
-//		telemetry.addData("Lower Motor Power", String.format("%.3f", lowerPower));
-//		telemetry.addData("Power Difference", String.format("%.3f %s", powerDifference, syncStatus));
-//
-//		telemetry.addData("", "=== SETTINGS ===");
-//		telemetry.addData("RUN_POWER", String.format("%.2f", Shooter.RUN_POWER));
-//		telemetry.addData("UPPER_OFFSET", String.format("%.3f", Shooter.UPPER_OFFSET));
-//		telemetry.addData("LOWER_OFFSET", String.format("%.3f", Shooter.LOWER_OFFSET));
-//
-//		telemetry.addData("", "=== CONTROLS ===");
-//		telemetry.addData("A", "START motors");
-//		telemetry.addData("B", "STOP motors");
-//
-//		telemetry.addData("", "=== TEST RESULTS ===");
-//		telemetry.addData("Motor Response", "✓ OPERATIONAL");
-//		telemetry.addData("Synchronization", syncStatus);
-//		telemetry.addData("Stop Function", "✓ VERIFIED");
-//
-//		telemetry.update();
-//
-//		// Update action scheduler
-//		scheduler.update();
-//	}
-//
-//	@Override
-//	public void stop() {
-//		// Clear any running actions and shutdown
-//		scheduler.clearActions();
-//		HardwareShutdown.shutdown();
-//	}
-//}
+package org.firstinspires.ftc.teamcode.OpModes.Tests;
+
+import com.acmerobotics.dashboard.config.Config;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+
+import org.firstinspires.ftc.teamcode.LifecycleManagementUtilities.HardwareInitializer;
+import org.firstinspires.ftc.teamcode.LifecycleManagementUtilities.HardwareShutdown;
+import org.firstinspires.ftc.teamcode.LifecycleManagementUtilities.SubsystemUpdater;
+import org.firstinspires.ftc.teamcode.Subsystems.Intake;
+import org.firstinspires.ftc.teamcode.Subsystems.Shooter;
+import org.firstinspires.ftc.teamcode.Subsystems.Spindexer;
+import org.firstinspires.ftc.teamcode.Subsystems.Transfer;
+import org.firstinspires.ftc.teamcode.Utilities.ActionScheduler;
+
+@Config
+@TeleOp
+public class Test_Shooter extends OpMode {
+	public static int lowerTargetRPM = 2700;
+	public static int upperTargetRPM = 2700;
+
+	private Shooter shooter;
+	private Spindexer spindexer;
+	private Transfer transfer;
+	private Intake intake;
+	private ActionScheduler scheduler;
+	//private Limelight limelight;
+
+	// Edge detection for triggers
+	private final boolean prevLeftTrigger = false;
+	private final boolean prevRightTrigger = false;
+	private boolean prevShooterActive = false;
+
+	@Override
+	public void init() {
+		HardwareInitializer.initialize(hardwareMap);  // Use centralized initializer
+
+		shooter = Shooter.getInstance();
+		spindexer = Spindexer.getInstance();
+		transfer = Transfer.getInstance();
+		intake = Intake.getInstance();
+		scheduler = ActionScheduler.getInstance();
+		//limelight = Limelight.getInstance();
+
+		scheduler.schedule(transfer.intakeDoorForward());
+		scheduler.update();
+
+		telemetry.addData("Status", "Initialized");
+		telemetry.update();
+	}
+
+	@Override
+	public void loop() {
+		SubsystemUpdater.update();
+
+		// Right trigger controls shooter (run at target RPM or stop)
+		boolean currentShooterActive = gamepad2.right_trigger > 0.5;
+
+		if (currentShooterActive) {
+			scheduler.schedule(shooter.run(lowerTargetRPM, upperTargetRPM));
+
+			// Transfer forward only if at target RPM, otherwise backward
+			if (shooter.isAtTargetRPM(lowerTargetRPM, upperTargetRPM)) {
+				scheduler.schedule(transfer.transferForward());
+			} else {
+				scheduler.schedule(transfer.transferBackward());
+			}
+		} else {
+			scheduler.schedule(shooter.run(0));
+		}
+		prevShooterActive = currentShooterActive;
+
+		// Left joystick Y controls spindexer power
+		double spindexerPower = gamepad2.left_stick_y;
+		scheduler.schedule(spindexer.setDirectPower(spindexerPower));
+
+		// Update scheduler
+		scheduler.update();
+
+		telemetry.addData("Lower Target RPM", lowerTargetRPM);
+		telemetry.addData("Upper Target RPM", upperTargetRPM);
+		telemetry.addData("Shooter Average RPM", shooter.averageRPM);
+		telemetry.addData("At Target RPM", shooter.isAtTargetRPM(lowerTargetRPM, upperTargetRPM));
+		telemetry.addData("Spindexer Power", spindexerPower);
+		//telemetry.addData("Distance to Blue Goal", limelight.getDistanceToTag(20));
+		//telemetry.addData("Distance to Red Goal", limelight.getDistanceToTag(24));
+		telemetry.update();
+	}
+
+	@Override
+	public void stop() {
+		HardwareShutdown.shutdown();
+	}
+}

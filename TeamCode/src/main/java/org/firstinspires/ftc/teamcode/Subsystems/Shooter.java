@@ -8,67 +8,75 @@ import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.InstantAction;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import org.firstinspires.ftc.teamcode.Utilities.PIDFController;
+import org.firstinspires.ftc.teamcode.Utilities.FeedForwardController;
 
 @Config
 public class Shooter {
+	// --- PID Controller Constants ---
+	public static double UPPER_P = 0.0024, UPPER_I = 0, UPPER_D = 0;
+	public static double LOWER_P = 0.002, LOWER_I = 0, LOWER_D = 0;
+
+	// --- Feedforward Constants ---
+	public static double UPPER_KS = 0.28, UPPER_KV = 0.000095;
+	public static double LOWER_KS = 0.29, LOWER_KV = 0.00017;
+
 	// --- Motor Power Constants ---
-	/**
-	 * The power level for the "on" state of the bang-bang controller. This is the power
-	 * used when the shooter's RPM is below the target range.
-	 */
-	public static double BANG_BANG_HIGH_POWER = 0.72;
-	/**
-	 * The power level for the "off" or "idle" state of the bang-bang controller. This is the
-	 * minimum power applied when the RPM is above the target range to keep it spinning.
-	 */
-	public static double BANG_BANG_LOW_POWER = 0.5;
-	/**
-	 * The power level to completely stop the motors.
-	 */
 	public static double STOP_POWER = 0.0;
 
 	// --- RPM & Control Constants ---
-	/**
-	 * The tolerance for the bang-bang controller. The shooter is considered "at target speed"
-	 * if the RPM is within `targetRPM +/- RPM_TOLERANCE`. A value of 100 is a good starting point.
-	 */
-	public static double RPM_TOLERANCE = 1.0;
-	/**
-	 * The number of encoder ticks per single revolution of the shooter motor's output shaft.
-	 */
+	public static double RPM_TOLERANCE = 100.0;
 	public static double TICKS_PER_REVOLUTION = 28.0;
-	/**
-	 * The RPM required for shooting artifacts from the audience-side shooting zone.
-	 */
-	public static double AUDIENCE_RPM = 2300.0;
+
+	// --- Pre-calculated constants ---
+	private static final double RPM_CONVERSION = 60.0 / TICKS_PER_REVOLUTION;
+	private static final double HALF_DIVISOR = 0.5;
+	public static double AUDIENCE_RPM = 2570.0;
 
 	// --- Motor Offsets ---
-	// Minor power adjustments to balance any speed differences between the two motors.
 	public static double UPPER_OFFSET = 0.0;
 	public static double LOWER_OFFSET = 0.0;
 
-	// --- Singleton Instance ---
 	private static Shooter instance = null;
 
-	// --- Motor & State Variables ---
 	private DcMotorEx upperShooter;
 	private DcMotorEx lowerShooter;
+
+	// Public State
 	public double averageRPM = 0.0;
 	public double upperRPM = 0.0;
 	public double lowerRPM = 0.0;
 
+	// Acceleration tracking (kept if you need it for tuning, otherwise unused)
+	public double upperAcceleration = 0.0;
+	public double lowerAcceleration = 0.0;
+	public double averageAcceleration = 0.0;
+
+	private long lastNanoTime = 0;
+	private double lastUpperVelocity = 0.0;
+	private double lastLowerVelocity = 0.0;
+
+	private PIDFController upperController;
+	private PIDFController lowerController;
+	private FeedForwardController upperFF;
+	private FeedForwardController lowerFF;
+
 	private Shooter() {}
 
 	public static void initialize(HardwareMap hardwareMap) {
-		if (instance == null) {
-			instance = new Shooter();
-			instance.upperShooter = hardwareMap.get(DcMotorEx.class, "upperShooter");
-			instance.lowerShooter = hardwareMap.get(DcMotorEx.class, "lowerShooter");
+		// Correct: Always create new instance to avoid stale hardware references
+		instance = new Shooter();
+		instance.upperShooter = hardwareMap.get(DcMotorEx.class, "upperShooter");
+		instance.lowerShooter = hardwareMap.get(DcMotorEx.class, "lowerShooter");
 
-			// Set zero power behavior. BRAKE helps motors stop faster and resist movement.
-			instance.upperShooter.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
-			instance.lowerShooter.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
-		}
+		instance.upperShooter.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
+		instance.lowerShooter.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
+
+		instance.upperController = new PIDFController(UPPER_P, UPPER_I, UPPER_D, 0);
+		instance.lowerController = new PIDFController(LOWER_P, LOWER_I, LOWER_D, 0);
+
+		instance.upperFF = new FeedForwardController(UPPER_KS, UPPER_KV, 0);
+		instance.lowerFF = new FeedForwardController(LOWER_KS, LOWER_KV, 0);
 	}
 
 	public static Shooter getInstance() {
@@ -80,103 +88,149 @@ public class Shooter {
 
 	public static void shutdown() {
 		if(instance != null) {
-			// Ensure motors are stopped when the op-mode ends.
 			instance.upperShooter.setPower(STOP_POWER);
 			instance.lowerShooter.setPower(STOP_POWER);
 		}
 	}
 
-	/**
-	 * Updates the RPM readings for both shooter motors based on their velocity.
-	 * This should be called continuously in your main robot loop to provide feedback for the controller.
-	 */
-	public void updateRPM() {
-		double upperVelocity = upperShooter.getVelocity(); // ticks per second
-		double lowerVelocity = lowerShooter.getVelocity(); // ticks per second
+	public void updateRPM(long nanoTime) {
+		double upperVelocity = upperShooter.getVelocity();
+		double lowerVelocity = lowerShooter.getVelocity();
 
-		upperRPM = (upperVelocity / TICKS_PER_REVOLUTION) * 60.0;
-		lowerRPM = (lowerVelocity / TICKS_PER_REVOLUTION) * 60.0;
+		upperRPM = upperVelocity * RPM_CONVERSION;
+		lowerRPM = lowerVelocity * RPM_CONVERSION;
+		averageRPM = (upperRPM + lowerRPM) * HALF_DIVISOR;
 
-		averageRPM = (upperRPM + lowerRPM) / 2.0;
+		if (lastNanoTime != 0) {
+			double timeElapsedSeconds = (nanoTime - lastNanoTime) / 1_000_000_000.0;
+			if (timeElapsedSeconds > 0) {
+				upperAcceleration = (upperVelocity - lastUpperVelocity) / timeElapsedSeconds;
+				lowerAcceleration = (lowerVelocity - lastLowerVelocity) / timeElapsedSeconds;
+				averageAcceleration = (upperAcceleration + lowerAcceleration) * HALF_DIVISOR;
+			}
+		}
+		lastNanoTime = nanoTime;
+		lastUpperVelocity = upperVelocity;
+		lastLowerVelocity = lowerVelocity;
 	}
 
 	/**
-	 * Checks if the shooter's average RPM is within the tolerance band of a given target.
-	 * Use this method to determine if it's safe to feed a note for shooting.
-	 * @param targetRPM The RPM you are aiming for.
-	 * @return true if the current averageRPM is within the tolerance, false otherwise.
+	 * Checks if BOTH motors are at their specific targets.
+	 * Returns FALSE if targets are < 100 (Safety: You aren't "Ready to Shoot" if stopped).
+	 */
+	public boolean isAtTargetRPM(double upperTarget, double lowerTarget) {
+		// Check Upper: Must be a valid target (>100) AND within tolerance
+		boolean upperReady = (upperTarget >= 100) && (Math.abs(upperRPM - upperTarget) <= RPM_TOLERANCE);
+
+		// Check Lower: Must be a valid target (>100) AND within tolerance
+		boolean lowerReady = (lowerTarget >= 100) && (Math.abs(lowerRPM - lowerTarget) <= RPM_TOLERANCE);
+
+		return upperReady && lowerReady;
+	}
+
+	/**
+	 * Convenience method for single target (both motors same speed)
 	 */
 	public boolean isAtTargetRPM(double targetRPM) {
-		return Math.abs(averageRPM - targetRPM) <= RPM_TOLERANCE;
+		return isAtTargetRPM(targetRPM, targetRPM);
 	}
 
 	/**
-	 * Returns an Action that runs the shooter motors to maintain a target RPM using separate bang-bang controllers.
-	 * Each motor is controlled independently based on its own RPM feedback.
-	 * This action must be run continuously and will maintain the target speed until cancelled.
-	 *
-	 * @param targetRPM The desired revolutions per minute for the shooter.
-	 * @return Action that runs the shooter with independent bang-bang controllers.
+	 * CENTRAL PHYSICS METHOD
+	 * Calculates powers, applies them, and handles common telemetry.
 	 */
+	private void updateMotors(double upperTarget, double lowerTarget, TelemetryPacket packet) {
+		double upperPower, lowerPower;
+
+		// UPPER MOTOR
+		if (upperTarget < 100) {
+			upperPower = STOP_POWER;
+		} else {
+			// Only calculate PID/FF when we actually want to move
+			double pid = upperController.getOutput(upperRPM, upperTarget);
+			double ff = upperFF.calculate(upperTarget, 0);
+			upperPower = ff + pid + UPPER_OFFSET;
+		}
+
+		// LOWER MOTOR
+		if (lowerTarget < 100) {
+			lowerPower = STOP_POWER;
+		} else {
+			double pid = lowerController.getOutput(lowerRPM, lowerTarget);
+			double ff = lowerFF.calculate(lowerTarget, 0);
+			lowerPower = ff + pid + LOWER_OFFSET;
+		}
+
+		upperShooter.setPower(upperPower);
+		lowerShooter.setPower(lowerPower);
+
+		// Standardized Telemetry
+		packet.put("Shooter Upper Target", upperTarget);
+		packet.put("Shooter Lower Target", lowerTarget);
+		packet.put("Shooter Upper RPM", upperRPM);
+		packet.put("Shooter Lower RPM", lowerRPM);
+		packet.put("Upper Power", upperPower);
+		packet.put("Lower Power", lowerPower);
+	}
+
 	public Action run(double targetRPM) {
+		return run(targetRPM, targetRPM);
+	}
+
+	public Action run(double upperTargetRPM, double lowerTargetRPM) {
+		return packet -> {
+			updateRPM(System.nanoTime());
+			updateMotors(upperTargetRPM, lowerTargetRPM, packet);
+			return false;
+		};
+	}
+
+	public Action runAndWait(double upperTargetRPM, double lowerTargetRPM) {
 		return new Action() {
-			private boolean upperHighPowerActive = true; // Start by powering up to reach the target.
-			private boolean lowerHighPowerActive = true; // Start by powering up to reach the target.
+			private boolean hasReachedTarget = false;
+			private long startTime = -1;
+			private final long TIMEOUT_NS = 5_000_000_000L;
 
 			@Override
 			public boolean run(@NonNull TelemetryPacket packet) {
-				// First, get the latest RPM reading. This is the "feedback" part of the loop.
-				updateRPM();
+				long now = System.nanoTime();
+				if (startTime == -1) startTime = now;
 
-				// --- Upper Motor Bang-Bang Controller Logic ---
-				// If RPM is too low, activate high power mode.
-				if (upperRPM < targetRPM - RPM_TOLERANCE) {
-					upperHighPowerActive = true;
+				// 1. TIMEOUT CHECK
+				if (now - startTime > TIMEOUT_NS) {
+					// Safety: Stop if we time out
+					upperShooter.setPower(0);
+					lowerShooter.setPower(0);
+					return false;
 				}
-				// If RPM is too high, switch to low power (idle) mode.
-				else if (upperRPM > targetRPM + RPM_TOLERANCE) {
-					upperHighPowerActive = false;
+
+				updateRPM(now);
+
+				// 2. CONTROL LOGIC (Reused from helper)
+				updateMotors(upperTargetRPM, lowerTargetRPM, packet);
+
+				// 3. CHECK IF AT TARGET
+				if (!hasReachedTarget && isAtTargetRPM(upperTargetRPM, lowerTargetRPM)) {
+					hasReachedTarget = true;
 				}
-				// If inside the tolerance band, the state does not change.
-				// This prevents the motor from rapidly switching on/off (chattering).
 
-				// --- Lower Motor Bang-Bang Controller Logic ---
-				// If RPM is too low, activate high power mode.
-				if (lowerRPM < targetRPM - RPM_TOLERANCE) {
-					lowerHighPowerActive = true;
+				packet.put("Shooter Ready", hasReachedTarget);
+
+				// 4. SHOT DETECTION
+				if (!hasReachedTarget) {
+					return true; // Keep spinning up
 				}
-				// If RPM is too high, switch to low power (idle) mode.
-				else if (lowerRPM > targetRPM + RPM_TOLERANCE) {
-					lowerHighPowerActive = false;
-				}
-				// If inside the tolerance band, the state does not change.
 
-				// Set power for each motor based on its controller's state.
-				double upperPower = upperHighPowerActive ? BANG_BANG_HIGH_POWER : BANG_BANG_LOW_POWER;
-				double lowerPower = lowerHighPowerActive ? BANG_BANG_HIGH_POWER : BANG_BANG_LOW_POWER;
+				// Drop detection
+				double targetAvg = (upperTargetRPM + lowerTargetRPM) * 0.5;
+				double currentAvg = (upperRPM + lowerRPM) * 0.5;
+				boolean shotFired = currentAvg < (targetAvg * 0.92);
 
-				upperShooter.setPower(upperPower + UPPER_OFFSET);
-				lowerShooter.setPower(lowerPower + LOWER_OFFSET);
-
-				// Optional: Add telemetry for debugging via FTC Dashboard
-				packet.put("Shooter Target RPM", targetRPM);
-				packet.put("Shooter Upper RPM", upperRPM);
-				packet.put("Shooter Lower RPM", lowerRPM);
-				packet.put("Shooter Average RPM", averageRPM);
-				packet.put("Upper Motor Power", upperPower);
-				packet.put("Lower Motor Power", lowerPower);
-				packet.put("Shooter At Target", isAtTargetRPM(targetRPM));
-
-				return false;
+				return !shotFired;
 			}
 		};
 	}
 
-	/**
-	 * Returns an InstantAction that immediately stops both shooter motors.
-	 *
-	 * @return Action that stops both shooter motors.
-	 */
 	public Action stop() {
 		return new InstantAction(() -> {
 			upperShooter.setPower(STOP_POWER);
