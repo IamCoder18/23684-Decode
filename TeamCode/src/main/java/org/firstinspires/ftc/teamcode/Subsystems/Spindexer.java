@@ -5,7 +5,7 @@ import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.InstantAction;
 import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.hardware.CRServo;
-import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
@@ -37,7 +37,7 @@ public class Spindexer {
 	private CRServo spindexerLeft;
 	private CRServo spindexerRight;
 	private AnalogInput spindexerEncoder;
-	private DcMotor quadratureEncoder;
+	private DcMotorEx quadratureEncoder;
 	// EMA filter state variables
 	private double filteredValue = 0.0;
 	private boolean isInitialized = false;
@@ -59,7 +59,7 @@ public class Spindexer {
 		instance.spindexerLeft = hardwareMap.get(CRServo.class, "spindexerLeft");
 		instance.spindexerRight = hardwareMap.get(CRServo.class, "spindexerRight");
 		instance.spindexerEncoder = hardwareMap.get(AnalogInput.class, "spindexerEncoder");
-		instance.quadratureEncoder = hardwareMap.get(DcMotor.class, "frontRight");
+		instance.quadratureEncoder = hardwareMap.get(DcMotorEx.class, "frontRight");
 		instance.controller = new PIDFController(P, I, D, F);
 		instance.controller.setOutputLimits(-1, 1);
 	}
@@ -191,7 +191,7 @@ public class Spindexer {
 			// This action is considered "done" when the error is small.
 			// This allows it to be a "blocking" call in a sequence.
 			// Returns true while moving (error >= threshold), false when within tolerance
-			double error = targetPosition - getPosition();
+			double error = targetPosition - getCalibratedPosition();
 			packet.put("Spindexer Error", error);
 			return Math.abs(error) >= 17; // Returns true while moving, false when within tolerance
 		};
