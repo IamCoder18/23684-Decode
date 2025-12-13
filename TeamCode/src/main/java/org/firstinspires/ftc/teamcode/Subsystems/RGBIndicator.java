@@ -48,10 +48,8 @@ public class RGBIndicator {
 	}
 
 	public static void initialize(HardwareMap hardwareMap) {
-		if (instance == null) {
-			instance = new RGBIndicator();
-			instance.rgbServo = hardwareMap.get(Servo.class, "rgbIndicator");
-		}
+		instance = new RGBIndicator();
+		instance.rgbServo = hardwareMap.get(Servo.class, "rgbIndicator");
 	}
 
 	public static RGBIndicator getInstance() {

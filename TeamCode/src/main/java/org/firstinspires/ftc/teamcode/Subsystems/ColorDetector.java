@@ -78,11 +78,9 @@ public class ColorDetector {
 	}
 
 	public static void initialize(HardwareMap hardwareMap) {
-		if (instance == null) {
-			instance = new ColorDetector();
-			instance.colourLeft = hardwareMap.get(com.qualcomm.robotcore.hardware.ColorSensor.class, "colourLeft");
-			instance.colourRight = hardwareMap.get(com.qualcomm.robotcore.hardware.ColorSensor.class, "colourRight");
-		}
+		instance = new ColorDetector();
+		instance.colourLeft = hardwareMap.get(com.qualcomm.robotcore.hardware.ColorSensor.class, "colourLeft");
+		instance.colourRight = hardwareMap.get(com.qualcomm.robotcore.hardware.ColorSensor.class, "colourRight");
 	}
 
 	public static ColorDetector getInstance() {

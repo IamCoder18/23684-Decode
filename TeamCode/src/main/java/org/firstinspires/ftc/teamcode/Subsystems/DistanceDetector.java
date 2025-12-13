@@ -48,10 +48,8 @@ public class DistanceDetector {
 	}
 
 	public static void initialize(HardwareMap hardwareMap) {
-		if (instance == null) {
-			instance = new DistanceDetector();
-			instance.frontDistance = hardwareMap.get(DistanceSensor.class, "frontDistance");
-		}
+		instance = new DistanceDetector();
+		instance.frontDistance = hardwareMap.get(DistanceSensor.class, "frontDistance");
 	}
 
 	public static DistanceDetector getInstance() {

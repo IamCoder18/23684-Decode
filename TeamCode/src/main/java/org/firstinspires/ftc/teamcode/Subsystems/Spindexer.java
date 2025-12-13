@@ -22,11 +22,8 @@ public class Spindexer {
 	// PID coefficients for position control. Tuned 2025-11-22.
 	public static double P = 0.01, I = 0.0, D = 0.0, F = 0.0;
 	// EMA tuning parameters
-	public static double ALPHA_RESPONSIVE = 0.7;
 	public static double ALPHA_SMOOTH = 0.05;
-	public static double MOTION_THRESHOLD = 0.1;
 	// Hybrid encoder calibration constants
-	public static double MIN_AVERAGE_TIME_SEC = 3.0;
 	public static double TOLERANCE_DEGREES = 3.0;
 	public static double MANUAL_TRIM_STEP_DEGREES = 2.0;
 	private static Spindexer instance = null;
@@ -58,17 +55,14 @@ public class Spindexer {
 	}
 
 	public static void initialize(HardwareMap hardwareMap) {
-		if (instance == null) {
-			instance = new Spindexer();
-			instance.spindexerLeft = hardwareMap.get(CRServo.class, "spindexerLeft");
-			instance.spindexerRight = hardwareMap.get(CRServo.class, "spindexerRight");
-			instance.spindexerEncoder = hardwareMap.get(AnalogInput.class, "spindexerEncoder");
-			instance.quadratureEncoder = hardwareMap.get(DcMotor.class, "frontRight");
-
-			instance.controller = new PIDFController(P, I, D, F);
-		}
+		instance = new Spindexer();
+		instance.spindexerLeft = hardwareMap.get(CRServo.class, "spindexerLeft");
+		instance.spindexerRight = hardwareMap.get(CRServo.class, "spindexerRight");
+		instance.spindexerEncoder = hardwareMap.get(AnalogInput.class, "spindexerEncoder");
+		instance.quadratureEncoder = hardwareMap.get(DcMotor.class, "frontRight");
+		instance.controller = new PIDFController(P, I, D, F);
+		instance.controller.setOutputLimits(-1, 1);
 	}
-
 
 	public static Spindexer getInstance() {
 		if (instance == null) {
@@ -105,20 +99,6 @@ public class Spindexer {
 		calibrationSum += absPos;
 		calibrationCount++;
 	}
-
-	// TODO: Deprecate this
-//	/**
-//	 * Finalizes auto calibration by calculating offset and saving to RobotState.
-//	 */
-//	public void finalizeAutoCalibration() {
-//		if (!calibrationActive || calibrationCount == 0) return;
-//		double avgAbs = calibrationSum / calibrationCount;
-//		RobotState state = RobotState.getInstance();
-//		state.absoluteOffset = avgAbs;
-//		state.averageQuality = (System.nanoTime() - calibrationStartTime) / 1e9; // seconds
-//		state.hasValidData = true;
-//		calibrationActive = false;
-//	}
 
 	/**
 	 * Finalizes teleop calibration with validation against existing data.

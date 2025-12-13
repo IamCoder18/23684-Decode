@@ -41,11 +41,9 @@ public class TouchDetector {
 	}
 
 	public static void initialize(HardwareMap hardwareMap) {
-		if (instance == null) {
-			instance = new TouchDetector();
-			instance.sensorLeft = hardwareMap.get(TouchSensor.class, "touchLeft");
-			instance.sensorRight = hardwareMap.get(TouchSensor.class, "touchRight");
-		}
+		instance = new TouchDetector();
+		instance.sensorLeft = hardwareMap.get(TouchSensor.class, "touchLeft");
+		instance.sensorRight = hardwareMap.get(TouchSensor.class, "touchRight");
 	}
 
 	public static TouchDetector getInstance() {
