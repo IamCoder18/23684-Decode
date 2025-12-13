@@ -141,15 +141,6 @@ public class Spindexer {
 	}
 
 	/**
-	 * Applies manual offset trim.
-	 */
-	public Action applyManualOffsetTrim(double direction) {
-		return new InstantAction(() -> {
-			RobotState.getInstance().absoluteOffset += direction * MANUAL_TRIM_STEP_DEGREES;
-		});
-	}
-
-	/**
 	 * Gets the filtered position using Dynamic Exponential Moving Average (EMA).
 	 * This provides a smoothed position value that adapts to motion.
 	 */

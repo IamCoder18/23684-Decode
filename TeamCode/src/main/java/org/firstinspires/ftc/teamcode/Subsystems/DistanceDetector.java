@@ -42,14 +42,14 @@ public class DistanceDetector {
 	 * True if an object is detected within OBJECT_THRESHOLD_CM
 	 */
 	public boolean isObject;
-	private DistanceSensor frontDistance;
+	private DistanceSensor intakeDistanceSensor;
 
 	private DistanceDetector() {
 	}
 
 	public static void initialize(HardwareMap hardwareMap) {
 		instance = new DistanceDetector();
-		instance.frontDistance = hardwareMap.get(DistanceSensor.class, "frontDistance");
+		instance.intakeDistanceSensor = hardwareMap.get(DistanceSensor.class, "intakeDistanceSensor");
 	}
 
 	public static DistanceDetector getInstance() {
@@ -69,7 +69,7 @@ public class DistanceDetector {
 	 * Updates the public isObject field.
 	 */
 	private void updateValues() {
-		rawDistance = frontDistance.getDistance(DistanceUnit.CM);
+		rawDistance = intakeDistanceSensor.getDistance(DistanceUnit.CM);
 		isObject = rawDistance <= OBJECT_THRESHOLD_CM;
 	}
 
