@@ -52,6 +52,7 @@ public class MainTeleOp extends OpMode {
 	protected Limelight limelight;
 	protected RGBIndicator rgbIndicator;
 
+
 	// Button state tracking to prevent continuous input
 	protected boolean leftTriggerPressed = false;
 	protected boolean rightTriggerPressed = false;
@@ -198,13 +199,13 @@ public class MainTeleOp extends OpMode {
 			if (getTeam() == Team.RED) {
 				scheduler.schedule(
 						drive.actionBuilder(drive.localizer.getPose())
-								.strafeToLinearHeading(new Vector2d(56.75, 10.25),ShotAngleUtility.calculateShotAngle(56.75, 10.25, -72, 72))
+								.strafeToLinearHeading(new Vector2d(56.75, 10.25),Math.toRadians(-23))
 								.build()
 				);
 			} else if (getTeam() == Team.BLUE) {
 				scheduler.schedule(
 						drive.actionBuilder(drive.localizer.getPose())
-								.strafeToLinearHeading(new Vector2d(56.75, -10.25),ShotAngleUtility.calculateShotAngle(56.75, -10.25, -72, -72))
+								.strafeToLinearHeading(new Vector2d(56.75, -10.25),Math.toRadians(23))
 								.build()
 				);
 			}

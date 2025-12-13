@@ -106,12 +106,12 @@ public abstract class AudienceAuto extends OpMode {
 		//double shotAngle = calculateShotAngle(getShootingX(), getShootingY());
 		double shotAngle = GetShootingHeading();
 		trajectoryToShootingPosition = drive.actionBuilder(new Pose2d(60, -9, Math.toRadians(0)))
-				.strafeToLinearHeading(new Vector2d(55, -9), Math.toRadians(25));
+				.strafeToLinearHeading(new Vector2d(55, -9), Math.toRadians(23));
 		telemetry.addData("Trajectory", "To Shooting Position - Target: (%.1f, %.1f)", getShootingX(), getShootingY());
 		telemetry.addData("Trajectory", "Shot angle: %.2f°", Math.toDegrees(shotAngle));
 		telemetry.update();
 
-		trajectoryToCollectionPosition = drive.actionBuilder(new Pose2d(55,-9, Math.toDegrees(25)))
+		trajectoryToCollectionPosition = drive.actionBuilder(new Pose2d(55,-9, Math.toDegrees(23)))
 				.strafeToLinearHeading(new Vector2d(35, -23), Math.toRadians(-90));
 		telemetry.addData("Trajectory", "To Collection Position - Target: (%.1f, %.1f)", getCollectionPosition().x, getCollectionPosition().y);
 		telemetry.addData("Trajectory", "Collection angle: %.2f°", getCollectionHeading());

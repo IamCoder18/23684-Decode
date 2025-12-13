@@ -43,6 +43,8 @@ public class Tune_Shooter extends OpMode {
 	private double lastUpperRPM = 0, lastLowerRPM = 0;
 	private long lastLoopTimeNanos = 0;
 
+	public static boolean USE_PIDF = true;
+
 	@Override
 	public void init() {
 		upperShooter = hardwareMap.get(DcMotorEx.class, "upperShooter");
@@ -107,8 +109,14 @@ public class Tune_Shooter extends OpMode {
 		double lowerTotalPower = lowerFeedforwardPower + lowerPidPower;
 
 		// --- Set Motor Power ---
-		upperShooter.setPower(upperTotalPower);
-		lowerShooter.setPower(lowerTotalPower);
+
+		if (!USE_PIDF) {
+			upperShooter.setPower(upperTotalPower);
+			lowerShooter.setPower(lowerTotalPower);
+		}else {
+			upperShooter.setPower(1);
+			lowerShooter.setPower(1);
+		}
 
 		// --- Update State for Next Loop ---
 		lastUpperRPM = upperRPM;

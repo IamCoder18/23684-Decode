@@ -19,7 +19,7 @@ import org.firstinspires.ftc.teamcode.Utilities.PIDFController;
  * Drive test OpMode for testing Mecanum drive with PID control.
  * Uses GoBilda Pinpoint for odometry.
  */
-@Disabled
+
 @Config
 @TeleOp
 public class Test_Drive extends OpMode {
@@ -64,9 +64,9 @@ public class Test_Drive extends OpMode {
 		pose = new Pose2d(0, 0, 0);
 		target = new Pose2d(targetX, targetY, targetH);
 
-		xPidController = new PIDFController(XController.kP, XController.kI, XController.kD, XController.kF);
-		yPidController = new PIDFController(YController.kP, YController.kI, YController.kD, YController.kF);
-		headingPidController = new PIDFController(HController.kP, HController.kI, HController.kD, HController.kF);
+		xPidController = new PIDFController(Xcontroller.kP, Xcontroller.kI, Xcontroller.kD, Xcontroller.kF);
+		yPidController = new PIDFController(Ycontroller.kP, Ycontroller.kI, Ycontroller.kD, Ycontroller.kF);
+		headingPidController = new PIDFController(Hcontroller.kP, Hcontroller.kI, Hcontroller.kD, Hcontroller.kF);
 
 		GoBildaPinpointDriver.EncoderDirection yEncoderDirection = GoBildaPinpointDriver.EncoderDirection.REVERSED;
 		GoBildaPinpointDriver.EncoderDirection xEncoderDirection = GoBildaPinpointDriver.EncoderDirection.REVERSED;
@@ -87,9 +87,9 @@ public class Test_Drive extends OpMode {
 	@Override
 	public void loop() {
 		// Update PID gains from config
-		xPidController.setPID(XController.kP, XController.kI, XController.kD, XController.kF);
-		yPidController.setPID(YController.kP, YController.kI, YController.kD, YController.kF);
-		headingPidController.setPID(HController.kP, HController.kI, HController.kD, HController.kF);
+		xPidController.setPID(Xcontroller.kP, Xcontroller.kI, Xcontroller.kD, Xcontroller.kF);
+		yPidController.setPID(Ycontroller.kP, Ycontroller.kI, Ycontroller.kD, Ycontroller.kF);
+		headingPidController.setPID(Hcontroller.kP, Hcontroller.kI, Hcontroller.kD, Hcontroller.kF);
 
 		// Update odometry
 		pinpoint.update();
@@ -142,6 +142,8 @@ public class Test_Drive extends OpMode {
 		public static double kF = 0;
 	}
 
+	public static XController Xcontroller = new XController();
+
 	/**
 	 * Y-axis (forward) PID controller gains.
 	 */
@@ -152,6 +154,8 @@ public class Test_Drive extends OpMode {
 		public static double kF = 0;
 	}
 
+	public static YController Ycontroller = new YController();
+
 	/**
 	 * Heading (rotation) PID controller gains.
 	 */
@@ -161,4 +165,6 @@ public class Test_Drive extends OpMode {
 		public static double kD = 0;
 		public static double kF = 0;
 	}
+
+	public static HController Hcontroller = new HController();
 }
