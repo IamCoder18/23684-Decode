@@ -47,10 +47,19 @@ public class ActionScheduler {
 	 * Calls run() on each active action and removes actions that are complete.
 	 */
 	public void update() {
-		TelemetryPacket packet = new TelemetryPacket();
+		// Early exit if no actions to process
+		if (runningActions.isEmpty()) {
+			return;
+		}
+
+		// Only create telemetry packet if we have actions or need to send data
+		TelemetryPacket packet = null;
 		List<Action> newActions = new ArrayList<>();
 
 		for (Action action : runningActions) {
+			if (packet == null) {
+				packet = new TelemetryPacket();
+			}
 			action.preview(packet.fieldOverlay());
 			if (action.run(packet)) {
 				newActions.add(action);
@@ -58,7 +67,11 @@ public class ActionScheduler {
 		}
 
 		runningActions = newActions;
-		dashboard.sendTelemetryPacket(packet);
+
+		// Only send telemetry if we created a packet
+		if (packet != null) {
+			dashboard.sendTelemetryPacket(packet);
+		}
 	}
 
 	/**

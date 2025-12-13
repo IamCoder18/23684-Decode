@@ -94,20 +94,42 @@ public class RGBIndicator {
 		int g = (hex >> 8) & 0xFF;
 		int b = hex & 0xFF;
 
-		// Find closest color in map
-		double minDistance = Double.MAX_VALUE;
-		int closestIndex = 0;
+		// Use binary search for faster color lookup
+		return findClosestColorBinary(r, g, b);
+	}
 
-		int[] currentRGB = {r, g, b};
-		for (int i = 0; i < COLOR_MAP.length; i++) {
-			double distance = rgbDistance(currentRGB, COLOR_MAP[i]);
-			if (distance < minDistance) {
-				minDistance = distance;
-				closestIndex = i;
+	/**
+		* Binary search implementation for faster color lookup.
+		* Pre-sorted color map allows for O(log n) search instead of O(n).
+		*/
+	private double findClosestColorBinary(int r, int g, int b) {
+		int low = 0;
+		int high = COLOR_MAP.length - 1;
+		int bestIndex = 0;
+		double bestDistance = Double.MAX_VALUE;
+
+		while (low <= high) {
+			int mid = low + (high - low) / 2;
+			double distance = rgbDistance(new int[]{r, g, b}, COLOR_MAP[mid]);
+
+			if (distance < bestDistance) {
+				bestDistance = distance;
+				bestIndex = mid;
+			}
+
+			// Determine search direction based on RGB values
+			int midR = COLOR_MAP[mid][0];
+			int midG = COLOR_MAP[mid][1];
+			int midB = COLOR_MAP[mid][2];
+
+			if (r < midR || (r == midR && g < midG) || (r == midR && g == midG && b < midB)) {
+				high = mid - 1;
+			} else {
+				low = mid + 1;
 			}
 		}
 
-		return SERVO_POSITIONS[closestIndex];
+		return SERVO_POSITIONS[bestIndex];
 	}
 
 	/**

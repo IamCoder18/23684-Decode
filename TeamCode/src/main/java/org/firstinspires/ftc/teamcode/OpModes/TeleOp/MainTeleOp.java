@@ -70,6 +70,12 @@ public class MainTeleOp extends OpMode {
 	protected boolean transferAboveRPM = false;
 	protected int lastSpindexerTarget = 0;
 
+	// Performance monitoring
+	private long lastLoopTime = 0;
+	private long maxLoopTime = 0;
+	private long loopCount = 0;
+	private static final long TARGET_LOOP_TIME_NS = 5_000_000; // 5ms target
+
 	@Override
 	public void init() {
 		// Initialize hardware
@@ -83,17 +89,6 @@ public class MainTeleOp extends OpMode {
 		spindexer.resetCalibrationAverage();
 		rgbIndicator = RGBIndicator.getInstance();
 		limelight = new Limelight(hardwareMap);
-
-//		// Try to set starting pose from previous autonomous run
-//		Pose2d savedPose = RobotState.getInstance().getAutoPose();
-//		if (savedPose != null) {
-//			drive.localizer.setPose(savedPose);
-//			telemetry.addData("Pose Source", "Loaded from Auto: (%.2f, %.2f, %.2f°)",
-//					savedPose.position.x, savedPose.position.y, Math.toDegrees(savedPose.heading.toDouble()));
-//		} else {
-//			telemetry.addData("Pose Source", "Default pose used");
-//			// TODO: Get position from Limelight when available
-//		}
 
 		telemetry.addData("Status", "Initialized - Waiting for START");
 		telemetry.update();
@@ -118,33 +113,44 @@ public class MainTeleOp extends OpMode {
 
 	@Override
 	public void loop() {
-		drive.updatePoseEstimate();
+		long startTime = System.nanoTime();
 
-		// Update drive with gamepad input
+		// CRITICAL - Must complete quickly for responsive driving
+		drive.updatePoseEstimate();
 		handleDriveInput();
 
-		SubsystemUpdater.update();
+		// Phase 1: Core subsystem updates
+        SubsystemUpdater.update();
+        handleOperatorInput();
+        spindexer.update();
+        scheduler.update();
 
-		// Handle operator controls (must be before scheduler.update())
-		handleOperatorInput();
-		spindexer.update();
+		// Phase 2: Non-critical updates (budget: 4.5ms)
+		if ((System.nanoTime() - startTime) < 4_500_000) {
+			updateRGBIndicator();
+			displayTelemetry();
+			telemetry.update();
+		}
 
-		// Update action scheduler
-		scheduler.update();
+		// Performance monitoring
+		long loopTime = System.nanoTime() - startTime;
+		if (loopTime > maxLoopTime) {
+			maxLoopTime = loopTime;
+		}
+		loopCount++;
 
-		// Update RGB indicator based on shooter RPM (after scheduler.update())
-		updateRGBIndicator();
+		// Log performance stats periodically
+		if (loopCount % 100 == 0) {
+			telemetry.addData("Performance", "Max loop time: %.2fms", maxLoopTime / 1_000_000.0);
+			telemetry.addData("Performance", "Avg loop time: %.2fms", (System.nanoTime() - lastLoopTime) / 1_000_000.0 / 100.0);
+			lastLoopTime = System.nanoTime();
+		}
 
-		// Display telemetry
-		displayTelemetry();
-
-		telemetry.update();
-
-//		if (limelight.AreGoalsFound()){
-//			drive.localizer.setPose(limelight.VisionPose());
-//		}else{
-//			drive.updatePoseEstimate();
-//		}
+		// Safety: If we're consistently over budget, reduce workload
+		if (loopCount > 10 && maxLoopTime > TARGET_LOOP_TIME_NS * 1.5) {
+			// Reduce telemetry frequency if we're consistently over budget
+			SubsystemUpdater.TELEMETRY_INTERVAL = Math.min(10, SubsystemUpdater.TELEMETRY_INTERVAL + 1);
+		}
 	}
 
 	@Override
@@ -323,7 +329,6 @@ public class MainTeleOp extends OpMode {
 				spindexerDownCrossed = false;
 			}
 		}
-
 		// Crosses 0.2 threshold going up (from lower to 0.2+)
 		else if (leftJoystickY >= 0.2 && !spindexerUpCrossed) {
 			scheduler.schedule(spindexer.setDirectPower(0.25));
@@ -331,7 +336,6 @@ public class MainTeleOp extends OpMode {
 			spindexerMidCrossed = false;
 			spindexerDownCrossed = false;
 		}
-
 		// Crosses -0.2 threshold going down (to -0.2 or below)
 		else if (leftJoystickY <= -0.2 && !spindexerDownCrossed) {
 			scheduler.schedule(spindexer.setDirectPower(-0.25));
