@@ -32,7 +32,6 @@ public class Shooter {
 	private static final double RPM_CONVERSION = 60.0 / TICKS_PER_REVOLUTION;
 	private static final double HALF_DIVISOR = 0.5;
 	public static double AUDIENCE_RPM = 2570.0;
-	public static double AUDIENCE_SHOT_RPM = 2500.0;
 
 	// --- Motor Offsets ---
 	public static double UPPER_OFFSET = 0.0;
