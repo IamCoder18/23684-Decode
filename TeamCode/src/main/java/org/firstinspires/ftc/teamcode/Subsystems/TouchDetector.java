@@ -20,7 +20,6 @@ import com.qualcomm.robotcore.hardware.TouchSensor;
  * 4. Read detected for combined state (true if either sensor is pressed)
  */
 public class TouchDetector {
-
 	private static TouchDetector instance = null;
 	// Public fields to store the last read values
 	/**
